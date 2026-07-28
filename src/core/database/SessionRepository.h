@@ -2,7 +2,7 @@
 
 #include <optional>
 #include <vector>
-
+#include <QtSql/qsqldatabase.h>
 #include "domain/Session.h"
 
 namespace gamelog::core::database
@@ -10,10 +10,16 @@ namespace gamelog::core::database
 class SessionRepository
 {
 public:
-    virtual ~SessionRepository() = default;
+    explicit SessionRepository(QSqlDatabase database);
 
-    [[nodiscard]] virtual std::optional<domain::Session> findActiveSession() = 0;
-    [[nodiscard]] virtual std::vector<domain::Session> listSessionsForGame(int gameId) = 0;
-    virtual bool save(const domain::Session &session) = 0;
+    [[nodiscard]] std::optional<domain::Session> findActiveSession();
+    [[nodiscard]] std::vector<domain::Session> listSessionsForGame(int gameId);
+
+    bool insert(domain::Session& session);
+    bool update(const domain::Session& session);
+    bool remove(int sessionId);
+
+private:
+    QSqlDatabase database_;
 };
 } // namespace gamelog::core::database

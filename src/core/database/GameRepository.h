@@ -4,16 +4,23 @@
 #include <vector>
 
 #include "domain/Game.h"
+#include <QtSql/qsqldatabase.h>
 
 namespace gamelog::core::database
 {
 class GameRepository
 {
 public:
-    virtual ~GameRepository() = default;
+    explicit GameRepository(QSqlDatabase database);
 
-    [[nodiscard]] virtual std::optional<domain::Game> findById(int id) = 0;
-    [[nodiscard]] virtual std::vector<domain::Game> listGames() = 0;
-    virtual bool save(const domain::Game &game) = 0;
+    [[nodiscard]] std::optional<domain::Game> findById(std::int64_t id) const;
+    [[nodiscard]] std::vector<domain::Game> findAll() const;
+
+    bool insert(domain::Game& game);
+    bool update(const domain::Game& game);
+    bool remove(std::int64_t id);
+
+private:
+    QSqlDatabase database_;
 };
 } // namespace gamelog::core::database
