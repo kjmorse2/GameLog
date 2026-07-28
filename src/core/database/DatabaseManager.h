@@ -25,6 +25,23 @@ public:
     [[nodiscard]] bool isOpen() const;
     [[nodiscard]] QSqlDatabase database() const;
 
+    /**
+     * Returns the normal persistent database path.
+     * Creates the containing directory if necessary.
+     */
+    [[nodiscard]]
+    static QString defaultDatabasePath();
+
+    /**
+     * Resolves an override path or falls back to the normal path.
+     *
+     * Precedence:
+     * 1. Explicit command-line path
+     * 2. GAMELOG_DATABASE_PATH environment variable
+     * 3. QStandardPaths application-data location
+     */
+    [[nodiscard]] static QString resolveDatabasePath(const QString& commandLinePath = {});
+
 private:
     [[nodiscard]] bool openDatabase();
     [[nodiscard]] bool configureDatabase();

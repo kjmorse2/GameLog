@@ -2,12 +2,21 @@
 #include <QTimer>
 
 #include "AgentApplication.h"
+#include "database/DatabaseManager.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("GameLog"));
-    QCoreApplication::setApplicationName(QStringLiteral("gamelog-agent"));
+    QCoreApplication::setApplicationName(QStringLiteral("GameLogDev"));
+
+    const QString databasePath = gamelog::core::database::DatabaseManager::resolveDatabasePath();
+
+    if(databasePath.isEmpty())
+    {
+        qCritical() << "Failed to determine database path.";
+        return 1;
+    }
 
     gamelog::agent::AgentApplication agentApplication;
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&agentApplication]() {

@@ -18,27 +18,22 @@ domain::Game gameFromQuery(const QSqlQuery& query)
     domain::Game game;
     game.id = query.value("id").toInt();
     game.title = query.value("title").toString();
-    game.executablePath =
-        query.value("executable_path").toString();
-    game.executableName =
-        query.value("executable_name").toString();
+    game.executablePath = query.value("executable_path").toString();
+    game.executableName = query.value("executable_name").toString();
 
-    const QVariant steamAppId =
-        query.value("steam_app_id");
+    const QVariant steamAppId = query.value("steam_app_id");
     if (!steamAppId.isNull())
     {
         game.steamAppId = steamAppId.toInt();
     }
 
-    const QVariant artworkPath =
-        query.value("artwork_path");
+    const QVariant artworkPath = query.value("artwork_path");
     if (!artworkPath.isNull())
     {
         game.artworkPath = artworkPath.toString();
     }
 
-    game.trackingEnabled =
-        query.value("tracking_enabled").toBool();
+    game.trackingEnabled = query.value("tracking_enabled").toBool();
 
     return game;
 }
@@ -223,9 +218,7 @@ bool GameRepository::insert(domain::Game& game)
     return true;
 }
 
-bool GameRepository::update(
-    const domain::Game& game
-)
+bool GameRepository::update(const domain::Game& game)
 {
     QSqlQuery query{database_};
     query.prepare(

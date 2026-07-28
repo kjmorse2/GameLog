@@ -8,7 +8,6 @@ add_library(gamelog-core STATIC
     steam/SteamLibraryScanner.cpp
     settings/ApplicationSettings.cpp
     logging/LoggingCategories.cpp
-    ipc/IpcStubs.cpp
     domain/Session.cpp
     process/ProcfsProcessSource.cpp
 

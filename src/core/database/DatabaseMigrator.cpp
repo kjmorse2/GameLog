@@ -11,13 +11,11 @@
 #include <QSqlQuery>
 #include <QStringList>
 
-namespace
-{
 
 // The migration files are compiled into gamelog-core through migrations.qrc.
 // Since gamelog-core is a static library, explicitly referencing the generated
 // resource initializer ensures the linker includes the resource object.
-void initializeMigrationResources()
+static void initializeMigrationResources()
 {
     static const bool initialized = [] {
         Q_INIT_RESOURCE(migrations);
@@ -26,8 +24,6 @@ void initializeMigrationResources()
 
     static_cast<void>(initialized);
 }
-
-} // namespace
 
 namespace gamelog::core::database
 {

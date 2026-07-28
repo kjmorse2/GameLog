@@ -38,11 +38,9 @@ private:
     [[nodiscard]] std::optional<bool> isApplied(int version) const;
     [[nodiscard]] bool applyMigration(const Migration& migration);
 
-    [[nodiscard]] static std::optional<QString>
-    readMigration(const QString& resourcePath);
+    [[nodiscard]] static std::optional<QString> readMigration(const QString& resourcePath);
 
-    [[nodiscard]] static const std::vector<Migration>&
-    knownMigrations();
+    [[nodiscard]] static const std::vector<Migration>& knownMigrations();
 
     QSqlDatabase database_;
 };

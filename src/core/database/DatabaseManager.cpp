@@ -7,6 +7,9 @@
 
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardPaths>
 
 namespace gamelog::core::database
 {
@@ -129,6 +132,54 @@ bool DatabaseManager::runMigrations()
 {
     DatabaseMigrator migrator{database_};
     return migrator.applyPendingMigrations();
+}
+
+QString DatabaseManager::defaultDatabasePath()
+{
+    const QString dataDirectory =
+        QStandardPaths::writableLocation(
+            QStandardPaths::AppLocalDataLocation
+        );
+
+    if (dataDirectory.isEmpty())
+    {
+        return {};
+    }
+
+    QDir directory;
+
+    if (!directory.mkpath(dataDirectory))
+    {
+        return {};
+    }
+
+    return QDir{dataDirectory}.filePath(
+        "gamelog.sqlite"
+    );
+}
+
+QString DatabaseManager::resolveDatabasePath(
+    const QString& commandLinePath
+)
+{
+    if (!commandLinePath.isEmpty())
+    {
+        return QFileInfo{commandLinePath}
+            .absoluteFilePath();
+    }
+
+    const QString environmentPath =
+        qEnvironmentVariable(
+            "GAMELOG_DATABASE_PATH"
+        );
+
+    if (!environmentPath.isEmpty())
+    {
+        return QFileInfo{environmentPath}
+            .absoluteFilePath();
+    }
+
+    return defaultDatabasePath();
 }
 
 } // namespace gamelog::core::database

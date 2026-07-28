@@ -155,10 +155,7 @@ sessionFromQuery(const QSqlQuery& query)
     return session;
 }
 
-void bindEndTimestamp(
-    QSqlQuery& query,
-    const std::optional<QDateTime>& endTimestamp
-)
+void bindEndTimestamp(QSqlQuery& query, const std::optional<QDateTime>& endTimestamp)
 {
     if (endTimestamp.has_value())
     {
@@ -178,15 +175,11 @@ void bindEndTimestamp(
 
 } // namespace
 
-SessionRepository::SessionRepository(
-    QSqlDatabase database
-)
+SessionRepository::SessionRepository(QSqlDatabase database)
     : database_{std::move(database)}
-{
-}
+{}
 
-std::optional<domain::Session>
-SessionRepository::findActiveSession() const
+std::optional<domain::Session> SessionRepository::findActiveSession() const
 {
     QSqlQuery query{database_};
 
@@ -267,9 +260,7 @@ SessionRepository::listSessionsForGame(
     return sessions;
 }
 
-bool SessionRepository::insert(
-    domain::Session& session
-)
+bool SessionRepository::insert(domain::Session& session)
 {
     QSqlQuery query{database_};
     query.prepare(
@@ -296,10 +287,7 @@ bool SessionRepository::insert(
     );
 
     query.bindValue(":game_id", session.gameId);
-    query.bindValue(
-        ":start_timestamp_utc",
-        dateTimeToDatabase(session.startTimestamp)
-    );
+    query.bindValue(":start_timestamp_utc", dateTimeToDatabase(session.startTimestamp));
     bindEndTimestamp(query, session.endTimestamp);
     query.bindValue(
         ":tracked_duration_seconds",
@@ -331,9 +319,7 @@ bool SessionRepository::insert(
     return true;
 }
 
-bool SessionRepository::update(
-    const domain::Session& session
-)
+bool SessionRepository::update(const domain::Session& session)
 {
     QSqlQuery query{database_};
     query.prepare(
@@ -408,5 +394,4 @@ bool SessionRepository::remove(int sessionId)
 
     return true;
 }
-
 } // namespace gamelog::core::database
