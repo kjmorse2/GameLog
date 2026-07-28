@@ -49,13 +49,9 @@ CREATE TABLE session_documents
         ON DELETE CASCADE
 );
 
--- statement-break
-
-CREATE UNIQUE INDEX one_active_session
-ON sessions(status)
-WHERE status = 'active';
-
--- statement-break
-
-CREATE INDEX sessions_by_game_and_start
-ON sessions(game_id, start_timestamp_utc);
+CREATE TABLE schema_migrations
+(
+    version INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    applied_at_utc TEXT NOT NULL
+);

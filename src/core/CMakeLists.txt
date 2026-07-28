@@ -1,5 +1,9 @@
 add_library(gamelog-core STATIC
     database/DatabaseManager.cpp
+    database/DatabaseMigrator.cpp
+    database/GameRepository.cpp
+    database/SessionRepository.cpp
+
     sessions/SessionManager.cpp
     steam/SteamLibraryScanner.cpp
     settings/ApplicationSettings.cpp
@@ -7,6 +11,8 @@ add_library(gamelog-core STATIC
     ipc/IpcStubs.cpp
     domain/Session.cpp
     process/ProcfsProcessSource.cpp
+
+    ${PROJECT_SOURCE_DIR}/resources/migrations/migrations.qrc
 )
 
 target_include_directories(gamelog-core

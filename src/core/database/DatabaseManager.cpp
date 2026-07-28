@@ -1,32 +1,43 @@
 #include "database/DatabaseManager.h"
 
-#include <QLoggingCategory>
-#include <utility>
-#include <QSqlError>
+#include "database/DatabaseMigrator.h"
 #include "logging/LoggingCategories.h"
-#include <QtCore/qloggingcategory.h>
+
+#include <utility>
+
+#include <QSqlError>
+#include <QSqlQuery>
 
 namespace gamelog::core::database
 {
-DatabaseManager::DatabaseManager(QString databasePath)
-    : databasePath_(std::move(databasePath))
+
+DatabaseManager::DatabaseManager(
+    QString databasePath,
+    QString connectionName
+)
+    : databasePath_{std::move(databasePath)},
+      connectionName_{std::move(connectionName)}
 {
 }
 
-bool DatabaseManager::openDatabase()
+DatabaseManager::~DatabaseManager()
 {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connectionName_);
-    db.setDatabaseName(databasePath_);
+    const QString connectionName = connectionName_;
 
-    if (!db.open())
+    if (database_.isValid())
     {
-        qCWarning(gamelogDatabaseLog) << "Failed to open database:" << db.lastError().text();
-        return false;
+        database_.close();
     }
 
-    database_ = db;
+    // All QSqlDatabase handles must release the connection before
+    // removeDatabase() is called.
+    database_ = QSqlDatabase{};
 
-    return true;
+    if (!connectionName.isEmpty() &&
+        QSqlDatabase::contains(connectionName))
+    {
+        QSqlDatabase::removeDatabase(connectionName);
+    }
 }
 
 bool DatabaseManager::initialize()
@@ -36,32 +47,88 @@ bool DatabaseManager::initialize()
         return false;
     }
 
-    if (!runMigrations())
+    if (!configureDatabase())
     {
+        return false;
+    }
+
+    return runMigrations();
+}
+
+bool DatabaseManager::isOpen() const
+{
+    return database_.isOpen();
+}
+
+QSqlDatabase DatabaseManager::database() const
+{
+    return database_;
+}
+
+bool DatabaseManager::openDatabase()
+{
+    if (connectionName_.isEmpty())
+    {
+        qCWarning(gamelogDatabaseLog)
+            << "Cannot open database with an empty connection name.";
+        return false;
+    }
+
+    if (QSqlDatabase::contains(connectionName_))
+    {
+        qCWarning(gamelogDatabaseLog)
+            << "A database connection already exists with name:"
+            << connectionName_;
+        return false;
+    }
+
+    database_ = QSqlDatabase::addDatabase(
+        "QSQLITE",
+        connectionName_
+    );
+    database_.setDatabaseName(databasePath_);
+
+    if (!database_.open())
+    {
+        qCWarning(gamelogDatabaseLog)
+            << "Failed to open database:"
+            << database_.lastError().text();
+
         return false;
     }
 
     return true;
 }
 
-const QString& DatabaseManager::databasePath() const
+bool DatabaseManager::configureDatabase()
 {
-    return databasePath_;
-}
+    QSqlQuery query{database_};
 
-bool DatabaseManager::isOpen() const
-{
-    return database().isOpen();
-}
+    if (!query.exec("PRAGMA foreign_keys = ON"))
+    {
+        qCWarning(gamelogDatabaseLog)
+            << "Failed to enable foreign keys:"
+            << query.lastError().text();
 
-QSqlDatabase DatabaseManager::database() const
-{
-    return QSqlDatabase::database(connectionName_);
+        return false;
+    }
+
+    if (!query.exec("PRAGMA busy_timeout = 5000"))
+    {
+        qCWarning(gamelogDatabaseLog)
+            << "Failed to set SQLite busy timeout:"
+            << query.lastError().text();
+
+        return false;
+    }
+
+    return true;
 }
 
 bool DatabaseManager::runMigrations()
 {
-    return true;
-} // namespace gamelog::core::database
-
+    DatabaseMigrator migrator{database_};
+    return migrator.applyPendingMigrations();
 }
+
+} // namespace gamelog::core::database
