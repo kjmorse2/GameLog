@@ -2,7 +2,7 @@
 
 #include <QLoggingCategory>
 #include <utility>
-
+#include <QSqlError>
 #include "logging/LoggingCategories.h"
 #include <QtCore/qloggingcategory.h>
 

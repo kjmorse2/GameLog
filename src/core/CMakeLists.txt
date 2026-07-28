@@ -5,6 +5,8 @@ add_library(gamelog-core STATIC
     settings/ApplicationSettings.cpp
     logging/LoggingCategories.cpp
     ipc/IpcStubs.cpp
+    domain/Session.cpp
+    process/ProcfsProcessSource.cpp
 )
 
 target_include_directories(gamelog-core
@@ -17,6 +19,8 @@ target_link_libraries(gamelog-core
         Qt6::Core
         Qt6::Sql
         Qt6::Network
+
     PRIVATE
+        PkgConfig::PROC2
         gamelog-warnings
 )

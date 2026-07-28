@@ -1,4 +1,5 @@
 #include "SessionRepository.h"
+#include "domain/Session.h"
 #include <QtCore/qloggingcategory.h>
 #include <QSqlQuery>
 
@@ -24,9 +25,8 @@ namespace gamelog::core::database
             session.startTimestamp = query.value("start_timestamp").toDateTime();
             session.endTimestamp = query.value("end_timestamp").toDateTime();
             session.trackedDuration = std::chrono::seconds(query.value("tracked_duration").toInt());
-            // TODO: Map source and status to SessionSource and SessionStatus enums
-            // session.source = query.value("source").toString();
-            // session.status = query.value("status").toString();
+            session.source = domain::sessionSourceFromString(query.value("source").toString());
+            session.status = domain::sessionStatusFromString(query.value("status").toString());
             sessions.push_back(session);
         }
 
