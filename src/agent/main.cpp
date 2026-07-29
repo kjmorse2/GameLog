@@ -26,8 +26,9 @@ int main(int argc, char *argv[])
 
     // Keep a simple heartbeat so process detection stays responsive.
     QTimer timer;
-    timer.setInterval(5000); // Check for games every 5 seconds
-    QObject::connect(&timer, &QTimer::timeout, [&agentApplication]() { agentApplication.checkForGames(); });
+    int updateInterval = 5;
+    timer.setInterval(updateInterval * 1000); // Check for games every 5 seconds
+    QObject::connect(&timer, &QTimer::timeout, [&agentApplication, updateInterval]() { agentApplication.updateAgent(updateInterval); });
     timer.start(5000); // Check for games every 5 seconds
 
     agentApplication.start();

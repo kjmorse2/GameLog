@@ -135,6 +135,74 @@ namespace gamelog::core::database {
         return gameFromQuery(query);
     }
 
+    std::optional<domain::Game> GameRepository::findByName(const QString &name) const
+    {
+        // Parameterize the lookup so callers never have to build SQL manually.
+        QSqlQuery query{database_};
+        query.prepare(
+                R"(
+            SELECT
+                id,
+                title,
+                executable_path,
+                executable_name,
+                steam_app_id,
+                artwork_path,
+                tracking_enabled
+            FROM games
+            WHERE executable_name = :name
+        )");
+        query.bindValue(":name", name);
+
+        if (!query.exec())
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to find game by name:" << query.lastError().text();
+
+            return std::nullopt;
+        }
+
+        if (!query.next())
+        {
+            return std::nullopt;
+        }
+
+        return gameFromQuery(query);
+    }
+
+    std::optional<domain::Game> GameRepository::findByPath(const QString &path) const
+    {
+        // Parameterize the lookup so callers never have to build SQL manually.
+        QSqlQuery query{database_};
+        query.prepare(
+                R"(
+            SELECT
+                id,
+                title,
+                executable_path,
+                executable_name,
+                steam_app_id,
+                artwork_path,
+                tracking_enabled
+            FROM games
+            WHERE executable_path = :executable_path
+        )");
+        query.bindValue(":executable_path", path);
+
+        if (!query.exec())
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to find game by path:" << query.lastError().text();
+
+            return std::nullopt;
+        }
+
+        if (!query.next())
+        {
+            return std::nullopt;
+        }
+
+        return gameFromQuery(query);
+    }
+
     bool GameRepository::insert(domain::Game &game)
     {
         // Insert only the mutable columns; the database assigns the primary key.

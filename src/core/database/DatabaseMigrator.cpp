@@ -203,12 +203,9 @@ namespace gamelog::core::database {
     {
         // Keep this list ordered so migration application stays deterministic.
         static const std::vector<Migration> migrations{
-            {
-                .version = 1,
-                .name = "initial_schema",
-                .resourcePath = ":/migrations/001_initial_schema.sql"
-            }
-        };
+                {.version = 1,
+                 .name = "initial_schema",
+                 .resourcePath = ":/migrations/001_initial_schema.sql"}};
 
         return migrations;
     }

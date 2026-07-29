@@ -14,8 +14,7 @@ namespace gamelog::core::sessions {
         m_sessionRepository(sessionRepository)
     {}
 
-    std::optional<domain::Session>
-    SessionManager::startAutomaticSession(int gameId)
+    std::optional<domain::Session> SessionManager::startAutomaticSession(int gameId)
     {
         // Guard the one-active-session rule before touching any repository state.
         if (m_isSessionActive)
@@ -72,13 +71,13 @@ namespace gamelog::core::sessions {
         return m_activeSession;
     }
 
-    bool SessionManager::endActiveSession()
+    std::optional<domain::Session> SessionManager::endActiveSession()
     {
         // If nothing is active, there is nothing to persist or close out.
         if (!m_isSessionActive)
         {
             qCWarning(gamelogCoreLog) << "Attempted to end a session when no session is active.";
-            return false;
+            return std::nullopt;
         }
 
         m_activeSession.endTimestamp = QDateTime::currentDateTime();
@@ -86,7 +85,7 @@ namespace gamelog::core::sessions {
         m_isSessionActive = false;
 
         // The repository write-back can be added once the lifecycle is fully wired.
-        return true;
+        return m_activeSession;
     }
 
     std::optional<domain::Session> SessionManager::activeSession()

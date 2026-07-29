@@ -26,6 +26,10 @@ namespace gamelog::core::database {
          */
         [[nodiscard]] std::optional<domain::Game> findById(std::int64_t id) const;
 
+        [[nodiscard]] std::optional<domain::Game> findByName(const QString &name) const;
+
+        [[nodiscard]] std::optional<domain::Game> findByPath(const QString &path) const;
+
         /**
          * @brief Returns every game ordered by title.
          */

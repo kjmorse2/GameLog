@@ -34,8 +34,9 @@ namespace gamelog::core::sessions {
 
         /**
          * @brief Ends the current in-memory active session, if one exists.
+         * @return The ended session, or std::nullopt if no session was active.
          */
-        [[nodiscard]] bool endActiveSession();
+        [[nodiscard]] std::optional<domain::Session> endActiveSession();
 
         /**
          * @brief Returns the in-memory active session or a persisted fallback.
