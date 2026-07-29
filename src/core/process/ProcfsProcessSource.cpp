@@ -3,6 +3,8 @@
 #include <array>
 #include <cerrno>
 #include <cstring>
+#include <utility>
+
 #include "logging/LoggingCategories.h"
 
 #include <libproc2/pids.h>
@@ -25,6 +27,7 @@ enum ResultIndex
 
 std::vector<ProcessInfo> ProcfsProcessSource::listProcesses()
 {
+    // Ask libproc2 for only the fields we actually need for detection.
     std::array<pids_item, ResultCount> requestedItems{
         PIDS_ID_PID,
         PIDS_CMD,
@@ -62,14 +65,19 @@ std::vector<ProcessInfo> ProcfsProcessSource::listProcesses()
 
     std::vector<ProcessInfo> processes;
 
-    if (fetched->counts != nullptr)
+    const int totalProcesses =
+        (fetched->counts != nullptr) ? fetched->counts->total : 0;
+
+    if (totalProcesses > 0)
     {
+        // Reserve based on the reported total to avoid repeated growth.
         processes.reserve(
-            static_cast<std::size_t>(fetched->counts->total)
+            static_cast<std::size_t>(totalProcesses)
         );
     }
 
-    for (int index = 0; index < fetched->counts->total; ++index)
+    // Walk each stack entry, skipping any partial rows that libproc2 could not fill.
+    for (int index = 0; index < totalProcesses; ++index)
     {
         pids_stack* stack = fetched->stacks[index];
 

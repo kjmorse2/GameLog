@@ -36,6 +36,7 @@ DatabaseMigrator::DatabaseMigrator(QSqlDatabase database)
 
 bool DatabaseMigrator::applyPendingMigrations()
 {
+    // The migrator only operates on a live connection.
     if (!database_.isValid() || !database_.isOpen())
     {
         qCWarning(gamelogDatabaseLog)
@@ -43,11 +44,13 @@ bool DatabaseMigrator::applyPendingMigrations()
         return false;
     }
 
+    // Make sure the ledger exists before we inspect or record anything.
     if (!ensureMigrationTable())
     {
         return false;
     }
 
+    // Apply each compiled-in migration in order.
     for (const Migration& migration : knownMigrations())
     {
         const std::optional<bool> applied =
@@ -74,6 +77,7 @@ bool DatabaseMigrator::applyPendingMigrations()
 
 bool DatabaseMigrator::ensureMigrationTable()
 {
+    // Keep the migration ledger as a tiny, dependency-free table.
     QSqlQuery query{database_};
 
     if (!query.exec(
@@ -99,6 +103,7 @@ bool DatabaseMigrator::ensureMigrationTable()
 std::optional<bool>
 DatabaseMigrator::isApplied(int version) const
 {
+    // A single existence check is enough because version is the primary key.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -126,6 +131,7 @@ bool DatabaseMigrator::applyMigration(
     const Migration& migration
 )
 {
+    // Read the SQL script first so we can fail before opening the transaction.
     const std::optional<QString> sql =
         readMigration(migration.resourcePath);
 
@@ -152,6 +158,8 @@ bool DatabaseMigrator::applyMigration(
         Qt::SkipEmptyParts
     );
 
+    // Execute the script in discrete chunks so future migrations can bundle
+    // multiple statements without depending on SQLite semicolon parsing.
     for (const QString& statement : statements)
     {
         const QString trimmed = statement.trimmed();
@@ -230,6 +238,7 @@ DatabaseMigrator::readMigration(
     const QString& resourcePath
 )
 {
+    // Resource-backed scripts stay in sync with the compiled binary.
     QFile file{resourcePath};
 
     if (!file.open(
@@ -245,6 +254,7 @@ DatabaseMigrator::readMigration(
 const std::vector<Migration>&
 DatabaseMigrator::knownMigrations()
 {
+    // Keep this list ordered so migration application stays deterministic.
     static const std::vector<Migration> migrations{
         {
             1,

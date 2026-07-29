@@ -1,12 +1,17 @@
 #include "AgentApplication.h"
 
 #include "logging/LoggingCategories.h"
-#include "process/ProcfsProcessSource.h"
-#include "domain/Game.h"
+#include "AgentApplication.h"
+
 #include "database/GameRepository.h"
+#include "logging/LoggingCategories.h"
+#include "process/ProcfsProcessSource.h"
 
 #include <memory>
+#include <vector>
 #include <utility>
+
+#include <QSqlDatabase>
 
 namespace gamelog::agent
 {
@@ -43,31 +48,18 @@ void AgentApplication::start()
         return;
     }
 
+    // The process source is lightweight, so create it only when the agent starts.
     m_processSource =
         std::make_unique<core::process::ProcfsProcessSource>();
 
-    const auto games = core::database::GameRepository(m_databaseManager.database()).findAll();
-
-    for (const auto& game : games)
+    if (!syncGamesWithDatabase())
     {
-        m_trackedExecutables.insert(game.executablePath.toStdString());
+        qCWarning(gamelogAgentLog) << "Failed to sync games with the database.";
     }
 
     m_running = true;
 
     qCInfo(gamelogAgentLog) << "GameLog agent started";
-
-
-
-
-
-
-
-    if(!syncGamesWithDatabase())
-    {
-        qCWarning(gamelogAgentLog) << "Failed to sync games with the database.";
-    }
-
     qCInfo(gamelogAgentLog) << "Database is: " << (m_databaseManager.isOpen() ? "open" : "closed");
     qCInfo(gamelogAgentLog) << "Database path: " << m_databaseManager.database().databaseName();
 }
@@ -101,6 +93,7 @@ void AgentApplication::checkForGames()
         return;
     }
 
+    // Poll the current process table and look for any executable path we cached.
     qCInfo(gamelogAgentLog) << "Checking for games...";
 
     std::vector<core::process::ProcessInfo> processes = m_processSource->listProcesses();
@@ -120,13 +113,6 @@ void AgentApplication::checkForGames()
 
 bool AgentApplication::syncGamesWithDatabase()
 {
-    if (!m_running)
-    {
-        qCWarning(gamelogAgentLog) << "Attempted to sync games with the database while the agent is not running.";
-
-        return false;
-    }
-
     const QSqlDatabase database = m_databaseManager.database();
 
     if (!database.isOpen())
@@ -134,6 +120,19 @@ bool AgentApplication::syncGamesWithDatabase()
         qCWarning(gamelogAgentLog) << "Cannot sync games because the database is not open.";
 
         return false;
+    }
+
+    // Rebuild the cache from scratch so stale executable paths do not linger.
+    m_trackedExecutables.clear();
+
+    const auto games = core::database::GameRepository(database).findAll();
+
+    for (const auto& game : games)
+    {
+        if (!game.executablePath.isEmpty())
+        {
+            m_trackedExecutables.insert(game.executablePath.toStdString());
+        }
     }
 
     qCInfo(gamelogAgentLog) << "Syncing games with database...";

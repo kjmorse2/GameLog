@@ -10,9 +10,10 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(QStringLiteral("GameLog"));
     QCoreApplication::setApplicationName(QStringLiteral("GameLogDev"));
 
+    // Resolve the database location once so the agent and tests use the same file.
     const QString databasePath = gamelog::core::database::DatabaseManager::resolveDatabasePath();
 
-    if(databasePath.isEmpty())
+    if (databasePath.isEmpty())
     {
         qCritical() << "Failed to determine database path.";
         return 1;
@@ -23,6 +24,7 @@ int main(int argc, char *argv[])
         agentApplication.stop();
     });
 
+    // Keep a simple heartbeat so process detection stays responsive.
     QTimer timer;
     timer.setInterval(5000); // Check for games every 5 seconds
     QObject::connect(&timer, &QTimer::timeout, [&agentApplication]() {

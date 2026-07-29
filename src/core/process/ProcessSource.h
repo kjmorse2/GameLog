@@ -7,19 +7,19 @@
 namespace gamelog::core::process
 {
 /**
- * @brief The ProcessSource class is an abstract base class that defines an interface for retrieving information about running processes.
+ * @brief Abstracts process enumeration so the agent can swap sources later.
  */
 class ProcessSource
 {
 public:
     /**
-     * @brief Virtual destructor for the ProcessSource class.
+     * @brief Ensures derived sources clean up correctly through the base type.
      */
     virtual ~ProcessSource() = default;
 
     /**
-     * @brief Lists all running processes.
-     * @return A vector of ProcessInfo objects representing the running processes.
+     * @brief Lists the currently running processes.
+     * @return One ProcessInfo record per observed process.
      */
     [[nodiscard]] virtual std::vector<ProcessInfo> listProcesses() = 0;
 };

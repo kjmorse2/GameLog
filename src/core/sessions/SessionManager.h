@@ -2,77 +2,72 @@
 
 #include <optional>
 
-#include "database/GameRepository.h"
-#include "database/SessionRepository.h"
+#include "domain/Game.h"
 #include "domain/Session.h"
+
+namespace gamelog::core::database
+{
+class GameRepository;
+class SessionRepository;
+}
 
 namespace gamelog::core::sessions
 {
+/**
+ * @brief Coordinates the active in-memory session state.
+ */
 class SessionManager
 {
 public:
 
     /**
-     * @brief Constructs a SessionManager with the given GameRepository and SessionRepository.
-     * @param gameRepository The GameRepository instance to be used for game-related database operations.
-     * @param sessionRepository The SessionRepository instance to be used for session-related database operations.
+     * @brief Connects the manager to the repositories it needs.
      */
     SessionManager(database::GameRepository &gameRepository, database::SessionRepository &sessionRepository);
 
     /**
-     * @brief Starts an automatic session for the specified game.
-     * @param gameId The ID of the game for which to start the session.
-     * @return An optional containing the started session, or std::nullopt if the session could not be started.
+     * @brief Starts an automatic session for the given game.
      */
     [[nodiscard]] std::optional<domain::Session> startAutomaticSession(int gameId);
 
     /**
-     * @brief Ends the currently active session, if any.
-     * @return True if the active session was successfully ended, false otherwise.
+     * @brief Starts a manual session for the given game.
      */
     [[nodiscard]] std::optional<domain::Session> startManualSession(int gameId);
 
     /**
-     * @brief Ends the currently active session, if any.
-     * @return True if the active session was successfully ended, false otherwise.
+     * @brief Ends the current in-memory active session, if one exists.
      */
     [[nodiscard]] bool endActiveSession();
 
     /**
-     * @brief Retrieves the currently active session, if any.
-     * @return An optional containing the active session, or std::nullopt if no active session is currently in progress.
+     * @brief Returns the in-memory active session or a persisted fallback.
      */
     [[nodiscard]] std::optional<domain::Session> activeSession();
 
-    /**
-     * @brief Checks if there is an active session in progress.
-     * @return True if there is an active session, false otherwise.
-     */
-    [[nodiscard]] bool sessionExists();
-
 private:
     /**
-     * @brief The GameRepository instance used for game-related database operations.
+     * @brief Repository for game lookups.
      */
     database::GameRepository &m_gameRepository;
 
     /**
-     * @brief The SessionRepository instance used for session-related database operations.
+     * @brief Repository for session persistence.
      */
     database::SessionRepository &m_sessionRepository;
 
     /**
-     * @brief A flag indicating whether there is an active session in progress.
+     * @brief Mirrors whether m_activeSession currently represents live state.
      */
     bool m_isSessionActive{false};
 
     /**
-     * @brief The currently active session, if any.
+     * @brief Cached active session while the manager owns the lifecycle.
      */
     domain::Session m_activeSession;
 
     /**
-     * @brief The currently active game associated with the active session, if any.
+     * @brief Cached game associated with the active session.
      */
     domain::Game m_activeGame;
 };

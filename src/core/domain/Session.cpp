@@ -1,14 +1,16 @@
 #include "Session.h"
 
+#include <stdexcept>
+
 namespace gamelog::core::domain
 {
 SessionSource sessionSourceFromString(const QString &sourceString)
 {
-    if (sourceString == "Automatic")
+    if (sourceString == "automatic" || sourceString == "Automatic")
     {
         return SessionSource::Automatic;
     }
-    else if (sourceString == "Manual")
+    else if (sourceString == "manual" || sourceString == "Manual")
     {
         return SessionSource::Manual;
     }
@@ -20,15 +22,15 @@ SessionSource sessionSourceFromString(const QString &sourceString)
 
 SessionStatus sessionStatusFromString(const QString &statusString)
 {
-    if (statusString == "Active")
+    if (statusString == "active" || statusString == "Active")
     {
         return SessionStatus::Active;
     }
-    else if (statusString == "Completed")
+    else if (statusString == "completed" || statusString == "Completed")
     {
         return SessionStatus::Completed;
     }
-    else if (statusString == "Interrupted")
+    else if (statusString == "interrupted" || statusString == "Interrupted")
     {
         return SessionStatus::Interrupted;
     }

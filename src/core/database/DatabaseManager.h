@@ -6,9 +6,15 @@
 namespace gamelog::core::database
 {
 
+/**
+ * @brief Owns one Qt SQL connection and applies the initial schema setup.
+ */
 class DatabaseManager
 {
 public:
+    /**
+     * @brief Creates a manager for a specific database path and connection name.
+     */
     DatabaseManager(QString databasePath, QString connectionName);
     ~DatabaseManager();
 
@@ -18,22 +24,30 @@ public:
     DatabaseManager& operator=(DatabaseManager&&) = delete;
 
     /**
-     * Opens, configures, and migrates the database.
+        * @brief Opens the database, applies PRAGMA settings, and runs migrations.
      */
     [[nodiscard]] bool initialize();
 
+        /**
+        * @brief Returns whether the Qt SQL connection is currently open.
+        */
     [[nodiscard]] bool isOpen() const;
+
+        /**
+        * @brief Returns the managed Qt SQL database handle.
+        */
     [[nodiscard]] QSqlDatabase database() const;
 
     /**
-     * Returns the normal persistent database path.
+        * @brief Returns the default persistent database path.
+        *
      * Creates the containing directory if necessary.
      */
     [[nodiscard]]
     static QString defaultDatabasePath();
 
     /**
-     * Resolves an override path or falls back to the normal path.
+        * @brief Resolves the database path from CLI, environment, or defaults.
      *
      * Precedence:
      * 1. Explicit command-line path
@@ -43,8 +57,19 @@ public:
     [[nodiscard]] static QString resolveDatabasePath(const QString& commandLinePath = {});
 
 private:
+    /**
+     * @brief Adds the connection to Qt and opens the underlying file.
+     */
     [[nodiscard]] bool openDatabase();
+
+    /**
+     * @brief Applies connection-level SQLite PRAGMAs.
+     */
     [[nodiscard]] bool configureDatabase();
+
+    /**
+     * @brief Runs any pending schema migrations.
+     */
     [[nodiscard]] bool runMigrations();
 
     QString databasePath_;

@@ -7,42 +7,45 @@
 namespace gamelog::core::domain
 {
 /**
- * @brief The Game struct represents a game in the application.
+ * @brief Describes one registered game entry.
+ *
+ * The struct intentionally stays lightweight so repositories and session
+ * services can pass it around by value.
  */
 struct Game
 {
     /**
-     * @brief The unique identifier for the game.
+     * @brief Primary key from the games table.
      */
     int id{0};
 
     /**
-     * @brief The title of the game.
+     * @brief Display title shown in the UI.
      */
     QString title;
 
     /**
-     * @brief The path to the game's executable file.
+     * @brief Absolute path to the executable used for process matching.
      */
     QString executablePath;
 
     /**
-     * @brief The name of the game's executable file.
+     * @brief Basename of the executable, cached for display and matching.
      */
     QString executableName;
 
     /**
-     * @brief The Steam App ID of the game, if available.
+     * @brief Optional Steam application identifier.
      */
     std::optional<int> steamAppId;
 
     /**
-     * @brief The path to the game's artwork, if available.
+     * @brief Optional local artwork file path.
      */
     std::optional<QString> artworkPath;
 
     /**
-     * @brief A flag indicating whether tracking is enabled for the game.
+     * @brief True when the game should be considered by detection logic.
      */
     bool trackingEnabled{true};
 };

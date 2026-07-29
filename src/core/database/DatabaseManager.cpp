@@ -45,16 +45,19 @@ DatabaseManager::~DatabaseManager()
 
 bool DatabaseManager::initialize()
 {
+    // Open the connection first so every later step has a live handle.
     if (!openDatabase())
     {
         return false;
     }
 
+    // Apply SQLite connection settings before any schema access happens.
     if (!configureDatabase())
     {
         return false;
     }
 
+    // Finally, bring the schema up to date.
     return runMigrations();
 }
 
@@ -85,6 +88,7 @@ bool DatabaseManager::openDatabase()
         return false;
     }
 
+    // Use a named Qt connection so the manager can clean it up deterministically.
     database_ = QSqlDatabase::addDatabase(
         "QSQLITE",
         connectionName_
@@ -105,6 +109,7 @@ bool DatabaseManager::openDatabase()
 
 bool DatabaseManager::configureDatabase()
 {
+    // Foreign keys are required for the repository relationships.
     QSqlQuery query{database_};
 
     if (!query.exec("PRAGMA foreign_keys = ON"))
@@ -116,6 +121,7 @@ bool DatabaseManager::configureDatabase()
         return false;
     }
 
+    // Keep SQLite from failing immediately when a second writer appears.
     if (!query.exec("PRAGMA busy_timeout = 5000"))
     {
         qCWarning(gamelogDatabaseLog)
@@ -136,6 +142,7 @@ bool DatabaseManager::runMigrations()
 
 QString DatabaseManager::defaultDatabasePath()
 {
+    // AppLocalDataLocation is the portable default for a per-user SQLite file.
     const QString dataDirectory =
         QStandardPaths::writableLocation(
             QStandardPaths::AppLocalDataLocation
@@ -146,6 +153,7 @@ QString DatabaseManager::defaultDatabasePath()
         return {};
     }
 
+    // Ensure the directory exists before returning the final database file path.
     QDir directory;
 
     if (!directory.mkpath(dataDirectory))
@@ -162,12 +170,14 @@ QString DatabaseManager::resolveDatabasePath(
     const QString& commandLinePath
 )
 {
+    // Command-line overrides win when they are present.
     if (!commandLinePath.isEmpty())
     {
         return QFileInfo{commandLinePath}
             .absoluteFilePath();
     }
 
+    // Allow local development and test runs to redirect storage.
     const QString environmentPath =
         qEnvironmentVariable(
             "GAMELOG_DATABASE_PATH"
@@ -179,6 +189,7 @@ QString DatabaseManager::resolveDatabasePath(
             .absoluteFilePath();
     }
 
+    // Fall back to the default per-user location.
     return defaultDatabasePath();
 }
 

@@ -13,6 +13,7 @@ namespace gamelog::core::database
 namespace
 {
 
+// Map one SELECT row into the domain type in one place so every query stays consistent.
 domain::Game gameFromQuery(const QSqlQuery& query)
 {
     domain::Game game;
@@ -44,6 +45,7 @@ void bindNullableInt(
     const std::optional<int>& value
 )
 {
+    // SQLite stores nulls explicitly, so use an empty QVariant when unset.
     if (value.has_value())
     {
         query.bindValue(placeholder, *value);
@@ -60,6 +62,7 @@ void bindNullableString(
     const std::optional<QString>& value
 )
 {
+    // Mirror the integer binder for optional text columns.
     if (value.has_value())
     {
         query.bindValue(placeholder, *value);
@@ -80,6 +83,7 @@ GameRepository::GameRepository(QSqlDatabase database)
 std::vector<domain::Game>
 GameRepository::findAll() const
 {
+    // Pull the full library in title order for UI lists and agent caches.
     QSqlQuery query{database_};
 
     if (!query.exec(
@@ -116,6 +120,7 @@ GameRepository::findAll() const
 std::optional<domain::Game>
 GameRepository::findById(std::int64_t id) const
 {
+    // Parameterize the lookup so callers never have to build SQL manually.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -157,6 +162,7 @@ GameRepository::findById(std::int64_t id) const
 
 bool GameRepository::insert(domain::Game& game)
 {
+    // Insert only the mutable columns; the database assigns the primary key.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -220,6 +226,7 @@ bool GameRepository::insert(domain::Game& game)
 
 bool GameRepository::update(const domain::Game& game)
 {
+    // Update the row in place using the in-memory id as the key.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -274,6 +281,7 @@ bool GameRepository::update(const domain::Game& game)
 
 bool GameRepository::remove(std::int64_t id)
 {
+    // Deleting by primary key keeps the repository behavior predictable.
     QSqlQuery query{database_};
     query.prepare(
         "DELETE FROM games WHERE id = :id"

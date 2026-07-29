@@ -4,11 +4,12 @@
 #include <optional>
 
 #include <QDateTime>
+#include <QString>
 
 namespace gamelog::core::domain
 {
 /**
- * @brief The SessionSource enum represents the source of a session, either automatic or manual.
+ * @brief Identifies how a session was created.
  */
 enum class SessionSource
 {
@@ -17,7 +18,7 @@ enum class SessionSource
 };
 
 /**
- * @brief The SessionStatus enum represents the status of a session, which can be active, completed, or interrupted.
+ * @brief Tracks the lifecycle state of a session.
  */
 enum class SessionStatus
 {
@@ -27,56 +28,58 @@ enum class SessionStatus
 };
 
 /**
- * @brief Converts a string representation of a session source to the corresponding SessionSource enum value.
- * @param sourceString The string representation of the session source.
- * @return The corresponding SessionSource enum value.
+ * @brief Converts a stored session-source string into an enum value.
+ * @param sourceString Serialized session source, usually from the database.
+ * @return The matching SessionSource value.
+ * @throws std::invalid_argument when the string is not recognized.
  */
 SessionSource sessionSourceFromString(const QString &sourceString);
 
 /**
- * @brief Converts a string representation of a session status to the corresponding SessionStatus enum value.
- * @param statusString The string representation of the session status.
- * @return The corresponding SessionStatus enum value.
+ * @brief Converts a stored session-status string into an enum value.
+ * @param statusString Serialized session status, usually from the database.
+ * @return The matching SessionStatus value.
+ * @throws std::invalid_argument when the string is not recognized.
  */
 SessionStatus sessionStatusFromString(const QString &statusString);
 
 /**
- * @brief The Session struct represents a gaming session in the application.
+ * @brief Represents one tracked play session.
  */
 struct Session
 {
     /**
-     * @brief The unique identifier for the session.
+     * @brief Primary key from the sessions table.
      */
     int id{0};
 
     /**
-     * @brief The unique identifier for the game associated with the session.
+     * @brief Primary key of the associated game.
      */
     int gameId{0};
 
     /**
-     * @brief The timestamp when the session started.
+     * @brief Start timestamp stored in local application time.
      */
     QDateTime startTimestamp;
 
     /**
-     * @brief The timestamp when the session ended, if available.
+     * @brief Optional end timestamp for completed sessions.
      */
     std::optional<QDateTime> endTimestamp;
 
     /**
-     * @brief The total duration of the session that was tracked, in seconds.
+     * @brief Duration accumulated while the session was active.
      */
     std::chrono::seconds trackedDuration{0};
 
     /**
-     * @brief The source of the session, either automatic or manual.
+     * @brief Source used to start the session.
      */
     SessionSource source{SessionSource::Automatic};
 
     /**
-     * @brief The status of the session, which can be active, completed, or interrupted.
+     * @brief Current lifecycle state.
      */
     SessionStatus status{SessionStatus::Active};
 };

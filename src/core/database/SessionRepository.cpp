@@ -16,6 +16,7 @@ namespace gamelog::core::database
 namespace
 {
 
+// Keep the stored strings centralized so the table representation stays stable.
 QString sourceToString(domain::SessionSource source)
 {
     switch (source)
@@ -47,6 +48,7 @@ QString statusToString(domain::SessionStatus status)
 std::optional<domain::SessionSource>
 sourceFromString(const QString& value)
 {
+    // Accept only the serialized values written by this repository.
     if (value == "automatic")
     {
         return domain::SessionSource::Automatic;
@@ -63,6 +65,7 @@ sourceFromString(const QString& value)
 std::optional<domain::SessionStatus>
 statusFromString(const QString& value)
 {
+    // Mirror the repository's stored status vocabulary.
     if (value == "active")
     {
         return domain::SessionStatus::Active;
@@ -85,6 +88,7 @@ QDateTime dateTimeFromDatabase(
     const QVariant& value
 )
 {
+    // Support both the current and older ISO encodings when reading rows back.
     QDateTime result = QDateTime::fromString(
         value.toString(),
         Qt::ISODateWithMs
@@ -105,12 +109,14 @@ QString dateTimeToDatabase(
     const QDateTime& value
 )
 {
+    // Store timestamps in UTC so comparisons and exports remain unambiguous.
     return value.toUTC().toString(Qt::ISODateWithMs);
 }
 
 std::optional<domain::Session>
 sessionFromQuery(const QSqlQuery& query)
 {
+    // Build one domain object from a single row and reject malformed enum values.
     const std::optional<domain::SessionSource> source =
         sourceFromString(
             query.value("source").toString()
@@ -157,6 +163,7 @@ sessionFromQuery(const QSqlQuery& query)
 
 void bindEndTimestamp(QSqlQuery& query, const std::optional<QDateTime>& endTimestamp)
 {
+    // The end timestamp is nullable because active sessions do not have one yet.
     if (endTimestamp.has_value())
     {
         query.bindValue(
@@ -181,6 +188,7 @@ SessionRepository::SessionRepository(QSqlDatabase database)
 
 std::optional<domain::Session> SessionRepository::findActiveSession() const
 {
+    // Only one row should ever satisfy the active-session contract.
     QSqlQuery query{database_};
 
     if (!query.exec(
@@ -218,6 +226,7 @@ SessionRepository::listSessionsForGame(
     int gameId
 ) const
 {
+    // Newest first keeps the history view easy to scan.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -262,6 +271,7 @@ SessionRepository::listSessionsForGame(
 
 bool SessionRepository::insert(domain::Session& session)
 {
+    // Insert the new session and capture the generated id for the caller.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -321,6 +331,7 @@ bool SessionRepository::insert(domain::Session& session)
 
 bool SessionRepository::update(const domain::Session& session)
 {
+    // Persist the current in-memory snapshot back to the same row.
     QSqlQuery query{database_};
     query.prepare(
         R"(
@@ -377,6 +388,7 @@ bool SessionRepository::update(const domain::Session& session)
 
 bool SessionRepository::remove(int sessionId)
 {
+    // Session deletion is a direct primary-key delete.
     QSqlQuery query{database_};
     query.prepare(
         "DELETE FROM sessions WHERE id = :id"

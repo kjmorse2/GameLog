@@ -12,15 +12,35 @@
 namespace gamelog::agent
 {
 
+/**
+ * @brief Owns the background agent runtime and its cached detection state.
+ */
 class AgentApplication
 {
 public:
+    /**
+     * @brief Creates the agent around one resolved database path.
+     */
     explicit AgentApplication(QString databasePath);
 
+    /**
+     * @brief Starts process tracking and refreshes the tracked-game cache.
+     */
     void start();
+
+    /**
+     * @brief Stops process tracking and releases the process source.
+     */
     void stop();
+
+    /**
+     * @brief Scans the current process table for tracked executables.
+     */
     void checkForGames();
 
+    /**
+     * @brief Rebuilds the tracked executable set from the current database.
+     */
     [[nodiscard]] bool syncGamesWithDatabase();
 
 private:
