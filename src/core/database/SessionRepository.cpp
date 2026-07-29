@@ -14,18 +14,17 @@
 namespace gamelog::core::database {
     namespace {
 
-        // Keep the stored strings centralized so the table representation stays stable.
         QString sourceToString(domain::SessionSource source)
         {
             switch (source)
             {
                 case domain::SessionSource::Automatic:
-                    return "automatic";
+                    return QStringLiteral("automatic");
                 case domain::SessionSource::Manual:
-                    return "manual";
+                    return QStringLiteral("manual");
             }
 
-            return "automatic";
+            return QStringLiteral("automatic");
         }
 
         QString statusToString(domain::SessionStatus status)
@@ -33,25 +32,25 @@ namespace gamelog::core::database {
             switch (status)
             {
                 case domain::SessionStatus::Active:
-                    return "active";
+                    return QStringLiteral("active");
                 case domain::SessionStatus::Completed:
-                    return "completed";
+                    return QStringLiteral("completed");
                 case domain::SessionStatus::Interrupted:
-                    return "interrupted";
+                    return QStringLiteral("interrupted");
             }
 
-            return "interrupted";
+            return QStringLiteral("interrupted");
         }
 
-        std::optional<domain::SessionSource> sourceFromString(const QString &value)
+        std::optional<domain::SessionSource>
+        sourceFromString(const QString &value)
         {
-            // Accept only the serialized values written by this repository.
-            if (value == "automatic")
+            if (value == QStringLiteral("automatic"))
             {
                 return domain::SessionSource::Automatic;
             }
 
-            if (value == "manual")
+            if (value == QStringLiteral("manual"))
             {
                 return domain::SessionSource::Manual;
             }
@@ -59,20 +58,20 @@ namespace gamelog::core::database {
             return std::nullopt;
         }
 
-        std::optional<domain::SessionStatus> statusFromString(const QString &value)
+        std::optional<domain::SessionStatus>
+        statusFromString(const QString &value)
         {
-            // Mirror the repository's stored status vocabulary.
-            if (value == "active")
+            if (value == QStringLiteral("active"))
             {
                 return domain::SessionStatus::Active;
             }
 
-            if (value == "completed")
+            if (value == QStringLiteral("completed"))
             {
                 return domain::SessionStatus::Completed;
             }
 
-            if (value == "interrupted")
+            if (value == QStringLiteral("interrupted"))
             {
                 return domain::SessionStatus::Interrupted;
             }
@@ -82,8 +81,8 @@ namespace gamelog::core::database {
 
         QDateTime dateTimeFromDatabase(const QVariant &value)
         {
-            // Support both the current and older ISO encodings when reading rows back.
-            QDateTime result = QDateTime::fromString(value.toString(), Qt::ISODateWithMs);
+            QDateTime result =
+                    QDateTime::fromString(value.toString(), Qt::ISODateWithMs);
 
             if (!result.isValid())
             {
@@ -95,76 +94,78 @@ namespace gamelog::core::database {
 
         QString dateTimeToDatabase(const QDateTime &value)
         {
-            // Store timestamps in UTC so comparisons and exports remain unambiguous.
             return value.toUTC().toString(Qt::ISODateWithMs);
         }
 
-        std::optional<domain::Session> sessionFromQuery(const QSqlQuery &query)
+        std::optional<domain::Session>
+        sessionFromQuery(const QSqlQuery &query)
         {
-            // Build one domain object from a single row and reject malformed enum values.
-            const std::optional<domain::SessionSource> source = sourceFromString(query.value("source").toString());
-            const std::optional<domain::SessionStatus> status = statusFromString(query.value("status").toString());
+            const auto source = sourceFromString(query.value(QStringLiteral("source")).toString());
+            const auto status = statusFromString(query.value(QStringLiteral("status")).toString());
 
-            if (!source.has_value() || !status.has_value())
+            if (!source || !status)
             {
                 qCWarning(gamelogDatabaseLog) << "Session row contains an invalid source or status.";
                 return std::nullopt;
             }
 
             domain::Session session;
-            session.id = query.value("id").toInt();
-            session.gameId = query.value("game_id").toInt();
-            session.startTimestamp = dateTimeFromDatabase(query.value("start_timestamp_utc"));
+            session.id = query.value(QStringLiteral("id")).toInt();
+            session.gameId = query.value(QStringLiteral("game_id")).toInt();
+            session.startTimestamp = dateTimeFromDatabase(query.value(QStringLiteral("start_timestamp_utc")));
 
-            const QVariant endTimestamp = query.value("end_timestamp_utc");
+            const QVariant endTimestamp = query.value(QStringLiteral("end_timestamp_utc"));
+
             if (!endTimestamp.isNull())
             {
                 session.endTimestamp = dateTimeFromDatabase(endTimestamp);
             }
 
-            session.trackedDuration = std::chrono::seconds{static_cast<std::chrono::seconds::rep>(query.value("tracked_duration_seconds").toLongLong())};
+            session.trackedDuration = std::chrono::seconds{
+                    static_cast<std::chrono::seconds::rep>(
+                            query.value(QStringLiteral("tracked_duration_seconds")).toLongLong())};
             session.source = *source;
             session.status = *status;
-
             return session;
         }
 
         void bindEndTimestamp(QSqlQuery &query, const std::optional<QDateTime> &endTimestamp)
         {
-            // The end timestamp is nullable because active sessions do not have one yet.
-            if (endTimestamp.has_value())
+            if (endTimestamp)
             {
-                query.bindValue(":end_timestamp_utc", dateTimeToDatabase(*endTimestamp));
+                query.bindValue(QStringLiteral(":end_timestamp_utc"), dateTimeToDatabase(*endTimestamp));
             }
             else
             {
-                query.bindValue(":end_timestamp_utc", QVariant{});
+                query.bindValue(QStringLiteral(":end_timestamp_utc"), QVariant{});
             }
         }
 
     } // namespace
 
-    SessionRepository::SessionRepository(QSqlDatabase database) : database_{std::move(database)} {}
+    SessionRepository::SessionRepository(const QSqlDatabase &database) :
+        database_{database}
+    {}
 
-    std::optional<domain::Session> SessionRepository::findActiveSession() const
+    std::optional<domain::Session>
+    SessionRepository::findActiveSession() const
     {
-        // Only one row should ever satisfy the active-session contract.
         QSqlQuery query{database_};
 
         if (!query.exec(
                     R"(
-                SELECT
-                    id,
-                    game_id,
-                    start_timestamp_utc,
-                    end_timestamp_utc,
-                    tracked_duration_seconds,
-                    source,
-                    status
-                FROM sessions
-                WHERE status = 'active'
-                LIMIT 1
-            )"))
+                    SELECT
+                        id,
+                        game_id,
+                        start_timestamp_utc,
+                        end_timestamp_utc,
+                        tracked_duration_seconds,
+                        source,
+                        status
+                    FROM sessions
+                    WHERE status = 'active'
+                    LIMIT 1
+                )"))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to find active session:" << query.lastError().text();
             return std::nullopt;
@@ -174,29 +175,29 @@ namespace gamelog::core::database {
         {
             return std::nullopt;
         }
+
         return sessionFromQuery(query);
     }
 
     std::vector<domain::Session>
     SessionRepository::listSessionsForGame(int gameId) const
     {
-        // Newest first keeps the history view easy to scan.
         QSqlQuery query{database_};
         query.prepare(
                 R"(
-            SELECT
-                id,
-                game_id,
-                start_timestamp_utc,
-                end_timestamp_utc,
-                tracked_duration_seconds,
-                source,
-                status
-            FROM sessions
-            WHERE game_id = :game_id
-            ORDER BY start_timestamp_utc DESC
-        )");
-        query.bindValue(":game_id", gameId);
+                SELECT
+                    id,
+                    game_id,
+                    start_timestamp_utc,
+                    end_timestamp_utc,
+                    tracked_duration_seconds,
+                    source,
+                    status
+                FROM sessions
+                WHERE game_id = :game_id
+                ORDER BY start_timestamp_utc DESC
+            )");
+        query.bindValue(QStringLiteral(":game_id"), gameId);
 
         if (!query.exec())
         {
@@ -208,9 +209,7 @@ namespace gamelog::core::database {
 
         while (query.next())
         {
-            const auto session = sessionFromQuery(query);
-
-            if (session.has_value())
+            if (const auto session = sessionFromQuery(query); session)
             {
                 sessions.push_back(*session);
             }
@@ -221,36 +220,41 @@ namespace gamelog::core::database {
 
     bool SessionRepository::insert(domain::Session &session)
     {
-        // Insert the new session and capture the generated id for the caller.
+        if (session.id != 0)
+        {
+            qCWarning(gamelogDatabaseLog) << "Refusing to insert a session that already has an ID:" << session.id;
+            return false;
+        }
+
         QSqlQuery query{database_};
         query.prepare(
                 R"(
-            INSERT INTO sessions
-            (
-                game_id,
-                start_timestamp_utc,
-                end_timestamp_utc,
-                tracked_duration_seconds,
-                source,
-                status
-            )
-            VALUES
-            (
-                :game_id,
-                :start_timestamp_utc,
-                :end_timestamp_utc,
-                :tracked_duration_seconds,
-                :source,
-                :status
-            )
-        )");
+                INSERT INTO sessions
+                (
+                    game_id,
+                    start_timestamp_utc,
+                    end_timestamp_utc,
+                    tracked_duration_seconds,
+                    source,
+                    status
+                )
+                VALUES
+                (
+                    :game_id,
+                    :start_timestamp_utc,
+                    :end_timestamp_utc,
+                    :tracked_duration_seconds,
+                    :source,
+                    :status
+                )
+            )");
 
-        query.bindValue(":game_id", session.gameId);
-        query.bindValue(":start_timestamp_utc", dateTimeToDatabase(session.startTimestamp));
+        query.bindValue(QStringLiteral(":game_id"), session.gameId);
+        query.bindValue(QStringLiteral(":start_timestamp_utc"), dateTimeToDatabase(session.startTimestamp));
         bindEndTimestamp(query, session.endTimestamp);
-        query.bindValue(":tracked_duration_seconds", QVariant::fromValue<qlonglong>(static_cast<qlonglong>(session.trackedDuration.count())));
-        query.bindValue(":source", sourceToString(session.source));
-        query.bindValue(":status", statusToString(session.status));
+        query.bindValue(QStringLiteral(":tracked_duration_seconds"), QVariant::fromValue<qlonglong>(session.trackedDuration.count()));
+        query.bindValue(QStringLiteral(":source"), sourceToString(session.source));
+        query.bindValue(QStringLiteral(":status"), statusToString(session.status));
 
         if (!query.exec())
         {
@@ -258,58 +262,89 @@ namespace gamelog::core::database {
             return false;
         }
 
-        session.id = query.lastInsertId().toInt();
+        const QVariant insertedId = query.lastInsertId();
+
+        if (!insertedId.isValid() || insertedId.toLongLong() <= 0)
+        {
+            qCWarning(gamelogDatabaseLog) << "Session insert succeeded but returned no valid primary key.";
+            return false;
+        }
+
+        session.id = insertedId.toInt();
         return true;
     }
 
     bool SessionRepository::update(const domain::Session &session)
     {
-        // Persist the current in-memory snapshot back to the same row.
+        if (session.id <= 0)
+        {
+            qCWarning(gamelogDatabaseLog) << "Refusing to update a session with an invalid ID:" << session.id;
+            return false;
+        }
+
         QSqlQuery query{database_};
         query.prepare(
                 R"(
-            UPDATE sessions
-            SET
-                game_id = :game_id,
-                start_timestamp_utc =
-                    :start_timestamp_utc,
-                end_timestamp_utc =
-                    :end_timestamp_utc,
-                tracked_duration_seconds =
-                    :tracked_duration_seconds,
-                source = :source,
-                status = :status
-            WHERE id = :id
-        )");
+                UPDATE sessions
+                SET
+                    game_id = :game_id,
+                    start_timestamp_utc = :start_timestamp_utc,
+                    end_timestamp_utc = :end_timestamp_utc,
+                    tracked_duration_seconds = :tracked_duration_seconds,
+                    source = :source,
+                    status = :status
+                WHERE id = :id
+            )");
 
-        query.bindValue(":game_id", session.gameId);
-        query.bindValue(":start_timestamp_utc", dateTimeToDatabase(session.startTimestamp));
+        query.bindValue(QStringLiteral(":game_id"), session.gameId);
+        query.bindValue(QStringLiteral(":start_timestamp_utc"), dateTimeToDatabase(session.startTimestamp));
         bindEndTimestamp(query, session.endTimestamp);
-        query.bindValue(":tracked_duration_seconds", QVariant::fromValue<qlonglong>(session.trackedDuration.count()));
-        query.bindValue(":source", sourceToString(session.source));
-        query.bindValue(":status", statusToString(session.status));
-        query.bindValue(":id", session.id);
+        query.bindValue(QStringLiteral(":tracked_duration_seconds"), QVariant::fromValue<qlonglong>(session.trackedDuration.count()));
+        query.bindValue(QStringLiteral(":source"), sourceToString(session.source));
+        query.bindValue(QStringLiteral(":status"), statusToString(session.status));
+        query.bindValue(QStringLiteral(":id"), session.id);
 
         if (!query.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to update session:" << query.lastError().text();
             return false;
         }
+
+        if (query.numRowsAffected() != 1)
+        {
+            qCWarning(gamelogDatabaseLog) << "Session update expected one row but changed" << query.numRowsAffected() << "for session ID" << session.id;
+            return false;
+        }
+
         return true;
     }
 
     bool SessionRepository::remove(int sessionId)
     {
-        // Session deletion is a direct primary-key delete.
+        if (sessionId <= 0)
+        {
+            qCWarning(gamelogDatabaseLog) << "Refusing to delete a session with an invalid ID:" << sessionId;
+            return false;
+        }
+
         QSqlQuery query{database_};
-        query.prepare("DELETE FROM sessions WHERE id = :id");
-        query.bindValue(":id", sessionId);
+        query.prepare(QStringLiteral("DELETE FROM sessions WHERE id = :id"));
+        query.bindValue(QStringLiteral(":id"), sessionId);
 
         if (!query.exec())
         {
-            qCWarning(gamelogDatabaseLog) << "Failed to delete session:" << query.lastError().text();
+            qCWarning(gamelogDatabaseLog)
+                    << "Failed to delete session:" << query.lastError().text();
             return false;
         }
+
+        if (query.numRowsAffected() != 1)
+        {
+            qCWarning(gamelogDatabaseLog) << "Session delete expected one row but changed" << query.numRowsAffected() << "for session ID" << sessionId;
+            return false;
+        }
+
         return true;
     }
+
 } // namespace gamelog::core::database

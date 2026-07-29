@@ -1,20 +1,18 @@
 #include "AgentApplication.h"
 
-#include "database/GameRepository.h"
 #include "logging/LoggingCategories.h"
 #include "process/ProcfsProcessSource.h"
 
-#include <memory>
+#include <algorithm>
 #include <utility>
 #include <vector>
 
 #include <QSqlDatabase>
-#include <QString>
 
 namespace gamelog::agent {
 
     AgentApplication::AgentApplication(QString databasePath) :
-        m_databaseManager{std::move(databasePath), "GameLogAgentConnection"}
+        m_databaseManager{std::move(databasePath), QStringLiteral("GameLogAgentConnection")}
     {
         m_databaseReady = m_databaseManager.initialize();
 
@@ -28,37 +26,38 @@ namespace gamelog::agent {
 
         m_gameRepository.emplace(database);
         m_sessionRepository.emplace(database);
-
         m_sessionManager.emplace(*m_gameRepository, *m_sessionRepository);
     }
 
-    void AgentApplication::start()
+    bool AgentApplication::start()
     {
         if (m_running)
         {
             qCWarning(gamelogAgentLog) << "Attempted to start an already-running agent.";
-            return;
+            return false;
         }
 
-        if (!m_databaseReady)
+        if (!m_databaseReady || !m_gameRepository || !m_sessionRepository || !m_sessionManager)
         {
-            qCWarning(gamelogAgentLog) << "Cannot start the agent because the database was not initialized.";
-            return;
+            qCWarning(gamelogAgentLog) << "Cannot start the agent because database services are unavailable.";
+            return false;
         }
 
-        // The process source is lightweight, so create it only when the agent starts.
         m_processSource = std::make_unique<core::process::ProcfsProcessSource>();
 
         if (!syncGamesWithDatabase())
         {
             qCWarning(gamelogAgentLog) << "Failed to sync games with the database.";
+            m_processSource.reset();
+            return false;
         }
 
         m_running = true;
 
         qCInfo(gamelogAgentLog) << "GameLog agent started";
-        qCInfo(gamelogAgentLog) << "Database is: " << (m_databaseManager.isOpen() ? "open" : "closed");
-        qCInfo(gamelogAgentLog) << "Database path: " << m_databaseManager.database().databaseName();
+        qCInfo(gamelogAgentLog) << "Database is:" << (m_databaseManager.isOpen() ? "open" : "closed");
+        qCInfo(gamelogAgentLog) << "Database path:" << m_databaseManager.database().databaseName();
+        return true;
     }
 
     void AgentApplication::stop()
@@ -70,11 +69,13 @@ namespace gamelog::agent {
 
         m_running = false;
         m_processSource.reset();
+        resetPendingStart();
+        m_gameClosedDuration = std::chrono::seconds::zero();
 
         qCInfo(gamelogAgentLog) << "GameLog agent stopped";
     }
 
-    void AgentApplication::updateAgent(int secondsSinceLastCall)
+    void AgentApplication::updateAgent(std::chrono::seconds elapsed)
     {
         if (!m_running)
         {
@@ -88,65 +89,68 @@ namespace gamelog::agent {
             return;
         }
 
-        const auto processes = m_processSource->listProcesses();
-
-        if (!m_recording)
+        if (elapsed <= std::chrono::seconds::zero())
         {
-            std::optional<core::process::ProcessInfo> detectedProcess;
-
-            for (const auto& process : processes)
-            {
-                const std::string path = process.executablePath.toStdString();
-
-                if (m_trackedExecutables.contains(path))
-                {
-                    detectedProcess = process;
-                    break;
-                }
-            }
-
-            if (!detectedProcess.has_value())
-            {
-                m_secondsGameHasBeenOpened = 0;
-                return;
-            }
-
-            m_secondsGameHasBeenOpened += secondsSinceLastCall;
-
-            if (m_secondsGameHasBeenOpened < 30)
-            {
-                return;
-            }
-
-            core::domain::Game detectedGame;
-            detectedGame.executablePath = detectedProcess->executablePath;
-            detectedGame.executableName = detectedProcess->executableName;
-            startNewSession(detectedGame);
+            qCWarning(gamelogAgentLog) << "Agent update received a non-positive elapsed duration.";
             return;
         }
 
-        bool activeGameFound = false;
+        const std::vector<core::process::ProcessInfo> processes = m_processSource->listProcesses();
 
-        for (const auto& process : processes)
+        if (!m_activeGame)
         {
-            if (process.executablePath == m_activeGame.executablePath)
+            const auto detectedProcess = std::ranges::find_if(
+                    processes,
+                    [this](const core::process::ProcessInfo &process) {
+                        return m_trackedExecutablePaths.contains(process.executablePath);
+                    });
+
+            if (detectedProcess == processes.end())
             {
-                activeGameFound = true;
-                break;
+                resetPendingStart();
+                return;
             }
+
+            // A different tracked process must earn its own complete grace period.
+            if (!m_pendingExecutablePath || *m_pendingExecutablePath != detectedProcess->executablePath)
+            {
+                m_pendingExecutablePath = detectedProcess->executablePath;
+                m_gameOpenDuration = std::chrono::seconds::zero();
+            }
+
+            m_gameOpenDuration += elapsed;
+
+            if (m_gameOpenDuration < kStartGracePeriod)
+            {
+                return;
+            }
+
+            // Whether the start succeeds or fails, begin a fresh grace interval
+            // before trying this process again. This avoids retry log spam.
+            static_cast<void>(startNewSession(*detectedProcess));
+            resetPendingStart();
+            return;
         }
+
+        const bool activeGameFound = std::ranges::any_of(
+                processes,
+                [this](const core::process::ProcessInfo &process) {
+                    return process.executablePath == m_activeGame->executablePath;
+                });
 
         if (activeGameFound)
         {
-            m_secondsGameHasBeenClosed = 0;
+            m_gameClosedDuration = std::chrono::seconds::zero();
             return;
         }
 
-        m_secondsGameHasBeenClosed += secondsSinceLastCall;
+        m_gameClosedDuration += elapsed;
 
-        if (m_secondsGameHasBeenClosed >= 30)
+        if (m_gameClosedDuration >= kEndGracePeriod)
         {
-            stopActiveSession();
+            // On failure, SessionManager retains its active state and this agent
+            // retains m_activeGame, so the next poll can safely retry the update.
+            static_cast<void>(stopActiveSession());
         }
     }
 
@@ -155,119 +159,95 @@ namespace gamelog::agent {
         if (!m_databaseManager.isOpen())
         {
             qCWarning(gamelogAgentLog) << "Cannot sync games because the database is not open.";
-
             return false;
         }
-
-        // Rebuild the cache from scratch so stale executable paths do not linger.
-        m_trackedExecutables.clear();
 
         if (!m_gameRepository)
         {
-            qCWarning(gamelogAgentLog) << "Cannot sync games because the game repository is not available.";
+            qCWarning(gamelogAgentLog) << "Cannot sync games because the game repository is unavailable.";
             return false;
         }
 
-        if (!m_sessionRepository)
-        {
-            qCWarning(gamelogAgentLog) << "Cannot sync games because the session repository is not available.";
-            return false;
-        }
+        m_trackedExecutablePaths.clear();
 
-        const auto games = m_gameRepository->findAll();
-
-        for (const auto &game: games)
+        for (const core::domain::Game &game: m_gameRepository->findAll())
         {
-            if (!game.executablePath.isEmpty())
+            if (game.trackingEnabled && !game.executablePath.isEmpty())
             {
-                m_trackedExecutables.insert(game.executablePath.toStdString());
+                m_trackedExecutablePaths.insert(game.executablePath);
             }
         }
 
-        qCInfo(gamelogAgentLog) << "Syncing games with database...";
-
+        qCInfo(gamelogAgentLog) << "Synced" << m_trackedExecutablePaths.size() << "tracked executable paths from the database.";
         return true;
     }
 
-    void AgentApplication::startNewSession(
-    const core::domain::Game& foundGame
-)
+    bool AgentApplication::startNewSession(
+            const core::process::ProcessInfo &detectedProcess)
     {
-        if (!m_gameRepository || !m_sessionRepository || !m_sessionManager)
+        if (!m_gameRepository || !m_sessionManager)
         {
             qCWarning(gamelogAgentLog) << "Cannot start a session because database services are unavailable.";
-            return;
+            return false;
         }
 
-        const std::optional<core::domain::Game> potentialGame = m_gameRepository->findByPath(foundGame.executablePath);
+        const std::optional<core::domain::Game> game = m_gameRepository->findByPath(detectedProcess.executablePath);
 
-        if (!potentialGame.has_value())
+        if (!game)
         {
-            qCWarning(gamelogAgentLog) << "Detected executable was not found in the database:" << foundGame.executablePath;
-            return;
+            qCWarning(gamelogAgentLog) << "Detected executable was not found in the database:" << detectedProcess.executablePath;
+            return false;
         }
 
-        const core::domain::Game& fullGame = *potentialGame;
+        const std::optional<core::domain::Session> session = m_sessionManager->startAutomaticSession(game->id);
 
-        const std::optional<core::domain::Session>
-            potentialSession = m_sessionManager->startAutomaticSession(fullGame.id);
-
-        if (!potentialSession.has_value())
+        if (!session)
         {
-            qCWarning(gamelogAgentLog) << "Failed to create a session for:" << fullGame.title;
-            return;
+            qCWarning(gamelogAgentLog) << "Failed to create and persist a session for:" << game->title;
+            return false;
         }
 
-        core::domain::Session newSession = *potentialSession;
+        m_activeGame = *game;
+        m_gameClosedDuration = std::chrono::seconds::zero();
 
-        if (!m_sessionRepository->insert(newSession))
-        {
-            qCWarning(gamelogAgentLog) << "Failed to persist the session for:" << fullGame.title;
-
-            // Reset SessionManager's in-memory active state.
-            static_cast<void>(m_sessionManager->endActiveSession());
-
-            return;
-        }
-
-        m_activeGame = fullGame;
-        m_activeSession = newSession;
-        m_recording = true;
-        m_secondsGameHasBeenOpened = 0;
-        m_secondsGameHasBeenClosed = 0;
-
-        qCInfo(gamelogAgentLog) << "Started session for game:" << fullGame.title;
+        qCInfo(gamelogAgentLog) << "Started session" << session->id << "for game:" << game->title;
+        return true;
     }
 
-    void AgentApplication::stopActiveSession()
+    bool AgentApplication::stopActiveSession()
     {
-        if (!m_sessionManager || !m_sessionRepository)
+        if (!m_sessionManager)
         {
-            qCWarning(gamelogAgentLog) << "Cannot stop the session because database services are unavailable.";
-            return;
+            qCWarning(gamelogAgentLog) << "Cannot stop the session because SessionManager is unavailable.";
+            return false;
         }
 
-        const std::optional<core::domain::Session> potentialEndedSession = m_sessionManager->endActiveSession();
-
-        if (!potentialEndedSession.has_value())
+        if (!m_activeGame)
         {
-            qCWarning(gamelogAgentLog) << "Failed to end the active session.";
-            return;
+            qCWarning(gamelogAgentLog) << "Cannot stop the session because the agent has no active game.";
+            return false;
         }
 
-        const core::domain::Session& endedSession = *potentialEndedSession;
+        const QString gameTitle = m_activeGame->title;
+        const std::optional<core::domain::Session> endedSession = m_sessionManager->endActiveSession();
 
-        if (!m_sessionRepository->update(endedSession))
+        if (!endedSession)
         {
-            qCWarning(gamelogAgentLog) << "Failed to persist the ended session.";
-            return;
+            qCWarning(gamelogAgentLog) << "Failed to complete and persist the active session for:" << gameTitle;
+            return false;
         }
 
-        m_activeSession = endedSession;
-        m_recording = false;
-        m_secondsGameHasBeenOpened = 0;
-        m_secondsGameHasBeenClosed = 0;
+        m_activeGame.reset();
+        m_gameClosedDuration = std::chrono::seconds::zero();
 
-        qCInfo(gamelogAgentLog) << "Stopped session for game:" << m_activeGame.title;
+        qCInfo(gamelogAgentLog) << "Stopped session" << endedSession->id << "for game:" << gameTitle;
+        return true;
     }
+
+    void AgentApplication::resetPendingStart() noexcept
+    {
+        m_pendingExecutablePath.reset();
+        m_gameOpenDuration = std::chrono::seconds::zero();
+    }
+
 } // namespace gamelog::agent

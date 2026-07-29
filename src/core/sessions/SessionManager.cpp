@@ -4,99 +4,138 @@
 #include "database/SessionRepository.h"
 #include "logging/LoggingCategories.h"
 
+#include <algorithm>
 #include <chrono>
 
 #include <QDateTime>
 
 namespace gamelog::core::sessions {
-    SessionManager::SessionManager(database::GameRepository &gameRepository, database::SessionRepository &sessionRepository) :
-        m_gameRepository(gameRepository),
-        m_sessionRepository(sessionRepository)
+
+    SessionManager::SessionManager(
+            database::GameRepository &gameRepository,
+            database::SessionRepository &sessionRepository) :
+        m_gameRepository{gameRepository},
+        m_sessionRepository{sessionRepository}
     {}
 
-    std::optional<domain::Session> SessionManager::startAutomaticSession(int gameId)
+    std::optional<domain::Session>
+    SessionManager::startAutomaticSession(int gameId)
     {
-        // Guard the one-active-session rule before touching any repository state.
-        if (m_isSessionActive)
-        {
-            qCWarning(gamelogCoreLog) << "Attempted to start a new automatic session while another session is active.";
-            return std::nullopt;
-        }
-
-        // Resolve the game once so the manager can cache both the game and session.
-        const std::optional<domain::Game> potentialGame = m_gameRepository.findById(gameId);
-        if (!potentialGame.has_value())
-        {
-            qCWarning(gamelogCoreLog) << "Automatic session requested for unknown game ID:" << gameId;
-            return std::nullopt;
-        }
-
-        m_activeGame = potentialGame.value();
-        m_activeSession.id = 0;
-        m_activeSession.gameId = m_activeGame.id;
-        m_activeSession.startTimestamp = QDateTime::currentDateTime();
-        m_activeSession.endTimestamp.reset();
-        m_activeSession.trackedDuration = std::chrono::seconds{0};
-        m_activeSession.source = domain::SessionSource::Automatic;
-        m_activeSession.status = domain::SessionStatus::Active;
-        m_isSessionActive = true;
-        return m_activeSession;
+        return startSession(gameId, domain::SessionSource::Automatic);
     }
 
-    std::optional<domain::Session> SessionManager::startManualSession(int gameId)
+    std::optional<domain::Session>
+    SessionManager::startManualSession(int gameId)
     {
-        // Manual starts obey the same exclusivity rule as automatic starts.
-        if (m_isSessionActive)
+        return startSession(gameId, domain::SessionSource::Manual);
+    }
+
+    std::optional<domain::Session>
+    SessionManager::startSession(int gameId, domain::SessionSource source)
+    {
+        if (m_activeSession)
         {
-            qCWarning(gamelogCoreLog) << "Attempted to start a new manual session while another session is active.";
+            qCWarning(gamelogCoreLog)
+                    << "Attempted to start a session while another in-memory session is active.";
             return std::nullopt;
         }
 
-        const std::optional<domain::Game> potentialGame = m_gameRepository.findById(gameId);
-        if (!potentialGame.has_value())
+        // The database constraint remains the final safety net, but checking first
+        // produces a useful error and avoids relying on a UNIQUE failure for control
+        // flow. It also detects an active row left by a previous agent process.
+        if (const auto persistedSession = m_sessionRepository.findActiveSession();
+            persistedSession)
         {
-            qCWarning(gamelogCoreLog) << "Manual session requested for unknown game ID:" << gameId;
+            qCWarning(gamelogCoreLog)
+                    << "Cannot start a session because active session"
+                    << persistedSession->id << "already exists in the database.";
             return std::nullopt;
         }
 
-        m_activeGame = potentialGame.value();
-        m_activeSession.id = 0;
-        m_activeSession.gameId = m_activeGame.id;
-        m_activeSession.startTimestamp = QDateTime::currentDateTime();
-        m_activeSession.endTimestamp.reset();
-        m_activeSession.trackedDuration = std::chrono::seconds{0};
-        m_activeSession.source = domain::SessionSource::Manual;
-        m_activeSession.status = domain::SessionStatus::Active;
-        m_isSessionActive = true;
-        return m_activeSession;
+        const std::optional<domain::Game> game =
+                m_gameRepository.findById(gameId);
+
+        if (!game)
+        {
+            qCWarning(gamelogCoreLog)
+                    << "Session requested for unknown game ID:" << gameId;
+            return std::nullopt;
+        }
+
+        // Build a local candidate first. It is not considered active until the
+        // repository insert succeeds and assigns its database ID.
+        domain::Session candidate{
+                .id = 0,
+                .gameId = game->id,
+                .startTimestamp = QDateTime::currentDateTimeUtc(),
+                .endTimestamp = std::nullopt,
+                .trackedDuration = std::chrono::seconds::zero(),
+                .source = source,
+                .status = domain::SessionStatus::Active,
+        };
+
+        if (!m_sessionRepository.insert(candidate))
+        {
+            qCWarning(gamelogCoreLog)
+                    << "Failed to persist a new session for game ID:" << gameId;
+            return std::nullopt;
+        }
+
+        // candidate now contains the generated primary key. Store exactly that
+        // persisted object so the later UPDATE targets the correct row.
+        m_activeSession = candidate;
+        return candidate;
     }
 
     std::optional<domain::Session> SessionManager::endActiveSession()
     {
-        // If nothing is active, there is nothing to persist or close out.
-        if (!m_isSessionActive)
+        if (!m_activeSession)
         {
-            qCWarning(gamelogCoreLog) << "Attempted to end a session when no session is active.";
+            qCWarning(gamelogCoreLog)
+                    << "Attempted to end a session when no in-memory session is active.";
             return std::nullopt;
         }
 
-        m_activeSession.endTimestamp = QDateTime::currentDateTime();
-        m_activeSession.status = domain::SessionStatus::Completed;
-        m_isSessionActive = false;
+        // Work on a candidate copy. The current active value is left untouched
+        // until the database update succeeds.
+        domain::Session completed = *m_activeSession;
+        const QDateTime endTimestamp = QDateTime::currentDateTimeUtc();
+        const qint64 elapsedMilliseconds =
+                completed.startTimestamp.msecsTo(endTimestamp);
+        const qint64 nonNegativeMilliseconds =
+                std::max<qint64>(elapsedMilliseconds, 0);
 
-        // The repository write-back can be added once the lifecycle is fully wired.
-        return m_activeSession;
+        completed.endTimestamp = endTimestamp;
+        completed.trackedDuration = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::milliseconds{
+                        static_cast<std::chrono::milliseconds::rep>(
+                                nonNegativeMilliseconds)});
+        completed.status = domain::SessionStatus::Completed;
+
+        if (!m_sessionRepository.update(completed))
+        {
+            qCWarning(gamelogCoreLog)
+                    << "Failed to persist completion of session:" << completed.id;
+            return std::nullopt;
+        }
+
+        m_activeSession.reset();
+        return completed;
     }
 
-    std::optional<domain::Session> SessionManager::activeSession()
+    std::optional<domain::Session> SessionManager::activeSession() const
     {
-        // Prefer the in-memory session while the manager is actively tracking one.
-        if (m_isSessionActive)
+        if (m_activeSession)
         {
             return m_activeSession;
         }
 
-        // Fall back to the repository when the manager is idle or recovering state.
         return m_sessionRepository.findActiveSession();
     }
+
+    bool SessionManager::hasActiveSession() const noexcept
+    {
+        return m_activeSession.has_value();
+    }
+
 } // namespace gamelog::core::sessions

@@ -2,7 +2,6 @@
 
 #include <optional>
 
-#include "domain/Game.h"
 #include "domain/Session.h"
 
 namespace gamelog::core::database {
@@ -11,62 +10,56 @@ namespace gamelog::core::database {
 } // namespace gamelog::core::database
 
 namespace gamelog::core::sessions {
+
     /**
-     * @brief Coordinates the active in-memory session state.
+     * @brief Owns the in-memory active-session state and its persistence boundary.
+     *
+     * The repository references are required, non-owning dependencies. They must
+     * outlive this manager.
      */
     class SessionManager
     {
     public:
-        /**
-         * @brief Connects the manager to the repositories it needs.
-         */
-        SessionManager(database::GameRepository &gameRepository, database::SessionRepository &sessionRepository);
+        SessionManager(database::GameRepository &gameRepository,
+                       database::SessionRepository &sessionRepository);
 
         /**
-         * @brief Starts an automatic session for the given game.
+         * @brief Validates, inserts, and activates an automatic session.
          */
-        [[nodiscard]] std::optional<domain::Session> startAutomaticSession(int gameId);
+        [[nodiscard]] std::optional<domain::Session>
+        startAutomaticSession(int gameId);
 
         /**
-         * @brief Starts a manual session for the given game.
+         * @brief Validates, inserts, and activates a manual session.
          */
-        [[nodiscard]] std::optional<domain::Session> startManualSession(int gameId);
+        [[nodiscard]] std::optional<domain::Session>
+        startManualSession(int gameId);
 
         /**
-         * @brief Ends the current in-memory active session, if one exists.
-         * @return The ended session, or std::nullopt if no session was active.
+         * @brief Completes the active session and persists the existing row.
+         *
+         * If persistence fails, the original active state is retained so the
+         * caller can retry without losing the session identity.
          */
         [[nodiscard]] std::optional<domain::Session> endActiveSession();
 
         /**
-         * @brief Returns the in-memory active session or a persisted fallback.
+         * @brief Returns the in-memory active session, or a persisted active row.
          */
-        [[nodiscard]] std::optional<domain::Session> activeSession();
+        [[nodiscard]] std::optional<domain::Session> activeSession() const;
+
+        /**
+         * @brief Reports whether this manager currently owns active in-memory state.
+         */
+        [[nodiscard]] bool hasActiveSession() const noexcept;
 
     private:
-        /**
-         * @brief Repository for game lookups.
-         */
+        [[nodiscard]] std::optional<domain::Session>
+        startSession(int gameId, domain::SessionSource source);
+
         database::GameRepository &m_gameRepository;
-
-        /**
-         * @brief Repository for session persistence.
-         */
         database::SessionRepository &m_sessionRepository;
-
-        /**
-         * @brief Mirrors whether m_activeSession currently represents live state.
-         */
-        bool m_isSessionActive{false};
-
-        /**
-         * @brief Cached active session while the manager owns the lifecycle.
-         */
-        domain::Session m_activeSession;
-
-        /**
-         * @brief Cached game associated with the active session.
-         */
-        domain::Game m_activeGame;
+        std::optional<domain::Session> m_activeSession;
     };
+
 } // namespace gamelog::core::sessions

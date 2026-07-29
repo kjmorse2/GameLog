@@ -18,7 +18,7 @@ namespace gamelog::core::database {
         /**
          * @brief Binds the repository to one open database connection.
          */
-        explicit SessionRepository(QSqlDatabase database);
+        explicit SessionRepository(const QSqlDatabase &database);
 
         /**
          * @brief Returns the single active session row, if one exists.
@@ -34,17 +34,17 @@ namespace gamelog::core::database {
         /**
          * @brief Inserts a new session row and updates the struct id.
          */
-        bool insert(domain::Session &session);
+        [[nodiscard]] bool insert(domain::Session &session);
 
         /**
-         * @brief Persists changes to an existing session row.
+         * @brief Persists changes to exactly one existing session row.
          */
-        bool update(const domain::Session &session);
+        [[nodiscard]] bool update(const domain::Session &session);
 
         /**
-         * @brief Deletes a session row by primary key.
+         * @brief Deletes exactly one session row by primary key.
          */
-        bool remove(int sessionId);
+        [[nodiscard]] bool remove(int sessionId);
 
     private:
         QSqlDatabase database_;
