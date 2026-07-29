@@ -5,8 +5,6 @@ add_library(gamelog-core STATIC
     database/SessionRepository.cpp
 
     sessions/SessionManager.cpp
-    steam/SteamLibraryScanner.cpp
-    settings/ApplicationSettings.cpp
     logging/LoggingCategories.cpp
     domain/Session.cpp
     process/ProcfsProcessSource.cpp

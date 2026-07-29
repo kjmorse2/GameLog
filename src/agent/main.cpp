@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    gamelog::agent::AgentApplication agentApplication;
+    gamelog::agent::AgentApplication agentApplication(databasePath);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&agentApplication]() {
         agentApplication.stop();
     });

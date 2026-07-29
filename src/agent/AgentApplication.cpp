@@ -1,34 +1,75 @@
 #include "AgentApplication.h"
-#include <process/ProcfsProcessSource.h>
-#include <process/ProcessInfo.h>
-
-#include <QLoggingCategory>
 
 #include "logging/LoggingCategories.h"
+#include "process/ProcfsProcessSource.h"
+#include "domain/Game.h"
+#include "database/GameRepository.h"
+
+#include <memory>
+#include <utility>
 
 namespace gamelog::agent
 {
 
-AgentApplication::AgentApplication(std::string databasePath)
-    : m_running{false},
-      m_trackedGames{}
+AgentApplication::AgentApplication(
+    QString databasePath
+)
+    : m_databaseManager{
+          std::move(databasePath),
+          "GameLogAgentConnection"
+      }
 {
-    // Initialize the database manager with the provided path
-    gamelog::core::database::DatabaseManager m_databaseManager{QString::fromStdString(databasePath), "GameLogAgentConnection"};
-    if (!m_databaseManager.initialize())
+    m_databaseReady = m_databaseManager.initialize();
+
+    if (!m_databaseReady)
     {
         qCWarning(gamelogAgentLog) << "Failed to initialize the database manager.";
     }
-    m_database = m_databaseManager.database();
 }
 
 void AgentApplication::start()
 {
+    if (m_running)
+    {
+        qCWarning(gamelogAgentLog) << "Attempted to start an already-running agent.";
+
+        return;
+    }
+
+    if (!m_databaseReady)
+    {
+        qCWarning(gamelogAgentLog) << "Cannot start the agent because the database was not initialized.";
+
+        return;
+    }
+
+    m_processSource =
+        std::make_unique<core::process::ProcfsProcessSource>();
+
+    const auto games = core::database::GameRepository(m_databaseManager.database()).findAll();
+
+    for (const auto& game : games)
+    {
+        m_trackedExecutables.insert(game.executablePath.toStdString());
+    }
+
     m_running = true;
+
     qCInfo(gamelogAgentLog) << "GameLog agent started";
-    m_processSource = new core::process::ProcfsProcessSource();
-    m_trackedGames = std::unordered_set<std::string>{};
-    syncGamesWithDatabase();
+
+
+
+
+
+
+
+    if(!syncGamesWithDatabase())
+    {
+        qCWarning(gamelogAgentLog) << "Failed to sync games with the database.";
+    }
+
+    qCInfo(gamelogAgentLog) << "Database is: " << (m_databaseManager.isOpen() ? "open" : "closed");
+    qCInfo(gamelogAgentLog) << "Database path: " << m_databaseManager.database().databaseName();
 }
 
 void AgentApplication::stop()
@@ -39,7 +80,9 @@ void AgentApplication::stop()
     }
 
     m_running = false;
-    qCInfo(gamelogAgentLog) << "GameLog agent stopping";
+    m_processSource.reset();
+
+    qCInfo(gamelogAgentLog) << "GameLog agent stopped";
 }
 
 void AgentApplication::checkForGames()
@@ -47,22 +90,49 @@ void AgentApplication::checkForGames()
     if (!m_running)
     {
         qCWarning(gamelogAgentLog) << "Attempted to check for games while the agent is not running.";
+
+        return;
+    }
+
+    if (!m_processSource)
+    {
+        qCWarning(gamelogAgentLog) << "Cannot check processes because the process source is unavailable.";
+
         return;
     }
 
     qCInfo(gamelogAgentLog) << "Checking for games...";
+
     std::vector<core::process::ProcessInfo> processes = m_processSource->listProcesses();
     for (const auto& process : processes)
     {
-        qCInfo(gamelogAgentLog) << "Found process:" << process.pid << process.executableName << process.executablePath;
+        const std::string executablePath = process.executablePath.toStdString();
+
+        if (m_trackedExecutables.find(executablePath) != m_trackedExecutables.end())
+        {
+            qCInfo(gamelogAgentLog) << "Found tracked game process:"
+                                    << "PID:" << process.pid
+                                    << "Executable Name:" << process.executableName
+                                    << "Executable Path:" << process.executablePath;
+        }
     }
-} 
+}
 
 bool AgentApplication::syncGamesWithDatabase()
 {
     if (!m_running)
     {
-        qCWarning(gamelogAgentLog) << "Attempted to sync games with database while the agent is not running.";
+        qCWarning(gamelogAgentLog) << "Attempted to sync games with the database while the agent is not running.";
+
+        return false;
+    }
+
+    const QSqlDatabase database = m_databaseManager.database();
+
+    if (!database.isOpen())
+    {
+        qCWarning(gamelogAgentLog) << "Cannot sync games because the database is not open.";
+
         return false;
     }
 
@@ -70,4 +140,5 @@ bool AgentApplication::syncGamesWithDatabase()
 
     return true;
 }
-}// namespace gamelog::agent
+
+} // namespace gamelog::agent

@@ -1,25 +1,37 @@
 #pragma once
+
+#include <memory>
 #include <string>
-#include <QSqlDatabase>
-#include "database/DatabaseManager.h"
 #include <unordered_set>
+
+#include <QString>
+
+#include "database/DatabaseManager.h"
+#include "process/ProcessSource.h"
 
 namespace gamelog::agent
 {
+
 class AgentApplication
 {
 public:
-    AgentApplication(std::string databasePath = {});
+    explicit AgentApplication(QString databasePath);
+
     void start();
     void stop();
     void checkForGames();
-    bool syncGamesWithDatabase();
+
+    [[nodiscard]] bool syncGamesWithDatabase();
 
 private:
     bool m_running{false};
-    core::process::ProcessSource* m_processSource{nullptr};
-    std::unordered_set<std::string> m_trackedGames{};
-    QSqlDatabase m_database;
-    gamelog::core::database::DatabaseManager& m_databaseManager;
+    bool m_databaseReady{false};
+
+    std::unique_ptr<core::process::ProcessSource> m_processSource;
+
+    std::unordered_set<std::string> m_trackedExecutables;
+
+    core::database::DatabaseManager m_databaseManager;
 };
+
 } // namespace gamelog::agent
