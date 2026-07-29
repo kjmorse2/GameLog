@@ -86,7 +86,7 @@ namespace gamelog::agent {
         {
             const std::string executablePath = process.executablePath.toStdString();
 
-            if (m_trackedExecutables.find(executablePath) != m_trackedExecutables.end())
+            if (m_trackedExecutables.contains(executablePath))
             {
                 qCInfo(gamelogAgentLog) << "Found tracked game process:"
                                         << "PID:" << process.pid

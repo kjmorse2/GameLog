@@ -186,8 +186,7 @@ namespace gamelog::core::database {
         return true;
     }
 
-    std::optional<QString>
-    DatabaseMigrator::readMigration(const QString &resourcePath)
+    std::optional<QString> DatabaseMigrator::readMigration(const QString &resourcePath)
     {
         // Resource-backed scripts stay in sync with the compiled binary.
         QFile file{resourcePath};
@@ -203,7 +202,13 @@ namespace gamelog::core::database {
     const std::vector<Migration> &DatabaseMigrator::knownMigrations()
     {
         // Keep this list ordered so migration application stays deterministic.
-        static const std::vector<Migration> migrations{{1, "initial_schema", ":/migrations/001_initial_schema.sql"}};
+        static const std::vector<Migration> migrations{
+            {
+                .version = 1,
+                .name = "initial_schema",
+                .resourcePath = ":/migrations/001_initial_schema.sql"
+            }
+        };
 
         return migrations;
     }
