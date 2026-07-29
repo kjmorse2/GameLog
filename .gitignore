@@ -1,6 +1,7 @@
 # Build directories
 build/
 build-*/
+cmake-build-debug/
 out/
 
 # CMake-generated files

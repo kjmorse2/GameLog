@@ -4,7 +4,8 @@ GameLog is a Linux-first desktop application scaffold for locally tracking PC ga
 
 ## Current status
 
-This repository currently contains the initial project scaffold only. Most planned features are represented by stubs with TODOs and are intentionally unimplemented.
+This repository currently contains the initial project scaffold only. Most planned features are represented by stubs
+with TODOs and are intentionally unimplemented.
 
 ## Planned architecture
 
@@ -60,4 +61,5 @@ ctest --test-dir build --output-on-failure
 
 ## Roadmap
 
-Next milestones include process detection, session lifecycle management, SQLite schema/data access, Steam import, local IPC protocol, and richer GUI workflows.
+Next milestones include process detection, session lifecycle management, SQLite schema/data access, Steam import, local
+IPC protocol, and richer GUI workflows.

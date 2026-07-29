@@ -1,9 +1,9 @@
 add_executable(gamelog-core-smoke
-    unit/CoreSmokeTest.cpp
+        unit/CoreSmokeTest.cpp
 )
 
 target_link_libraries(gamelog-core-smoke
-    PRIVATE
+        PRIVATE
         gamelog-core
         Qt6::Core
         Qt6::Test

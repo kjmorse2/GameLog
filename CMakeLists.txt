@@ -21,7 +21,7 @@ pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)
 add_library(gamelog-warnings INTERFACE)
 
 target_compile_options(gamelog-warnings
-    INTERFACE
+        INTERFACE
         $<$<CXX_COMPILER_ID:GNU>:-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion>
         $<$<CXX_COMPILER_ID:Clang>:-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion>
         $<$<CXX_COMPILER_ID:AppleClang>:-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion>
@@ -29,6 +29,6 @@ target_compile_options(gamelog-warnings
 
 add_subdirectory(src)
 
-if(BUILD_TESTING)
+if (BUILD_TESTING)
     add_subdirectory(tests)
-endif()
+endif ()

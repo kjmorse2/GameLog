@@ -2,41 +2,40 @@
 
 #include <stdexcept>
 
-namespace gamelog::core::domain
-{
-SessionSource sessionSourceFromString(const QString &sourceString)
-{
-    if (sourceString == "automatic" || sourceString == "Automatic")
+namespace gamelog::core::domain {
+    SessionSource sessionSourceFromString(const QString &sourceString)
     {
-        return SessionSource::Automatic;
+        if (sourceString == "automatic" || sourceString == "Automatic")
+        {
+            return SessionSource::Automatic;
+        }
+        else if (sourceString == "manual" || sourceString == "Manual")
+        {
+            return SessionSource::Manual;
+        }
+        else
+        {
+            throw std::invalid_argument("Invalid session source string: " + sourceString.toStdString());
+        }
     }
-    else if (sourceString == "manual" || sourceString == "Manual")
-    {
-        return SessionSource::Manual;
-    }
-    else
-    {
-        throw std::invalid_argument("Invalid session source string: " + sourceString.toStdString());
-    }
-}
 
-SessionStatus sessionStatusFromString(const QString &statusString)
-{
-    if (statusString == "active" || statusString == "Active")
+    SessionStatus sessionStatusFromString(const QString &statusString)
     {
-        return SessionStatus::Active;
+        if (statusString == "active" || statusString == "Active")
+        {
+            return SessionStatus::Active;
+        }
+        else if (statusString == "completed" || statusString == "Completed")
+        {
+            return SessionStatus::Completed;
+        }
+        else if (statusString == "interrupted" || statusString == "Interrupted")
+        {
+            return SessionStatus::Interrupted;
+        }
+        else
+        {
+            throw std::invalid_argument("Invalid session status string: " + statusString.toStdString());
+        }
     }
-    else if (statusString == "completed" || statusString == "Completed")
-    {
-        return SessionStatus::Completed;
-    }
-    else if (statusString == "interrupted" || statusString == "Interrupted")
-    {
-        return SessionStatus::Interrupted;
-    }
-    else
-    {
-        throw std::invalid_argument("Invalid session status string: " + statusString.toStdString());
-    }
-}
 } // namespace gamelog::core::domain

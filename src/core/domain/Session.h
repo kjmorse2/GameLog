@@ -6,81 +6,80 @@
 #include <QDateTime>
 #include <QString>
 
-namespace gamelog::core::domain
-{
-/**
- * @brief Identifies how a session was created.
- */
-enum class SessionSource
-{
-    Automatic,
-    Manual
-};
-
-/**
- * @brief Tracks the lifecycle state of a session.
- */
-enum class SessionStatus
-{
-    Active,
-    Completed,
-    Interrupted
-};
-
-/**
- * @brief Converts a stored session-source string into an enum value.
- * @param sourceString Serialized session source, usually from the database.
- * @return The matching SessionSource value.
- * @throws std::invalid_argument when the string is not recognized.
- */
-SessionSource sessionSourceFromString(const QString &sourceString);
-
-/**
- * @brief Converts a stored session-status string into an enum value.
- * @param statusString Serialized session status, usually from the database.
- * @return The matching SessionStatus value.
- * @throws std::invalid_argument when the string is not recognized.
- */
-SessionStatus sessionStatusFromString(const QString &statusString);
-
-/**
- * @brief Represents one tracked play session.
- */
-struct Session
-{
+namespace gamelog::core::domain {
     /**
-     * @brief Primary key from the sessions table.
+     * @brief Identifies how a session was created.
      */
-    int id{0};
+    enum class SessionSource
+    {
+        Automatic,
+        Manual
+    };
 
     /**
-     * @brief Primary key of the associated game.
+     * @brief Tracks the lifecycle state of a session.
      */
-    int gameId{0};
+    enum class SessionStatus
+    {
+        Active,
+        Completed,
+        Interrupted
+    };
 
     /**
-     * @brief Start timestamp stored in local application time.
+     * @brief Converts a stored session-source string into an enum value.
+     * @param sourceString Serialized session source, usually from the database.
+     * @return The matching SessionSource value.
+     * @throws std::invalid_argument when the string is not recognized.
      */
-    QDateTime startTimestamp;
+    SessionSource sessionSourceFromString(const QString &sourceString);
 
     /**
-     * @brief Optional end timestamp for completed sessions.
+     * @brief Converts a stored session-status string into an enum value.
+     * @param statusString Serialized session status, usually from the database.
+     * @return The matching SessionStatus value.
+     * @throws std::invalid_argument when the string is not recognized.
      */
-    std::optional<QDateTime> endTimestamp;
+    SessionStatus sessionStatusFromString(const QString &statusString);
 
     /**
-     * @brief Duration accumulated while the session was active.
+     * @brief Represents one tracked play session.
      */
-    std::chrono::seconds trackedDuration{0};
+    struct Session
+    {
+        /**
+         * @brief Primary key from the sessions table.
+         */
+        int id{0};
 
-    /**
-     * @brief Source used to start the session.
-     */
-    SessionSource source{SessionSource::Automatic};
+        /**
+         * @brief Primary key of the associated game.
+         */
+        int gameId{0};
 
-    /**
-     * @brief Current lifecycle state.
-     */
-    SessionStatus status{SessionStatus::Active};
-};
+        /**
+         * @brief Start timestamp stored in local application time.
+         */
+        QDateTime startTimestamp;
+
+        /**
+         * @brief Optional end timestamp for completed sessions.
+         */
+        std::optional<QDateTime> endTimestamp;
+
+        /**
+         * @brief Duration accumulated while the session was active.
+         */
+        std::chrono::seconds trackedDuration{0};
+
+        /**
+         * @brief Source used to start the session.
+         */
+        SessionSource source{SessionSource::Automatic};
+
+        /**
+         * @brief Current lifecycle state.
+         */
+        SessionStatus status{SessionStatus::Active};
+    };
 } // namespace gamelog::core::domain

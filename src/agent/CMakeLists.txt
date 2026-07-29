@@ -1,10 +1,10 @@
 add_executable(gamelog-agent
-    main.cpp
-    AgentApplication.cpp
+        main.cpp
+        AgentApplication.cpp
 )
 
 target_link_libraries(gamelog-agent
-    PRIVATE
+        PRIVATE
         gamelog-core
         Qt6::Core
         gamelog-warnings

@@ -2,7 +2,8 @@
 
 **Document status:** Initial implementation design  
 **Project type:** Solo portfolio project  
-**Primary platform:** Linux desktop, with Dank Linux / Dank Material Shell on Wayland as the initial development environment  
+**Primary platform:** Linux desktop, with Dank Linux / Dank Material Shell on Wayland as the initial development
+environment  
 **Working language and framework:** C++23 and Qt 6  
 **Working name:** GameLog
 
@@ -10,11 +11,16 @@
 
 ## 1. Purpose
 
-GameLog is a lightweight, local desktop application for automatically tracking PC game sessions. It detects when a registered game starts, records the session, allows the user to take timestamped rich-text notes, and presents historical play information through a desktop GUI.
+GameLog is a lightweight, local desktop application for automatically tracking PC game sessions. It detects when a
+registered game starts, records the session, allows the user to take timestamped rich-text notes, and presents
+historical play information through a desktop GUI.
 
-The application is inspired by game-tracking and backlog-management services such as Backloggd, but its first version is focused on **local session tracking** rather than social features or comprehensive backlog management.
+The application is inspired by game-tracking and backlog-management services such as Backloggd, but its first version is
+focused on **local session tracking** rather than social features or comprehensive backlog management.
 
-This document is intended to guide implementation by a solo developer. It deliberately omits enterprise-oriented concerns such as cloud scaling, multi-user authorization, distributed services, and organizational deployment environments.
+This document is intended to guide implementation by a solo developer. It deliberately omits enterprise-oriented
+concerns such as cloud scaling, multi-user authorization, distributed services, and organizational deployment
+environments.
 
 ---
 
@@ -31,26 +37,27 @@ The first complete version of GameLog should:
 - Allow any application to be registered manually as a game.
 - Track exactly one active session at a time.
 - Record:
-  - Game played
-  - Session start time
-  - Session end time
-  - Tracked duration
-  - Session source, such as automatic or manual
-  - Timestamped rich-text notes
+    - Game played
+    - Session start time
+    - Session end time
+    - Tracked duration
+    - Session source, such as automatic or manual
+    - Timestamped rich-text notes
 - Display a system tray icon while the GUI is running.
 - Support configurable session UI modes:
-  - Tray only
-  - Minimal elapsed-time display
-  - Compact session panel
-  - Full note-taking panel
-  - Full application
+    - Tray only
+    - Minimal elapsed-time display
+    - Compact session panel
+    - Full note-taking panel
+    - Full application
 - Allow completed sessions to be edited or deleted.
 - Display per-game summaries and a basic calendar highlighting every day on which the game was played.
 - Store all application data locally in SQLite.
 - Retrieve game artwork from the local Steam installation when available.
 - Allow manual artwork selection when automatic Steam artwork retrieval fails.
 - Export session notes as HTML files.
-- Remain modular enough to support additional launch configurations, artwork providers, platforms, and integrations later.
+- Remain modular enough to support additional launch configurations, artwork providers, platforms, and integrations
+  later.
 
 ### 2.2 Learning goals
 
@@ -105,11 +112,11 @@ On first launch, GameLog should guide the user through:
 2. Importing installed Steam games.
 3. Choosing whether the background agent starts automatically at desktop login.
 4. Selecting the default behavior when a session starts:
-   - Tray only
-   - Minimal timer
-   - Compact session panel
-   - Notes panel
-   - Full application
+    - Tray only
+    - Minimal timer
+    - Compact session panel
+    - Notes panel
+    - Full application
 5. Choosing the default process-detection polling interval.
 6. Reviewing where GameLog stores its local data.
 
@@ -131,7 +138,8 @@ GameLog reads Steam library configuration and application manifests to obtain:
 
 Imported games that do not yet have a confirmed executable are marked as **Unconfigured**.
 
-When the user launches an unconfigured Steam game, GameLog may present candidate processes that appeared during the launch. The user selects the process that represents the game. That executable becomes the game's detection target.
+When the user launches an unconfigured Steam game, GameLog may present candidate processes that appeared during the
+launch. The user selects the process that represents the game. That executable becomes the game's detection target.
 
 #### Manual registration
 
@@ -170,7 +178,8 @@ A manual session:
 - May optionally end automatically if the associated registered process closes.
 - Is labeled as manually started in session history.
 
-For Version 1, the default behavior should be to end a manual session only when the user explicitly stops it. Automatic ending can be added as a per-game option later.
+For Version 1, the default behavior should be to end a manual session only when the user explicitly stops it. Automatic
+ending can be added as a per-game option later.
 
 ### 3.5 One active session rule
 
@@ -219,7 +228,8 @@ A lightweight, non-windowed background process responsible for:
 - Launching the GUI when needed
 - Hosting the local IPC server
 
-The agent should link only the Qt modules and GameLog components it needs. It should not initialize calendar views, rich-text widgets, or other heavy GUI components.
+The agent should link only the Qt modules and GameLog components it needs. It should not initialize calendar views,
+rich-text widgets, or other heavy GUI components.
 
 ### 4.2 `gamelog`
 
@@ -264,25 +274,25 @@ A static library is preferred initially to avoid runtime shared-library installa
 
 ## 5. Technology Stack
 
-| Area | Technology |
-|---|---|
-| Language | C++23 |
-| GUI | Qt 6 Widgets |
-| Core Qt modules | Qt Core, Qt Widgets, Qt GUI, Qt SQL, Qt Network |
-| Database | SQLite |
-| Database access | Qt SQL with repository classes |
-| Build system | CMake |
-| Testing | Qt Test and CTest |
-| IPC | `QLocalServer` and `QLocalSocket` |
-| IPC payload | Length-prefixed JSON |
-| Process discovery | Linux `/proc` filesystem |
-| Startup service | systemd user service |
-| Configuration | `QSettings` |
-| Rich-text editor | `QTextEdit` / `QTextDocument` |
-| Note storage | HTML |
-| Logging | `QLoggingCategory` with local log files |
-| Initial packaging | Manual CMake install |
-| Later packaging | Arch Linux `PKGBUILD` |
+| Area              | Technology                                      |
+|-------------------|-------------------------------------------------|
+| Language          | C++23                                           |
+| GUI               | Qt 6 Widgets                                    |
+| Core Qt modules   | Qt Core, Qt Widgets, Qt GUI, Qt SQL, Qt Network |
+| Database          | SQLite                                          |
+| Database access   | Qt SQL with repository classes                  |
+| Build system      | CMake                                           |
+| Testing           | Qt Test and CTest                               |
+| IPC               | `QLocalServer` and `QLocalSocket`               |
+| IPC payload       | Length-prefixed JSON                            |
+| Process discovery | Linux `/proc` filesystem                        |
+| Startup service   | systemd user service                            |
+| Configuration     | `QSettings`                                     |
+| Rich-text editor  | `QTextEdit` / `QTextDocument`                   |
+| Note storage      | HTML                                            |
+| Logging           | `QLoggingCategory` with local log files         |
+| Initial packaging | Manual CMake install                            |
+| Later packaging   | Arch Linux `PKGBUILD`                           |
 
 The build must require C++23 rather than silently falling back to an older standard.
 
@@ -292,7 +302,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 ```
 
-The project should use a recent Qt 6 release available on the development system. The code should avoid depending on a newly introduced Qt API unless the minimum Qt version is explicitly updated.
+The project should use a recent Qt 6 release available on the development system. The code should avoid depending on a
+newly introduced Qt API unless the minimum Qt version is explicitly updated.
 
 ---
 
@@ -363,7 +374,8 @@ Suggested fields:
 - Created timestamp
 - Updated timestamp
 
-A future version may replace the single executable fields with a collection of launch profiles without changing the meaning of `Game`.
+A future version may replace the single executable fields with a collection of launch profiles without changing the
+meaning of `Game`.
 
 ### 7.2 Session
 
@@ -377,18 +389,19 @@ Suggested fields:
 - End timestamp in UTC
 - Tracked duration in seconds
 - Session source:
-  - Automatic
-  - Manual
+    - Automatic
+    - Manual
 - Session status:
-  - Active
-  - Completed
-  - Interrupted
+    - Active
+    - Completed
+    - Interrupted
 - Original detected start timestamp
 - Original detected end timestamp
 - Created timestamp
 - Updated timestamp
 
-The original detected timestamps are preserved so that a user can edit the displayed start or end times without losing the initial automatic values.
+The original detected timestamps are preserved so that a user can edit the displayed start or end times without losing
+the initial automatic values.
 
 ### 7.3 Session note document
 
@@ -487,9 +500,9 @@ erDiagram
 - `steam_app_id` may be null.
 - `tracking_enabled` defaults to true after configuration.
 - `configuration_state` is one of:
-  - `unconfigured`
-  - `configured`
-  - `disabled`
+    - `unconfigured`
+    - `configured`
+    - `disabled`
 
 #### `sessions`
 
@@ -498,13 +511,14 @@ erDiagram
 - `end_time_utc` is null only for an active session.
 - `tracked_duration_seconds` defaults to zero.
 - `status` is one of:
-  - `active`
-  - `completed`
-  - `interrupted`
+    - `active`
+    - `completed`
+    - `interrupted`
 - `source` is one of:
-  - `automatic`
-  - `manual`
-- A database-level partial unique index should be used when supported to guarantee that only one row can have `status = 'active'`.
+    - `automatic`
+    - `manual`
+- A database-level partial unique index should be used when supported to guarantee that only one row can have
+  `status = 'active'`.
 
 Example:
 
@@ -558,7 +572,8 @@ Suggested paths:
 
 The implementation should use Qt standard-path APIs rather than hard-coding these paths.
 
-The application should copy selected Steam artwork into its own artwork directory. It should not permanently depend on Steam's cache retaining the original file.
+The application should copy selected Steam artwork into its own artwork directory. It should not permanently depend on
+Steam's cache retaining the original file.
 
 ---
 
@@ -574,7 +589,8 @@ For each numeric process directory, the detector may inspect:
 - `/proc/<pid>/cmdline`
 - `/proc/<pid>/status`
 
-The detector should ignore processes owned by other users and gracefully handle files disappearing while they are being read.
+The detector should ignore processes owned by other users and gracefully handle files disappearing while they are being
+read.
 
 ### 10.2 Matching order
 
@@ -597,13 +613,15 @@ Recommended defaults:
 
 These values should be configurable.
 
-The start grace period prevents very short-lived helper processes from creating sessions. The end grace period allows games that restart or replace a process to continue the same session.
+The start grace period prevents very short-lived helper processes from creating sessions. The end grace period allows
+games that restart or replace a process to continue the same session.
 
 ### 10.4 Tracked duration
 
 GameLog should store both wall-clock timestamps and an accumulated tracked duration.
 
-Tracked duration should be calculated using a monotonic clock and checkpointed periodically. This avoids counting long system suspends as active play when the platform clock behavior permits.
+Tracked duration should be calculated using a monotonic clock and checkpointed periodically. This avoids counting long
+system suspends as active play when the platform clock behavior permits.
 
 The agent should checkpoint:
 
@@ -616,7 +634,8 @@ A crash or forced shutdown should not lose the entire session.
 
 ### 10.5 Process abstraction
 
-The `/proc` reader must be hidden behind an interface so that it can be tested without scanning the developer's real machine.
+The `/proc` reader must be hidden behind an interface so that it can be tested without scanning the developer's real
+machine.
 
 ```cpp
 class ProcessSource
@@ -774,7 +793,8 @@ The GUI is authoritative for:
 - Artwork choices
 - Calendar and history presentation
 
-Completed-session edits may be written directly through the shared repository layer. Active-session lifecycle changes must go through the agent.
+Completed-session edits may be written directly through the shared repository layer. Active-session lifecycle changes
+must go through the agent.
 
 ---
 
@@ -798,7 +818,8 @@ Only one GUI process runs. A later invocation sends an activation request to the
 
 - At login, only the agent is required to run.
 - When a session starts, the agent launches the GUI in the configured mode.
-- If only the tray, minimal timer, compact panel, or notes panel is active, the GUI exits automatically when the session ends.
+- If only the tray, minimal timer, compact panel, or notes panel is active, the GUI exits automatically when the session
+  ends.
 - If the full application window is visible, the GUI remains open after the session ends.
 - Closing the full application window exits the GUI process completely.
 - Closing the full window must not leave a hidden tray process running.
@@ -916,7 +937,8 @@ The panel should:
 - End the current session
 - Hide without ending the session
 
-The initial environment is Wayland through Dank Linux and Dank Material Shell. The implementation should remain generic and avoid desktop-specific APIs where possible.
+The initial environment is Wayland through Dank Linux and Dank Material Shell. The implementation should remain generic
+and avoid desktop-specific APIs where possible.
 
 ---
 
@@ -965,7 +987,8 @@ Adding an entry should:
 4. Place the cursor in the new section.
 5. Autosave after a short debounce interval.
 
-The document may also include an untimestamped summary section at the top or bottom, but timestamped entries are the primary note structure.
+The document may also include an untimestamped summary section at the top or bottom, but timestamped entries are the
+primary note structure.
 
 ### 14.5 Autosave
 
@@ -1031,10 +1054,10 @@ Version 1 should support an assisted workflow:
 3. User launches the game.
 4. GameLog observes newly appearing processes.
 5. Candidate executables are ranked using:
-   - Location inside the game's install directory
-   - Process lifetime
-   - Executable type
-   - Exclusion of known helpers
+    - Location inside the game's install directory
+    - Process lifetime
+    - Executable type
+    - Exclusion of known helpers
 6. User confirms the correct executable.
 
 Automatic Proton and launcher handling may improve later, but the user remains the final authority in Version 1.
@@ -1057,7 +1080,8 @@ Version 1 providers:
 - `SteamArtworkProvider`
 - `ManualArtworkProvider`
 
-The Steam provider searches locally available Steam artwork using the App ID. When suitable artwork is found, GameLog copies it into its own data directory.
+The Steam provider searches locally available Steam artwork using the App ID. When suitable artwork is found, GameLog
+copies it into its own data directory.
 
 No external artwork API is required for Version 1.
 
@@ -1089,7 +1113,8 @@ WantedBy=default.target
 
 The setup UI should enable or disable the service using `systemctl --user`.
 
-The implementation must verify that a graphical program launched by the agent receives the correct Wayland environment. This is a platform-integration test item, not an assumption.
+The implementation must verify that a graphical program launched by the agent receives the correct Wayland environment.
+This is a platform-integration test item, not an assumption.
 
 ### 16.2 Development installation
 
@@ -1637,6 +1662,6 @@ Accumulated active playtime, which may differ from the simple difference between
 
 ## 27. Change History
 
-| Version | Date | Author | Changes |
-|---|---|---|---|
-| 0.1 | 2026-07-27 | Kenneth Morse | Initial design created through requirements workshop |
+| Version | Date       | Author        | Changes                                              |
+|---------|------------|---------------|------------------------------------------------------|
+| 0.1     | 2026-07-27 | Kenneth Morse | Initial design created through requirements workshop |

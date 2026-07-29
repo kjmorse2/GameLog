@@ -5,192 +5,146 @@
 
 #include <utility>
 
-#include <QSqlError>
-#include <QSqlQuery>
 #include <QDir>
 #include <QFileInfo>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QStandardPaths>
 
-namespace gamelog::core::database
-{
+namespace gamelog::core::database {
+    DatabaseManager::DatabaseManager(QString databasePath, QString connectionName) :
+        databasePath_{std::move(databasePath)},
+        connectionName_{std::move(connectionName)}
+    {}
 
-DatabaseManager::DatabaseManager(
-    QString databasePath,
-    QString connectionName
-)
-    : databasePath_{std::move(databasePath)},
-      connectionName_{std::move(connectionName)}
-{
-}
-
-DatabaseManager::~DatabaseManager()
-{
-    const QString connectionName = connectionName_;
-
-    if (database_.isValid())
+    DatabaseManager::~DatabaseManager()
     {
-        database_.close();
+        const QString connectionName = connectionName_;
+
+        if (database_.isValid())
+        {
+            database_.close();
+        }
+        // All QSqlDatabase handles must release the connection before
+        // removeDatabase() is called.
+        database_ = QSqlDatabase{};
+        if (!connectionName.isEmpty() && QSqlDatabase::contains(connectionName))
+        {
+            QSqlDatabase::removeDatabase(connectionName);
+        }
     }
 
-    // All QSqlDatabase handles must release the connection before
-    // removeDatabase() is called.
-    database_ = QSqlDatabase{};
-
-    if (!connectionName.isEmpty() &&
-        QSqlDatabase::contains(connectionName))
+    bool DatabaseManager::initialize()
     {
-        QSqlDatabase::removeDatabase(connectionName);
-    }
-}
-
-bool DatabaseManager::initialize()
-{
-    // Open the connection first so every later step has a live handle.
-    if (!openDatabase())
-    {
-        return false;
+        // Open the connection first so every later step has a live handle.
+        if (!openDatabase())
+        {
+            return false;
+        }
+        // Apply SQLite connection settings before any schema access happens.
+        if (!configureDatabase())
+        {
+            return false;
+        }
+        // Finally, bring the schema up to date.
+        return runMigrations();
     }
 
-    // Apply SQLite connection settings before any schema access happens.
-    if (!configureDatabase())
+    bool DatabaseManager::isOpen() const { return database_.isOpen(); }
+
+    QSqlDatabase DatabaseManager::database() const { return database_; }
+
+    bool DatabaseManager::openDatabase()
     {
-        return false;
+        if (connectionName_.isEmpty())
+        {
+            qCWarning(gamelogDatabaseLog) << "Cannot open database with an empty connection name.";
+            return false;
+        }
+
+        if (QSqlDatabase::contains(connectionName_))
+        {
+            qCWarning(gamelogDatabaseLog) << "A database connection already exists with name:" << connectionName_;
+            return false;
+        }
+
+        // Use a named Qt connection so the manager can clean it up deterministically.
+        database_ = QSqlDatabase::addDatabase("QSQLITE", connectionName_);
+        database_.setDatabaseName(databasePath_);
+
+        if (!database_.open())
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to open database:" << database_.lastError().text();
+            return false;
+        }
+        return true;
     }
 
-    // Finally, bring the schema up to date.
-    return runMigrations();
-}
-
-bool DatabaseManager::isOpen() const
-{
-    return database_.isOpen();
-}
-
-QSqlDatabase DatabaseManager::database() const
-{
-    return database_;
-}
-
-bool DatabaseManager::openDatabase()
-{
-    if (connectionName_.isEmpty())
+    bool DatabaseManager::configureDatabase()
     {
-        qCWarning(gamelogDatabaseLog)
-            << "Cannot open database with an empty connection name.";
-        return false;
+        // Foreign keys are required for the repository relationships.
+        QSqlQuery query{database_};
+
+        if (!query.exec("PRAGMA foreign_keys = ON"))
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to enable foreign keys:" << query.lastError().text();
+            return false;
+        }
+        // Keep SQLite from failing immediately when a second writer appears.
+        if (!query.exec("PRAGMA busy_timeout = 5000"))
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to set SQLite busy timeout:" << query.lastError().text();
+            return false;
+        }
+
+        return true;
     }
 
-    if (QSqlDatabase::contains(connectionName_))
+    bool DatabaseManager::runMigrations()
     {
-        qCWarning(gamelogDatabaseLog)
-            << "A database connection already exists with name:"
-            << connectionName_;
-        return false;
+        DatabaseMigrator migrator{database_};
+        return migrator.applyPendingMigrations();
     }
 
-    // Use a named Qt connection so the manager can clean it up deterministically.
-    database_ = QSqlDatabase::addDatabase(
-        "QSQLITE",
-        connectionName_
-    );
-    database_.setDatabaseName(databasePath_);
-
-    if (!database_.open())
+    QString DatabaseManager::defaultDatabasePath()
     {
-        qCWarning(gamelogDatabaseLog)
-            << "Failed to open database:"
-            << database_.lastError().text();
+        // AppLocalDataLocation is the portable default for a per-user SQLite file.
+        const QString dataDirectory = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
 
-        return false;
+        if (dataDirectory.isEmpty())
+        {
+            return {};
+        }
+
+        // Ensure the directory exists before returning the final database file path.
+        QDir directory;
+
+        if (!directory.mkpath(dataDirectory))
+        {
+            return {};
+        }
+
+        return QDir{dataDirectory}.filePath("gamelog.sqlite");
     }
 
-    return true;
-}
-
-bool DatabaseManager::configureDatabase()
-{
-    // Foreign keys are required for the repository relationships.
-    QSqlQuery query{database_};
-
-    if (!query.exec("PRAGMA foreign_keys = ON"))
+    QString DatabaseManager::resolveDatabasePath(const QString &commandLinePath)
     {
-        qCWarning(gamelogDatabaseLog)
-            << "Failed to enable foreign keys:"
-            << query.lastError().text();
+        // Command-line overrides win when they are present.
+        if (!commandLinePath.isEmpty())
+        {
+            return QFileInfo{commandLinePath}.absoluteFilePath();
+        }
 
-        return false;
+        // Allow local development and test runs to redirect storage.
+        const QString environmentPath = qEnvironmentVariable("GAMELOG_DATABASE_PATH");
+
+        if (!environmentPath.isEmpty())
+        {
+            return QFileInfo{environmentPath}.absoluteFilePath();
+        }
+
+        // Fall back to the default per-user location.
+        return defaultDatabasePath();
     }
-
-    // Keep SQLite from failing immediately when a second writer appears.
-    if (!query.exec("PRAGMA busy_timeout = 5000"))
-    {
-        qCWarning(gamelogDatabaseLog)
-            << "Failed to set SQLite busy timeout:"
-            << query.lastError().text();
-
-        return false;
-    }
-
-    return true;
-}
-
-bool DatabaseManager::runMigrations()
-{
-    DatabaseMigrator migrator{database_};
-    return migrator.applyPendingMigrations();
-}
-
-QString DatabaseManager::defaultDatabasePath()
-{
-    // AppLocalDataLocation is the portable default for a per-user SQLite file.
-    const QString dataDirectory =
-        QStandardPaths::writableLocation(
-            QStandardPaths::AppLocalDataLocation
-        );
-
-    if (dataDirectory.isEmpty())
-    {
-        return {};
-    }
-
-    // Ensure the directory exists before returning the final database file path.
-    QDir directory;
-
-    if (!directory.mkpath(dataDirectory))
-    {
-        return {};
-    }
-
-    return QDir{dataDirectory}.filePath(
-        "gamelog.sqlite"
-    );
-}
-
-QString DatabaseManager::resolveDatabasePath(
-    const QString& commandLinePath
-)
-{
-    // Command-line overrides win when they are present.
-    if (!commandLinePath.isEmpty())
-    {
-        return QFileInfo{commandLinePath}
-            .absoluteFilePath();
-    }
-
-    // Allow local development and test runs to redirect storage.
-    const QString environmentPath =
-        qEnvironmentVariable(
-            "GAMELOG_DATABASE_PATH"
-        );
-
-    if (!environmentPath.isEmpty())
-    {
-        return QFileInfo{environmentPath}
-            .absoluteFilePath();
-    }
-
-    // Fall back to the default per-user location.
-    return defaultDatabasePath();
-}
 
 } // namespace gamelog::core::database

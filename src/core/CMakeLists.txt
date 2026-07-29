@@ -1,29 +1,29 @@
 add_library(gamelog-core STATIC
-    database/DatabaseManager.cpp
-    database/DatabaseMigrator.cpp
-    database/GameRepository.cpp
-    database/SessionRepository.cpp
+        database/DatabaseManager.cpp
+        database/DatabaseMigrator.cpp
+        database/GameRepository.cpp
+        database/SessionRepository.cpp
 
-    sessions/SessionManager.cpp
-    logging/LoggingCategories.cpp
-    domain/Session.cpp
-    process/ProcfsProcessSource.cpp
+        sessions/SessionManager.cpp
+        logging/LoggingCategories.cpp
+        domain/Session.cpp
+        process/ProcfsProcessSource.cpp
 
-    ${PROJECT_SOURCE_DIR}/resources/migrations/migrations.qrc
+        ${PROJECT_SOURCE_DIR}/resources/migrations/migrations.qrc
 )
 
 target_include_directories(gamelog-core
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(gamelog-core
-    PUBLIC
+        PUBLIC
         Qt6::Core
         Qt6::Sql
         Qt6::Network
 
-    PRIVATE
+        PRIVATE
         PkgConfig::PROC2
         gamelog-warnings
 )

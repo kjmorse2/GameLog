@@ -4,54 +4,51 @@
 #include <string>
 #include <unordered_set>
 
-#include <QString>
-
 #include "database/DatabaseManager.h"
 #include "process/ProcessSource.h"
 
-namespace gamelog::agent
-{
-
-/**
- * @brief Owns the background agent runtime and its cached detection state.
- */
-class AgentApplication
-{
-public:
-    /**
-     * @brief Creates the agent around one resolved database path.
-     */
-    explicit AgentApplication(QString databasePath);
+namespace gamelog::agent {
 
     /**
-     * @brief Starts process tracking and refreshes the tracked-game cache.
+     * @brief Owns the background agent runtime and its cached detection state.
      */
-    void start();
+    class AgentApplication
+    {
+    public:
+        /**
+         * @brief Creates the agent around one resolved database path.
+         */
+        explicit AgentApplication(QString databasePath);
 
-    /**
-     * @brief Stops process tracking and releases the process source.
-     */
-    void stop();
+        /**
+         * @brief Starts process tracking and refreshes the tracked-game cache.
+         */
+        void start();
 
-    /**
-     * @brief Scans the current process table for tracked executables.
-     */
-    void checkForGames();
+        /**
+         * @brief Stops process tracking and releases the process source.
+         */
+        void stop();
 
-    /**
-     * @brief Rebuilds the tracked executable set from the current database.
-     */
-    [[nodiscard]] bool syncGamesWithDatabase();
+        /**
+         * @brief Scans the current process table for tracked executables.
+         */
+        void checkForGames();
 
-private:
-    bool m_running{false};
-    bool m_databaseReady{false};
+        /**
+         * @brief Rebuilds the tracked executable set from the current database.
+         */
+        [[nodiscard]] bool syncGamesWithDatabase();
 
-    std::unique_ptr<core::process::ProcessSource> m_processSource;
+    private:
+        bool m_running{false};
+        bool m_databaseReady{false};
 
-    std::unordered_set<std::string> m_trackedExecutables;
+        std::unique_ptr<core::process::ProcessSource> m_processSource;
 
-    core::database::DatabaseManager m_databaseManager;
-};
+        std::unordered_set<std::string> m_trackedExecutables;
+
+        core::database::DatabaseManager m_databaseManager;
+    };
 
 } // namespace gamelog::agent
