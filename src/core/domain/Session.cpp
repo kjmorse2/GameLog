@@ -9,14 +9,11 @@ namespace gamelog::core::domain {
         {
             return SessionSource::Automatic;
         }
-        else if (sourceString == "manual" || sourceString == "Manual")
+        if (sourceString == "manual" || sourceString == "Manual")
         {
             return SessionSource::Manual;
         }
-        else
-        {
-            throw std::invalid_argument("Invalid session source string: " + sourceString.toStdString());
-        }
+        throw std::invalid_argument("Invalid session source string: " + sourceString.toStdString());
     }
 
     SessionStatus sessionStatusFromString(const QString &statusString)
@@ -25,17 +22,14 @@ namespace gamelog::core::domain {
         {
             return SessionStatus::Active;
         }
-        else if (statusString == "completed" || statusString == "Completed")
+        if (statusString == "completed" || statusString == "Completed")
         {
             return SessionStatus::Completed;
         }
-        else if (statusString == "interrupted" || statusString == "Interrupted")
+        if (statusString == "interrupted" || statusString == "Interrupted")
         {
             return SessionStatus::Interrupted;
         }
-        else
-        {
-            throw std::invalid_argument("Invalid session status string: " + statusString.toStdString());
-        }
+        throw std::invalid_argument("Invalid session status string: " + statusString.toStdString());
     }
 } // namespace gamelog::core::domain

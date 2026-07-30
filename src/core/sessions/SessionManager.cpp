@@ -9,42 +9,42 @@
 
 #include <QDateTime>
 
+using gamelog::core::database::GameRepository;
+using gamelog::core::database::SessionRepository;
+using std::optional;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+namespace d = gamelog::core::domain;
+
 namespace gamelog::core::sessions {
 
-    SessionManager::SessionManager(
-            database::GameRepository &gameRepository,
-            database::SessionRepository &sessionRepository) :
+    SessionManager::SessionManager(GameRepository &gameRepository, SessionRepository &sessionRepository) :
         m_gameRepository{gameRepository},
         m_sessionRepository{sessionRepository}
     {}
 
-    std::optional<domain::Session>
-    SessionManager::startAutomaticSession(int gameId)
+    optional<d::Session> SessionManager::startAutomaticSession(int gameId)
     {
-        return startSession(gameId, domain::SessionSource::Automatic);
+        return startSession(gameId, d::SessionSource::Automatic);
     }
 
-    std::optional<domain::Session>
-    SessionManager::startManualSession(int gameId)
+    optional<d::Session> SessionManager::startManualSession(int gameId)
     {
-        return startSession(gameId, domain::SessionSource::Manual);
+        return startSession(gameId, d::SessionSource::Manual);
     }
 
-    std::optional<domain::Session>
-    SessionManager::startSession(int gameId, domain::SessionSource source)
+    optional<d::Session> SessionManager::startSession(int gameId, d::SessionSource source)
     {
         if (m_activeSession)
         {
-            qCWarning(gamelogCoreLog)
-                    << "Attempted to start a session while another in-memory session is active.";
+            qCWarning(gamelogCoreLog) << "Attempted to start a session while another in-memory session is active.";
             return std::nullopt;
         }
 
         // The database constraint remains the final safety net, but checking first
         // produces a useful error and avoids relying on a UNIQUE failure for control
         // flow. It also detects an active row left by a previous agent process.
-        if (const auto persistedSession = m_sessionRepository.findActiveSession();
-            persistedSession)
+        if (const auto persistedSession = m_sessionRepository.findActiveSession(); persistedSession)
         {
             qCWarning(gamelogCoreLog)
                     << "Cannot start a session because active session"
@@ -52,32 +52,29 @@ namespace gamelog::core::sessions {
             return std::nullopt;
         }
 
-        const std::optional<domain::Game> game =
-                m_gameRepository.findById(gameId);
+        const optional<d::Game> game = m_gameRepository.findById(gameId);
 
         if (!game)
         {
-            qCWarning(gamelogCoreLog)
-                    << "Session requested for unknown game ID:" << gameId;
+            qCWarning(gamelogCoreLog) << "Session requested for unknown game ID:" << gameId;
             return std::nullopt;
         }
 
         // Build a local candidate first. It is not considered active until the
         // repository insert succeeds and assigns its database ID.
-        domain::Session candidate{
+        d::Session candidate{
                 .id = 0,
                 .gameId = game->id,
                 .startTimestamp = QDateTime::currentDateTimeUtc(),
                 .endTimestamp = std::nullopt,
-                .trackedDuration = std::chrono::seconds::zero(),
+                .trackedDuration = seconds::zero(),
                 .source = source,
-                .status = domain::SessionStatus::Active,
+                .status = d::SessionStatus::Active,
         };
 
         if (!m_sessionRepository.insert(candidate))
         {
-            qCWarning(gamelogCoreLog)
-                    << "Failed to persist a new session for game ID:" << gameId;
+            qCWarning(gamelogCoreLog) << "Failed to persist a new session for game ID:" << gameId;
             return std::nullopt;
         }
 
@@ -87,35 +84,28 @@ namespace gamelog::core::sessions {
         return candidate;
     }
 
-    std::optional<domain::Session> SessionManager::endActiveSession()
+    optional<d::Session> SessionManager::endActiveSession()
     {
         if (!m_activeSession)
         {
-            qCWarning(gamelogCoreLog)
-                    << "Attempted to end a session when no in-memory session is active.";
+            qCWarning(gamelogCoreLog) << "Attempted to end a session when no in-memory session is active.";
             return std::nullopt;
         }
 
         // Work on a candidate copy. The current active value is left untouched
         // until the database update succeeds.
-        domain::Session completed = *m_activeSession;
+        d::Session completed = *m_activeSession;
         const QDateTime endTimestamp = QDateTime::currentDateTimeUtc();
-        const qint64 elapsedMilliseconds =
-                completed.startTimestamp.msecsTo(endTimestamp);
-        const qint64 nonNegativeMilliseconds =
-                std::max<qint64>(elapsedMilliseconds, 0);
+        const qint64 elapsedMilliseconds = completed.startTimestamp.msecsTo(endTimestamp);
+        const qint64 nonNegativeMilliseconds = std::max<qint64>(elapsedMilliseconds, 0);
 
         completed.endTimestamp = endTimestamp;
-        completed.trackedDuration = std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::milliseconds{
-                        static_cast<std::chrono::milliseconds::rep>(
-                                nonNegativeMilliseconds)});
-        completed.status = domain::SessionStatus::Completed;
+        completed.trackedDuration = std::chrono::duration_cast<seconds>(milliseconds{static_cast<milliseconds::rep>(nonNegativeMilliseconds)});
+        completed.status = d::SessionStatus::Completed;
 
         if (!m_sessionRepository.update(completed))
         {
-            qCWarning(gamelogCoreLog)
-                    << "Failed to persist completion of session:" << completed.id;
+            qCWarning(gamelogCoreLog) << "Failed to persist completion of session:" << completed.id;
             return std::nullopt;
         }
 
@@ -123,7 +113,7 @@ namespace gamelog::core::sessions {
         return completed;
     }
 
-    std::optional<domain::Session> SessionManager::activeSession() const
+    optional<d::Session> SessionManager::activeSession() const
     {
         if (m_activeSession)
         {
@@ -137,5 +127,4 @@ namespace gamelog::core::sessions {
     {
         return m_activeSession.has_value();
     }
-
 } // namespace gamelog::core::sessions

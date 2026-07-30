@@ -12,8 +12,11 @@
 #include "database/SessionRepository.h"
 #include "domain/Game.h"
 #include "process/ProcessInfo.h"
-#include "process/ProcessSource.h"
 #include "sessions/SessionManager.h"
+
+namespace gamelog::core::process {
+    class ProcessSource;
+}
 
 namespace gamelog::agent {
 
@@ -29,6 +32,8 @@ namespace gamelog::agent {
          * @brief Creates the agent around one resolved database path.
          */
         explicit AgentApplication(QString databasePath);
+
+        ~AgentApplication();
 
         /**
          * @brief Starts process tracking and refreshes the tracked-game cache.
@@ -51,23 +56,65 @@ namespace gamelog::agent {
         // Declare the database owner before every object that holds a copy of its
         // QSqlDatabase handle. Members are destroyed in reverse declaration order,
         // so SessionManager and the repositories disappear before DatabaseManager.
+        /**
+         * @brief handles database connection
+         */
         core::database::DatabaseManager m_databaseManager;
+
+        /**
+         * @breif Access the GameTable inside the database
+         */
         std::optional<core::database::GameRepository> m_gameRepository;
+
+        /**
+         * @breif Access the SessionTable inside the database
+         */
         std::optional<core::database::SessionRepository> m_sessionRepository;
+
+        /**
+         * @breif Manage and create new active sessions when required
+         */
         std::optional<core::sessions::SessionManager> m_sessionManager;
 
+
+        /**
+         * @brief handle gathering of processes using libProc.
+         */
         std::unique_ptr<core::process::ProcessSource> m_processSource;
+
+        /**
+         * @brief Stores the set of tracked executable paths, for checking against active processes.
+         */
         QSet<QString> m_trackedExecutablePaths;
 
-        // An optional expresses the state directly: no value means no game is
-        // currently being tracked. This replaces a separate m_recording flag plus
-        // a default-constructed Game that could disagree with it.
+        /**
+         * @brief Holds the active game being recorded when there is a session being recorded.
+         */
         std::optional<core::domain::Game> m_activeGame;
+
+        /**
+         * @brief Holds the executable path of a pending game that is about to start a session.
+         */
         std::optional<QString> m_pendingExecutablePath;
 
+        /**
+         * @brief Indicates whether the agent is currently running.
+         */
         bool m_running{false};
+
+        /**
+         * @brief Indicates whether the database is ready for operations.
+         */
         bool m_databaseReady{false};
+
+        /**
+         * @brief Tracks the duration for which a game has been open.
+         */
         std::chrono::seconds m_gameOpenDuration{0};
+
+        /**
+         * @brief Tracks the duration for which a game has been closed.
+         */
         std::chrono::seconds m_gameClosedDuration{0};
 
         // These should eventually come from QSettings. They remain constants here
@@ -83,8 +130,7 @@ namespace gamelog::agent {
         /**
          * @brief Resolves a detected process to a game and requests a persisted session.
          */
-        [[nodiscard]] bool
-        startNewSession(const core::process::ProcessInfo &detectedProcess);
+        [[nodiscard]] bool startNewSession(const core::process::ProcessInfo &detectedProcess);
 
         /**
          * @brief Requests that SessionManager persist and complete the active session.

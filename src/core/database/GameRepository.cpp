@@ -11,6 +11,7 @@
 namespace gamelog::core::database {
     namespace {
 
+
         // Map one SELECT row into the domain type in one place so every query stays
         // consistent.
         domain::Game gameFromQuery(const QSqlQuery &query)
@@ -67,7 +68,7 @@ namespace gamelog::core::database {
 
     } // namespace
 
-    GameRepository::GameRepository(QSqlDatabase database) : database_{std::move(database)} {}
+    GameRepository::GameRepository(const QSqlDatabase &database) : database_{database} {}
 
     std::vector<domain::Game> GameRepository::findAll() const
     {
@@ -284,8 +285,7 @@ namespace gamelog::core::database {
         // Deleting by primary key keeps the repository behavior predictable.
         QSqlQuery query{database_};
         query.prepare("DELETE FROM games WHERE id = :id");
-        query.bindValue(":id",
-                        QVariant::fromValue<qlonglong>(static_cast<qlonglong>(id)));
+        query.bindValue(":id", QVariant::fromValue<qlonglong>(static_cast<qlonglong>(id)));
 
         if (!query.exec())
         {

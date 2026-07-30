@@ -1,6 +1,7 @@
 #include "AgentApplication.h"
 
 #include "logging/LoggingCategories.h"
+#include "process/ProcessSource.h"
 #include "process/ProcfsProcessSource.h"
 
 #include <algorithm>
@@ -9,10 +10,16 @@
 
 #include <QSqlDatabase>
 
+using gamelog::core::process::ProcessInfo;
+using gamelog::core::process::ProcessSource;
+namespace d = gamelog::core::domain;
+using std::chrono::seconds;
+
 namespace gamelog::agent {
 
     AgentApplication::AgentApplication(QString databasePath) :
-        m_databaseManager{std::move(databasePath), QStringLiteral("GameLogAgentConnection")}
+        m_databaseManager{std::move(databasePath),
+                          QStringLiteral("GameLogAgentConnection")}
     {
         m_databaseReady = m_databaseManager.initialize();
 
@@ -24,13 +31,17 @@ namespace gamelog::agent {
 
         const QSqlDatabase database = m_databaseManager.database();
 
+        // Construct the database interfaces using emplace, as required by std::optinal
         m_gameRepository.emplace(database);
         m_sessionRepository.emplace(database);
         m_sessionManager.emplace(*m_gameRepository, *m_sessionRepository);
     }
 
+    AgentApplication::~AgentApplication() = default;
+
     bool AgentApplication::start()
     {
+        // Check that all flags are green to start listenting and recording.
         if (m_running)
         {
             qCWarning(gamelogAgentLog) << "Attempted to start an already-running agent.";
@@ -43,8 +54,10 @@ namespace gamelog::agent {
             return false;
         }
 
+        // Construct process source when ready
         m_processSource = std::make_unique<core::process::ProcfsProcessSource>();
 
+        // Sync games into memory
         if (!syncGamesWithDatabase())
         {
             qCWarning(gamelogAgentLog) << "Failed to sync games with the database.";
@@ -70,12 +83,12 @@ namespace gamelog::agent {
         m_running = false;
         m_processSource.reset();
         resetPendingStart();
-        m_gameClosedDuration = std::chrono::seconds::zero();
+        m_gameClosedDuration = seconds::zero();
 
         qCInfo(gamelogAgentLog) << "GameLog agent stopped";
     }
 
-    void AgentApplication::updateAgent(std::chrono::seconds elapsed)
+    void AgentApplication::updateAgent(seconds elapsed)
     {
         if (!m_running)
         {
@@ -89,19 +102,19 @@ namespace gamelog::agent {
             return;
         }
 
-        if (elapsed <= std::chrono::seconds::zero())
+        if (elapsed <= seconds::zero())
         {
             qCWarning(gamelogAgentLog) << "Agent update received a non-positive elapsed duration.";
             return;
         }
 
-        const std::vector<core::process::ProcessInfo> processes = m_processSource->listProcesses();
+        const std::vector<ProcessInfo> processes = m_processSource->listProcesses();
 
         if (!m_activeGame)
         {
             const auto detectedProcess = std::ranges::find_if(
                     processes,
-                    [this](const core::process::ProcessInfo &process) {
+                    [this](const ProcessInfo &process) {
                         return m_trackedExecutablePaths.contains(process.executablePath);
                     });
 
@@ -115,7 +128,7 @@ namespace gamelog::agent {
             if (!m_pendingExecutablePath || *m_pendingExecutablePath != detectedProcess->executablePath)
             {
                 m_pendingExecutablePath = detectedProcess->executablePath;
-                m_gameOpenDuration = std::chrono::seconds::zero();
+                m_gameOpenDuration = seconds::zero();
             }
 
             m_gameOpenDuration += elapsed;
@@ -134,13 +147,13 @@ namespace gamelog::agent {
 
         const bool activeGameFound = std::ranges::any_of(
                 processes,
-                [this](const core::process::ProcessInfo &process) {
+                [this](const ProcessInfo &process) {
                     return process.executablePath == m_activeGame->executablePath;
                 });
 
         if (activeGameFound)
         {
-            m_gameClosedDuration = std::chrono::seconds::zero();
+            m_gameClosedDuration = seconds::zero();
             return;
         }
 
@@ -170,7 +183,7 @@ namespace gamelog::agent {
 
         m_trackedExecutablePaths.clear();
 
-        for (const core::domain::Game &game: m_gameRepository->findAll())
+        for (const d::Game &game: m_gameRepository->findAll())
         {
             if (game.trackingEnabled && !game.executablePath.isEmpty())
             {
@@ -183,7 +196,7 @@ namespace gamelog::agent {
     }
 
     bool AgentApplication::startNewSession(
-            const core::process::ProcessInfo &detectedProcess)
+            const ProcessInfo &detectedProcess)
     {
         if (!m_gameRepository || !m_sessionManager)
         {
@@ -191,7 +204,7 @@ namespace gamelog::agent {
             return false;
         }
 
-        const std::optional<core::domain::Game> game = m_gameRepository->findByPath(detectedProcess.executablePath);
+        const std::optional<d::Game> game = m_gameRepository->findByPath(detectedProcess.executablePath);
 
         if (!game)
         {
@@ -199,7 +212,7 @@ namespace gamelog::agent {
             return false;
         }
 
-        const std::optional<core::domain::Session> session = m_sessionManager->startAutomaticSession(game->id);
+        const std::optional<d::Session> session = m_sessionManager->startAutomaticSession(game->id);
 
         if (!session)
         {
@@ -208,7 +221,7 @@ namespace gamelog::agent {
         }
 
         m_activeGame = *game;
-        m_gameClosedDuration = std::chrono::seconds::zero();
+        m_gameClosedDuration = seconds::zero();
 
         qCInfo(gamelogAgentLog) << "Started session" << session->id << "for game:" << game->title;
         return true;
@@ -229,7 +242,7 @@ namespace gamelog::agent {
         }
 
         const QString gameTitle = m_activeGame->title;
-        const std::optional<core::domain::Session> endedSession = m_sessionManager->endActiveSession();
+        const std::optional<d::Session> endedSession = m_sessionManager->endActiveSession();
 
         if (!endedSession)
         {
@@ -238,7 +251,7 @@ namespace gamelog::agent {
         }
 
         m_activeGame.reset();
-        m_gameClosedDuration = std::chrono::seconds::zero();
+        m_gameClosedDuration = seconds::zero();
 
         qCInfo(gamelogAgentLog) << "Stopped session" << endedSession->id << "for game:" << gameTitle;
         return true;
@@ -247,7 +260,7 @@ namespace gamelog::agent {
     void AgentApplication::resetPendingStart() noexcept
     {
         m_pendingExecutablePath.reset();
-        m_gameOpenDuration = std::chrono::seconds::zero();
+        m_gameOpenDuration = seconds::zero();
     }
 
 } // namespace gamelog::agent

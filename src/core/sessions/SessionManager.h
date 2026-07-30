@@ -20,20 +20,26 @@ namespace gamelog::core::sessions {
     class SessionManager
     {
     public:
-        SessionManager(database::GameRepository &gameRepository,
-                       database::SessionRepository &sessionRepository);
+        /**
+         * @brief Constructs a new session manager.
+         * @param gameRepository The interface for accessing the games table of the database.
+         * @param sessionRepository The interface for accessing the session table of the database.
+         */
+        SessionManager(database::GameRepository &gameRepository, database::SessionRepository &sessionRepository);
 
         /**
          * @brief Validates, inserts, and activates an automatic session.
+         * @param gameId the id of the game to start the session for.
+         * @return The new session if one was created
          */
-        [[nodiscard]] std::optional<domain::Session>
-        startAutomaticSession(int gameId);
+        [[nodiscard]] std::optional<domain::Session> startAutomaticSession(int gameId);
 
         /**
          * @brief Validates, inserts, and activates a manual session.
+         * @param gameId the id of the game to start the session for.
+         * @return The new session if one was created
          */
-        [[nodiscard]] std::optional<domain::Session>
-        startManualSession(int gameId);
+        [[nodiscard]] std::optional<domain::Session> startManualSession(int gameId);
 
         /**
          * @brief Completes the active session and persists the existing row.
@@ -45,20 +51,38 @@ namespace gamelog::core::sessions {
 
         /**
          * @brief Returns the in-memory active session, or a persisted active row.
+         * @return The active session if there is one.
          */
         [[nodiscard]] std::optional<domain::Session> activeSession() const;
 
         /**
          * @brief Reports whether this manager currently owns active in-memory state.
+         * @return a boolean describing if there is an active session.
          */
         [[nodiscard]] bool hasActiveSession() const noexcept;
 
     private:
-        [[nodiscard]] std::optional<domain::Session>
-        startSession(int gameId, domain::SessionSource source);
+        /**
+         * @brief Starts a new session.
+         * @param gameId the database id of the game to start the session for.
+         * @param source enum describing the source of the session.
+         * @return The new session if one was created.
+         */
+        [[nodiscard]] std::optional<domain::Session> startSession(int gameId, domain::SessionSource source);
 
+        /**
+         * @brief The game table interface.
+         */
         database::GameRepository &m_gameRepository;
+
+        /**
+         * @brief The session table interface.
+         */
         database::SessionRepository &m_sessionRepository;
+
+        /**
+         * @brief The active session if there is one.
+         */
         std::optional<domain::Session> m_activeSession;
     };
 

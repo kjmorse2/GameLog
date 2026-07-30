@@ -9,7 +9,6 @@
 #include <QResource>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QStringList>
 
 // The migration files are compiled into gamelog-core through migrations.qrc.
 // Since gamelog-core is a static library, explicitly referencing the generated
@@ -26,7 +25,7 @@ static void initializeMigrationResources()
 
 namespace gamelog::core::database {
 
-    DatabaseMigrator::DatabaseMigrator(QSqlDatabase database) : database_{std::move(database)}
+    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase &database) : database_{database}
     {
         initializeMigrationResources();
     }
