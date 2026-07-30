@@ -1,3 +1,81 @@
+# ---------------------------------------------------------------------------
+# Shared test support
+# ---------------------------------------------------------------------------
+
+add_library(gamelog-test-support STATIC
+        fixtures/TestDatabaseFixture.cpp
+)
+
+target_include_directories(gamelog-test-support
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(gamelog-test-support
+        PUBLIC
+        gamelog-core
+        Qt6::Core
+        Qt6::Sql
+
+        PRIVATE
+        gamelog-warnings
+)
+
+
+# ---------------------------------------------------------------------------
+# Grouping targets
+#
+# These do not create executables. They collect dependencies so the custom
+# test-running targets can ensure every required executable is built first.
+# ---------------------------------------------------------------------------
+
+add_custom_target(gamelog-all-tests-build)
+add_custom_target(gamelog-database-tests-build)
+
+
+# ---------------------------------------------------------------------------
+# Helper for database QTest executables
+# ---------------------------------------------------------------------------
+
+function(add_gamelog_database_test target_name source_file)
+    add_executable(${target_name}
+            ${source_file}
+    )
+
+    target_link_libraries(${target_name}
+            PRIVATE
+            gamelog-test-support
+            Qt6::Test
+            gamelog-warnings
+    )
+
+    add_test(
+            NAME ${target_name}
+            COMMAND ${target_name}
+    )
+
+    set_tests_properties(
+            ${target_name}
+            PROPERTIES
+            LABELS "database;integration"
+    )
+
+    add_dependencies(
+            gamelog-all-tests-build
+            ${target_name}
+    )
+
+    add_dependencies(
+            gamelog-database-tests-build
+            ${target_name}
+    )
+endfunction()
+
+
+# ---------------------------------------------------------------------------
+# Smoke test
+# ---------------------------------------------------------------------------
+
 add_executable(gamelog-core-smoke
         unit/CoreSmokeTest.cpp
 )
@@ -10,67 +88,83 @@ target_link_libraries(gamelog-core-smoke
         gamelog-warnings
 )
 
-add_test(NAME gamelog-core-smoke COMMAND gamelog-core-smoke)
-
-add_executable(gamelog-database-manager-test
-        fixtures/TestDatabaseFixture.cpp
-        unit/core/database/DatabaseManagerTest.cpp
+add_test(
+        NAME gamelog-core-smoke
+        COMMAND gamelog-core-smoke
 )
 
-target_link_libraries(gamelog-database-manager-test
-        PRIVATE
-        gamelog-core
-        Qt6::Core
-        Qt6::Sql
-        Qt6::Test
-        gamelog-warnings
+set_tests_properties(
+        gamelog-core-smoke
+        PROPERTIES
+        LABELS "unit;smoke"
 )
 
-target_include_directories(gamelog-database-manager-test
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
+add_dependencies(
+        gamelog-all-tests-build
+        gamelog-core-smoke
 )
 
-add_test(NAME gamelog-database-manager-test COMMAND gamelog-database-manager-test)
 
-add_executable(gamelog-game-repository-test
-        fixtures/TestDatabaseFixture.cpp
-        unit/core/database/GameRepositoryTest.cpp
+# ---------------------------------------------------------------------------
+# Database test executables
+# ---------------------------------------------------------------------------
+
+add_gamelog_database_test(
+        gamelog-database-manager-test
+        integration/database/DatabaseManagerTest.cpp
 )
 
-target_link_libraries(gamelog-game-repository-test
-        PRIVATE
-        gamelog-core
-        Qt6::Core
-        Qt6::Sql
-        Qt6::Test
-        gamelog-warnings
+add_gamelog_database_test(
+        gamelog-game-repository-test
+        integration/database/GameRepositoryTest.cpp
 )
 
-target_include_directories(gamelog-game-repository-test
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
+add_gamelog_database_test(
+        gamelog-session-repository-test
+        integration/database/SessionRepositoryTest.cpp
 )
 
-add_test(NAME gamelog-game-repository-test COMMAND gamelog-game-repository-test)
 
-add_executable(gamelog-session-repository-test
-        fixtures/TestDatabaseFixture.cpp
-        unit/core/database/SessionRepositoryTest.cpp
+# ---------------------------------------------------------------------------
+# Convenient commands
+# ---------------------------------------------------------------------------
+
+add_custom_target(check
+        COMMAND
+        ${CMAKE_CTEST_COMMAND}
+        --output-on-failure
+
+        WORKING_DIRECTORY
+        ${CMAKE_BINARY_DIR}
+
+        COMMENT
+        "Running the complete GameLog test suite"
+
+        USES_TERMINAL
 )
 
-target_link_libraries(gamelog-session-repository-test
-        PRIVATE
-        gamelog-core
-        Qt6::Core
-        Qt6::Sql
-        Qt6::Test
-        gamelog-warnings
+add_dependencies(
+        check
+        gamelog-all-tests-build
 )
 
-target_include_directories(gamelog-session-repository-test
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
+
+add_custom_target(check-database
+        COMMAND
+        ${CMAKE_CTEST_COMMAND}
+        --output-on-failure
+        -L database
+
+        WORKING_DIRECTORY
+        ${CMAKE_BINARY_DIR}
+
+        COMMENT
+        "Running GameLog database tests"
+
+        USES_TERMINAL
 )
 
-add_test(NAME gamelog-session-repository-test COMMAND gamelog-session-repository-test)
+add_dependencies(
+        check-database
+        gamelog-database-tests-build
+)

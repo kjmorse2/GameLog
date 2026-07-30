@@ -39,6 +39,7 @@ private:
 
 void GameRepositoryTest::init()
 {
+    QTest::failOnWarning();
     databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(
             QString{"game-repository-%1"}.arg(QTest::currentTestFunction()));
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("game-repository");

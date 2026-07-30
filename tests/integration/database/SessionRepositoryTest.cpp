@@ -1,13 +1,11 @@
+#include <QSqlQuery>
+#include <QTimeZone>
 #include <QtTest/QtTest>
+#include <memory>
 
 #include "database/DatabaseManager.h"
 #include "database/SessionRepository.h"
 #include "fixtures/TestDatabaseFixture.h"
-
-#include <memory>
-
-#include <QSqlQuery>
-#include <QTimeZone>
 
 using gamelog::core::database::DatabaseManager;
 using gamelog::core::database::SessionRepository;
@@ -30,9 +28,9 @@ private slots:
     void insert_persistsSessionAndAssignsId();
     void insert_failsForUnknownGameId();
     void update_persistsModifiedFields();
-    void update_returnsTrueForMissingRow();
+    void update_returnsFalseForMissingRow();
     void remove_deletesExistingRow();
-    void remove_returnsTrueForMissingRow();
+    void remove_returnsFalseForMissingRow();
 
 private:
     int insertGame(const QString &title) const;
@@ -230,7 +228,7 @@ void SessionRepositoryTest::update_persistsModifiedFields()
     QCOMPARE(sessions[0].trackedDuration, std::chrono::seconds{2700});
 }
 
-void SessionRepositoryTest::update_returnsTrueForMissingRow()
+void SessionRepositoryTest::update_returnsFalseForMissingRow()
 {
     const int gameId = insertGame("Missing Session");
     QVERIFY(gameId > 0);
@@ -238,7 +236,7 @@ void SessionRepositoryTest::update_returnsTrueForMissingRow()
     Session session = makeSession(gameId, utcDateTime(2026, 4, 2, 9, 15, 0));
     session.id = 999999;
 
-    QVERIFY(repository_->update(session));
+    QVERIFY(!repository_->update(session));
 }
 
 void SessionRepositoryTest::remove_deletesExistingRow()
@@ -254,9 +252,9 @@ void SessionRepositoryTest::remove_deletesExistingRow()
     QVERIFY(sessions.empty());
 }
 
-void SessionRepositoryTest::remove_returnsTrueForMissingRow()
+void SessionRepositoryTest::remove_returnsFalseForMissingRow()
 {
-    QVERIFY(repository_->remove(999999));
+    QVERIFY(!repository_->remove(999999));
 }
 
 QTEST_GUILESS_MAIN(SessionRepositoryTest)
