@@ -3,9 +3,9 @@
 #include <QtTest/QtTest>
 #include <memory>
 
+#include "../../fixtures/TestDatabaseFixture.h"
 #include "database/DatabaseManager.h"
 #include "database/SessionRepository.h"
-#include "fixtures/TestDatabaseFixture.h"
 
 using gamelog::core::database::DatabaseManager;
 using gamelog::core::database::SessionRepository;

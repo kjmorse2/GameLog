@@ -1,10 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 
-#include <QSet>
+#include <QHash>
 #include <QString>
 
 #include "database/DatabaseManager.h"
@@ -12,6 +13,7 @@
 #include "database/SessionRepository.h"
 #include "domain/Game.h"
 #include "process/ProcessInfo.h"
+#include "process/SteamProcessInspector.h"
 #include "sessions/SessionManager.h"
 
 namespace gamelog::core::process {
@@ -82,20 +84,17 @@ namespace gamelog::agent {
          */
         std::unique_ptr<core::process::ProcessSource> m_processSource;
 
-        /**
-         * @brief Stores the set of tracked executable paths, for checking against active processes.
-         */
-        QSet<QString> m_trackedExecutablePaths;
+        core::process::SteamProcessInspector m_steamProcessInspector;
+
+        QHash<std::uint32_t, core::domain::Game> m_trackedSteamGames;
+        QHash<QString, core::domain::Game> m_trackedPathGames;
 
         /**
          * @brief Holds the active game being recorded when there is a session being recorded.
          */
         std::optional<core::domain::Game> m_activeGame;
 
-        /**
-         * @brief Holds the executable path of a pending game that is about to start a session.
-         */
-        std::optional<QString> m_pendingExecutablePath;
+        std::optional<int> m_pendingGameId;
 
         /**
          * @brief Indicates whether the agent is currently running.
@@ -128,9 +127,22 @@ namespace gamelog::agent {
         [[nodiscard]] bool syncGamesWithDatabase();
 
         /**
-         * @brief Resolves a detected process to a game and requests a persisted session.
+         * @brief Resolves a detected process to a tracked game.
          */
-        [[nodiscard]] bool startNewSession(const core::process::ProcessInfo &detectedProcess);
+        [[nodiscard]] std::optional<core::domain::Game> matchTrackedGame(
+                const core::process::ProcessInfo &process) const;
+
+        /**
+         * @brief Checks whether a running process still matches a recorded game.
+         */
+        [[nodiscard]] bool processMatchesGame(
+                const core::process::ProcessInfo &process,
+                const core::domain::Game &game) const;
+
+        /**
+         * @brief Starts a persisted session for a detected game.
+         */
+        [[nodiscard]] bool startNewSession(const core::domain::Game &game);
 
         /**
          * @brief Requests that SessionManager persist and complete the active session.

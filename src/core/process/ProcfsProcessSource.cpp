@@ -82,10 +82,10 @@ namespace gamelog::core::process {
             {
                 process.executablePath = QString::fromLocal8Bit(executable);
             }
+            // qInfo(gamelogCoreLog) << "Detected process:" << process.executableName << "PID:" << process.pid << "Path:" << process.executablePath;
             processes.push_back(std::move(process));
         }
         procps_pids_unref(&info);
         return processes;
     }
-
 } // namespace gamelog::core::process

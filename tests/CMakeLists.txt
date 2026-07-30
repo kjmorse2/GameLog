@@ -15,18 +15,13 @@ target_link_libraries(gamelog-test-support
         PUBLIC
         gamelog-core
         Qt6::Core
-        Qt6::Sql
 
         PRIVATE
         gamelog-warnings
 )
 
-
 # ---------------------------------------------------------------------------
 # Grouping targets
-#
-# These do not create executables. They collect dependencies so the custom
-# test-running targets can ensure every required executable is built first.
 # ---------------------------------------------------------------------------
 
 add_custom_target(gamelog-all-tests-build)
@@ -34,17 +29,20 @@ add_custom_target(gamelog-database-tests-build)
 
 
 # ---------------------------------------------------------------------------
-# Helper for database QTest executables
+# General QTest helper
 # ---------------------------------------------------------------------------
 
-function(add_gamelog_database_test target_name source_file)
-    add_executable(${target_name}
+function(add_gamelog_test target_name source_file labels)
+    add_executable(
+            ${target_name}
             ${source_file}
     )
 
-    target_link_libraries(${target_name}
+    target_link_libraries(
+            ${target_name}
             PRIVATE
-            gamelog-test-support
+            gamelog-core
+            Qt6::Core
             Qt6::Test
             gamelog-warnings
     )
@@ -57,12 +55,32 @@ function(add_gamelog_database_test target_name source_file)
     set_tests_properties(
             ${target_name}
             PROPERTIES
-            LABELS "database;integration"
+            LABELS "${labels}"
     )
 
     add_dependencies(
             gamelog-all-tests-build
             ${target_name}
+    )
+endfunction()
+
+
+# ---------------------------------------------------------------------------
+# Database QTest helper
+# ---------------------------------------------------------------------------
+
+function(add_gamelog_database_test target_name source_file)
+    add_gamelog_test(
+            ${target_name}
+            ${source_file}
+            "database;integration"
+    )
+
+    target_link_libraries(
+            ${target_name}
+            PRIVATE
+            gamelog-test-support
+            Qt6::Sql
     )
 
     add_dependencies(
@@ -73,40 +91,7 @@ endfunction()
 
 
 # ---------------------------------------------------------------------------
-# Smoke test
-# ---------------------------------------------------------------------------
-
-add_executable(gamelog-core-smoke
-        unit/CoreSmokeTest.cpp
-)
-
-target_link_libraries(gamelog-core-smoke
-        PRIVATE
-        gamelog-core
-        Qt6::Core
-        Qt6::Test
-        gamelog-warnings
-)
-
-add_test(
-        NAME gamelog-core-smoke
-        COMMAND gamelog-core-smoke
-)
-
-set_tests_properties(
-        gamelog-core-smoke
-        PROPERTIES
-        LABELS "unit;smoke"
-)
-
-add_dependencies(
-        gamelog-all-tests-build
-        gamelog-core-smoke
-)
-
-
-# ---------------------------------------------------------------------------
-# Database test executables
+# Database tests
 # ---------------------------------------------------------------------------
 
 add_gamelog_database_test(
@@ -126,45 +111,17 @@ add_gamelog_database_test(
 
 
 # ---------------------------------------------------------------------------
-# Convenient commands
+# General domain tests
 # ---------------------------------------------------------------------------
 
-add_custom_target(check
-        COMMAND
-        ${CMAKE_CTEST_COMMAND}
-        --output-on-failure
-
-        WORKING_DIRECTORY
-        ${CMAKE_BINARY_DIR}
-
-        COMMENT
-        "Running the complete GameLog test suite"
-
-        USES_TERMINAL
+add_gamelog_test(
+        gamelog-session-test
+        unit/core/domain/SessionTest.cpp
+        "unit;core;domain"
 )
 
-add_dependencies(
-        check
-        gamelog-all-tests-build
-)
-
-
-add_custom_target(check-database
-        COMMAND
-        ${CMAKE_CTEST_COMMAND}
-        --output-on-failure
-        -L database
-
-        WORKING_DIRECTORY
-        ${CMAKE_BINARY_DIR}
-
-        COMMENT
-        "Running GameLog database tests"
-
-        USES_TERMINAL
-)
-
-add_dependencies(
-        check-database
-        gamelog-database-tests-build
+add_gamelog_test(
+        gamelog-process-test
+        unit/core/process/ProcessTest.cpp
+        "unit;core;domain"
 )

@@ -8,6 +8,9 @@ add_library(gamelog-core STATIC
         logging/LoggingCategories.cpp
         domain/Session.cpp
         process/ProcfsProcessSource.cpp
+        process/ProcessHelpers.cpp
+        process/SteamProcessInspector.cpp
+        process/SteamProcessInspector.h
 
         ${PROJECT_SOURCE_DIR}/resources/migrations/migrations.qrc
 )

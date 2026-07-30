@@ -5,6 +5,7 @@
 #include "process/ProcfsProcessSource.h"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -18,8 +19,7 @@ using std::chrono::seconds;
 namespace gamelog::agent {
 
     AgentApplication::AgentApplication(QString databasePath) :
-        m_databaseManager{std::move(databasePath),
-                          QStringLiteral("GameLogAgentConnection")}
+        m_databaseManager{std::move(databasePath), QStringLiteral("GameLogAgentConnection")}
     {
         m_databaseReady = m_databaseManager.initialize();
 
@@ -108,26 +108,36 @@ namespace gamelog::agent {
             return;
         }
 
-        const std::vector<ProcessInfo> processes = m_processSource->listProcesses();
+        std::vector<ProcessInfo> processes = m_processSource->listProcesses();
+
+        if (!m_trackedSteamGames.isEmpty())
+        {
+            m_steamProcessInspector.annotate(processes);
+        }
 
         if (!m_activeGame)
         {
-            const auto detectedProcess = std::ranges::find_if(
-                    processes,
-                    [this](const ProcessInfo &process) {
-                        return m_trackedExecutablePaths.contains(process.executablePath);
-                    });
+            std::optional<d::Game> detectedGame;
 
-            if (detectedProcess == processes.end())
+            for (const ProcessInfo &process: processes)
+            {
+                detectedGame = matchTrackedGame(process);
+
+                if (detectedGame)
+                {
+                    break;
+                }
+            }
+
+            if (!detectedGame)
             {
                 resetPendingStart();
                 return;
             }
 
-            // A different tracked process must earn its own complete grace period.
-            if (!m_pendingExecutablePath || *m_pendingExecutablePath != detectedProcess->executablePath)
+            if (!m_pendingGameId || *m_pendingGameId != detectedGame->id)
             {
-                m_pendingExecutablePath = detectedProcess->executablePath;
+                m_pendingGameId = detectedGame->id;
                 m_gameOpenDuration = seconds::zero();
             }
 
@@ -138,18 +148,16 @@ namespace gamelog::agent {
                 return;
             }
 
-            // Whether the start succeeds or fails, begin a fresh grace interval
-            // before trying this process again. This avoids retry log spam.
-            static_cast<void>(startNewSession(*detectedProcess));
+            static_cast<void>(startNewSession(*detectedGame));
             resetPendingStart();
             return;
         }
 
-        const bool activeGameFound = std::ranges::any_of(
-                processes,
-                [this](const ProcessInfo &process) {
-                    return process.executablePath == m_activeGame->executablePath;
-                });
+        const bool activeGameFound = std::ranges::any_of(processes, [this](const ProcessInfo &process) {
+            return processMatchesGame(
+                    process,
+                    *m_activeGame);
+        });
 
         if (activeGameFound)
         {
@@ -181,49 +189,105 @@ namespace gamelog::agent {
             return false;
         }
 
-        m_trackedExecutablePaths.clear();
+        m_trackedSteamGames.clear();
+        m_trackedPathGames.clear();
 
         for (const d::Game &game: m_gameRepository->findAll())
         {
-            if (game.trackingEnabled && !game.executablePath.isEmpty())
+            if (!game.trackingEnabled)
             {
-                m_trackedExecutablePaths.insert(game.executablePath);
+                continue;
+            }
+
+            if (game.steamAppId &&
+                *game.steamAppId > 0)
+            {
+                m_trackedSteamGames.insert(
+                        static_cast<std::uint32_t>(
+                                *game.steamAppId),
+                        game);
+            }
+
+            if (!game.executablePath.isEmpty())
+            {
+                m_trackedPathGames.insert(
+                        game.executablePath,
+                        game);
             }
         }
 
-        qCInfo(gamelogAgentLog) << "Synced" << m_trackedExecutablePaths.size() << "tracked executable paths from the database.";
+        qCInfo(gamelogAgentLog)
+                << "Synced"
+                << m_trackedSteamGames.size()
+                << "Steam games and"
+                << m_trackedPathGames.size()
+                << "path-based games.";
         return true;
     }
 
-    bool AgentApplication::startNewSession(
-            const ProcessInfo &detectedProcess)
+    std::optional<d::Game> AgentApplication::matchTrackedGame(const ProcessInfo &process) const
     {
-        if (!m_gameRepository || !m_sessionManager)
+        if (process.steamAppId)
         {
-            qCWarning(gamelogAgentLog) << "Cannot start a session because database services are unavailable.";
+            const auto steamGame = m_trackedSteamGames.constFind(*process.steamAppId);
+
+            if (steamGame != m_trackedSteamGames.constEnd())
+            {
+                return steamGame.value();
+            }
+        }
+
+        if (!process.executablePath.isEmpty())
+        {
+            const auto pathGame = m_trackedPathGames.constFind(process.executablePath);
+
+            if (pathGame !=
+                m_trackedPathGames.constEnd())
+            {
+                return pathGame.value();
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    bool AgentApplication::processMatchesGame(const ProcessInfo &process, const d::Game &game) const
+    {
+        if (game.steamAppId && *game.steamAppId > 0 && process.steamAppId)
+        {
+            return *process.steamAppId == static_cast<std::uint32_t>(*game.steamAppId);
+        }
+
+        return !game.executablePath.isEmpty() && process.executablePath == game.executablePath;
+    }
+
+    bool AgentApplication::startNewSession(const d::Game &game)
+    {
+        if (!m_sessionManager)
+        {
+            qCWarning(gamelogAgentLog) << "Cannot start a session because SessionManager is unavailable.";
+
             return false;
         }
 
-        const std::optional<d::Game> game = m_gameRepository->findByPath(detectedProcess.executablePath);
-
-        if (!game)
-        {
-            qCWarning(gamelogAgentLog) << "Detected executable was not found in the database:" << detectedProcess.executablePath;
-            return false;
-        }
-
-        const std::optional<d::Session> session = m_sessionManager->startAutomaticSession(game->id);
+        const std::optional<d::Session> session = m_sessionManager->startAutomaticSession(game.id);
 
         if (!session)
         {
-            qCWarning(gamelogAgentLog) << "Failed to create and persist a session for:" << game->title;
+            qCWarning(gamelogAgentLog) << "Failed to start session for:" << game.title;
+
             return false;
         }
 
-        m_activeGame = *game;
+        m_activeGame = game;
         m_gameClosedDuration = seconds::zero();
 
-        qCInfo(gamelogAgentLog) << "Started session" << session->id << "for game:" << game->title;
+        qCInfo(gamelogAgentLog)
+                << "Started session"
+                << session->id
+                << "for game:"
+                << game.title;
+
         return true;
     }
 
@@ -259,7 +323,7 @@ namespace gamelog::agent {
 
     void AgentApplication::resetPendingStart() noexcept
     {
-        m_pendingExecutablePath.reset();
+        m_pendingGameId.reset();
         m_gameOpenDuration = seconds::zero();
     }
 
