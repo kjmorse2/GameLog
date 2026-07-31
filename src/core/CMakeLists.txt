@@ -24,7 +24,6 @@ target_link_libraries(gamelog-core
         PUBLIC
         Qt6::Core
         Qt6::Sql
-        Qt6::Network
 
         PRIVATE
         PkgConfig::PROC2

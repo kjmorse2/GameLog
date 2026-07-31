@@ -13,7 +13,7 @@ set(CMAKE_AUTORCC ON)
 
 include(CTest)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Test)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)
@@ -32,3 +32,28 @@ add_subdirectory(src)
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif ()
+
+option(
+        GAMELOG_ENABLE_INSTALL
+        "Generate GameLog installation rules"
+        OFF
+)
+
+if(GAMELOG_ENABLE_INSTALL)
+    install(TARGETS gamelog RUNTIME DESTINATION bin)
+
+    install(PROGRAMS
+            packaging/scripts/gamelog-gui-launcher
+            DESTINATION bin
+    )
+
+    install(FILES
+            packaging/systemd/gamelog-headless.service
+            DESTINATION lib/systemd/user
+    )
+
+    install(FILES
+            packaging/applications/gamelog.desktop
+            DESTINATION share/applications
+    )
+endif()
