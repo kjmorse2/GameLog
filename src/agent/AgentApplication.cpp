@@ -5,7 +5,6 @@
 #include "process/ProcfsProcessSource.h"
 
 #include <algorithm>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -70,6 +69,11 @@ namespace gamelog::agent {
         qCInfo(gamelogAgentLog) << "GameLog agent started";
         qCInfo(gamelogAgentLog) << "Database is:" << (m_databaseManager.isOpen() ? "open" : "closed");
         qCInfo(gamelogAgentLog) << "Database path:" << m_databaseManager.database().databaseName();
+
+        if (!m_agentIpcServer.start("GameLogAgentServer"))
+        {
+           qCWarning(gamelogAgentLog) << "Failed to start the agent.";
+        }
         return true;
     }
 
@@ -84,6 +88,7 @@ namespace gamelog::agent {
         m_processSource.reset();
         resetPendingStart();
         m_gameClosedDuration = seconds::zero();
+        m_agentIpcServer.stop();
 
         qCInfo(gamelogAgentLog) << "GameLog agent stopped";
     }

@@ -125,3 +125,18 @@ add_gamelog_test(
         unit/core/process/ProcessTest.cpp
         "unit;core;domain"
 )
+
+add_executable(gamelog-agent-ipc-test
+        integration/agent/AgentIpcServerTest.cpp
+)
+
+target_link_libraries(gamelog-agent-ipc-test
+        PRIVATE
+        gamelog-agent-lib
+        Qt6::Test
+)
+
+add_test(
+        NAME gamelog-agent-ipc-test
+        COMMAND gamelog-agent-ipc-test
+)

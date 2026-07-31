@@ -15,6 +15,7 @@
 #include "process/ProcessInfo.h"
 #include "process/SteamProcessInspector.h"
 #include "sessions/SessionManager.h"
+#include "AgentIpcServer.h"
 
 namespace gamelog::core::process {
     class ProcessSource;
@@ -55,6 +56,8 @@ namespace gamelog::agent {
         void updateAgent(std::chrono::seconds elapsed);
 
     private:
+
+        AgentIpcServer m_agentIpcServer;
         // Declare the database owner before every object that holds a copy of its
         // QSqlDatabase handle. Members are destroyed in reverse declaration order,
         // so SessionManager and the repositories disappear before DatabaseManager.

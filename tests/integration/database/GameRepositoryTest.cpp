@@ -1,6 +1,6 @@
 #include <QtTest/QtTest>
 
-#include "../../fixtures/TestDatabaseFixture.h"
+#include "fixtures/TestDatabaseFixture.h"
 #include "database/DatabaseManager.h"
 #include "database/GameRepository.h"
 
