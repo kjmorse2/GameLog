@@ -17,11 +17,11 @@ using std::chrono::seconds;
 namespace gamelog::application {
 
 GameLogRuntime::GameLogRuntime(QString databasePath)
-    : databaseManager_{std::move(databasePath),
-    QStringLiteral("GameLogRuntimeConnection")}
+    : databaseManager_{
+          std::move(databasePath),
+          QStringLiteral("GameLogRuntimeConnection")}
 {
     databaseReady_ = databaseManager_.initialize();
-
     if (!databaseReady_)
     {
         qCWarning(gamelogAgentLog) << "Failed to initialize the database manager.";
@@ -29,10 +29,10 @@ GameLogRuntime::GameLogRuntime(QString databasePath)
     }
 
     const QSqlDatabase database = databaseManager_.database();
-
     gameRepository_.emplace(database);
     sessionRepository_.emplace(database);
-    sessionManager_.emplace(*gameRepository_, *sessionRepository_);
+    gameService_.emplace(*gameRepository_);
+    sessionService_.emplace(*sessionRepository_, *gameService_);
 }
 
 GameLogRuntime::~GameLogRuntime() = default;
@@ -41,13 +41,15 @@ bool GameLogRuntime::start()
 {
     if (running_)
     {
-        qCWarning(gamelogAgentLog) << "Attempted to start an already-running GameLog runtime.";
+        qCWarning(gamelogAgentLog)
+            << "Attempted to start an already-running GameLog runtime.";
         return false;
     }
 
-    if (!databaseReady_ || !gameRepository_ || !sessionRepository_ || !sessionManager_)
+    if (!databaseReady_ || !gameService_ || !sessionService_)
     {
-        qCWarning(gamelogAgentLog) << "Cannot start because database services are unavailable.";
+        qCWarning(gamelogAgentLog)
+            << "Cannot start because application services are unavailable.";
         return false;
     }
 
@@ -67,11 +69,11 @@ bool GameLogRuntime::start()
     }
 
     running_ = true;
-
     qCInfo(gamelogAgentLog) << "GameLog runtime started";
-    qCInfo(gamelogAgentLog) << "Database is:" << (databaseManager_.isOpen() ? "open" : "closed");
-    qCInfo(gamelogAgentLog) << "Database path:" << databaseManager_.database().databaseName();
-
+    qCInfo(gamelogAgentLog)
+        << "Database is:" << (databaseManager_.isOpen() ? "open" : "closed");
+    qCInfo(gamelogAgentLog)
+        << "Database path:" << databaseManager_.database().databaseName();
     return true;
 }
 
@@ -88,8 +90,7 @@ void GameLogRuntime::stop()
     gameClosedDuration_ = seconds::zero();
     activeGame_.reset();
 
-    // Do not complete an active session here. During a headless <-> GUI
-    // handoff the next process restores the same active row from the database.
+    // Preserve an active row for headless/GUI launcher handoff.
     qCInfo(gamelogAgentLog) << "GameLog runtime stopped";
 }
 
@@ -97,24 +98,23 @@ void GameLogRuntime::update(seconds elapsed)
 {
     if (!running_)
     {
-        qCWarning(gamelogAgentLog) << "Attempted to update a runtime that is not running.";
+        qCWarning(gamelogAgentLog)
+            << "Attempted to update a runtime that is not running.";
         return;
     }
-
     if (!processSource_)
     {
         qCWarning(gamelogAgentLog) << "Process source is unavailable.";
         return;
     }
-
     if (elapsed <= seconds::zero())
     {
-        qCWarning(gamelogAgentLog) << "Runtime update received a non-positive elapsed duration.";
+        qCWarning(gamelogAgentLog)
+            << "Runtime update received a non-positive elapsed duration.";
         return;
     }
 
     std::vector<ProcessInfo> processes = processSource_->listProcesses();
-
     if (!trackedSteamGames_.isEmpty())
     {
         steamProcessInspector_.annotate(processes);
@@ -123,11 +123,9 @@ void GameLogRuntime::update(seconds elapsed)
     if (!activeGame_)
     {
         std::optional<d::Game> detectedGame;
-
         for (const ProcessInfo &process : processes)
         {
             detectedGame = matchTrackedGame(process);
-
             if (detectedGame)
             {
                 break;
@@ -147,7 +145,6 @@ void GameLogRuntime::update(seconds elapsed)
         }
 
         gameOpenDuration_ += elapsed;
-
         if (gameOpenDuration_ < kStartGracePeriod)
         {
             return;
@@ -171,7 +168,6 @@ void GameLogRuntime::update(seconds elapsed)
     }
 
     gameClosedDuration_ += elapsed;
-
     if (gameClosedDuration_ >= kEndGracePeriod)
     {
         static_cast<void>(stopActiveSession());
@@ -180,24 +176,40 @@ void GameLogRuntime::update(seconds elapsed)
 
 std::vector<d::Game> GameLogRuntime::listGames() const
 {
-    if (!gameRepository_)
+    return searchGames({});
+}
+
+std::vector<d::Game> GameLogRuntime::searchGames(
+    const d::query::GameQuery &query) const
+{
+    if (!gameService_)
     {
         qCWarning(gamelogAgentLog)
-            << "Cannot list games because the repository is unavailable.";
+            << "Cannot search games because GameService is unavailable.";
         return {};
     }
+    return gameService_->search(query);
+}
 
-    return gameRepository_->findAll();
+std::vector<d::Session> GameLogRuntime::searchSessions(
+    const d::query::SessionQuery &query) const
+{
+    if (!sessionService_)
+    {
+        qCWarning(gamelogAgentLog)
+            << "Cannot search sessions because SessionService is unavailable.";
+        return {};
+    }
+    return sessionService_->search(query);
 }
 
 std::optional<d::Session> GameLogRuntime::activeSession() const
 {
-    if (!sessionManager_)
+    if (!sessionService_)
     {
         return std::nullopt;
     }
-
-    return sessionManager_->activeSession();
+    return sessionService_->findActiveSession();
 }
 
 bool GameLogRuntime::reloadTrackedGames()
@@ -207,35 +219,23 @@ bool GameLogRuntime::reloadTrackedGames()
 
 bool GameLogRuntime::syncGamesWithDatabase()
 {
-    if (!databaseManager_.isOpen())
+    if (!databaseManager_.isOpen() || !gameService_)
     {
         qCWarning(gamelogAgentLog)
-            << "Cannot sync games because the database is not open.";
-        return false;
-    }
-
-    if (!gameRepository_)
-    {
-        qCWarning(gamelogAgentLog)
-            << "Cannot sync games because the game repository is unavailable.";
+            << "Cannot sync games because GameService or the database is unavailable.";
         return false;
     }
 
     trackedSteamGames_.clear();
     trackedPathGames_.clear();
 
-    for (const d::Game &game : gameRepository_->findAll())
+    for (const d::Game &game : gameService_->listTrackedGames())
     {
-        if (!game.trackingEnabled)
-        {
-            continue;
-        }
-
         if (game.steamAppId && *game.steamAppId > 0)
         {
-            trackedSteamGames_.insert(static_cast<std::uint32_t>(*game.steamAppId), game);
+            trackedSteamGames_.insert(
+                static_cast<std::uint32_t>(*game.steamAppId), game);
         }
-
         if (!game.executablePath.isEmpty())
         {
             trackedPathGames_.insert(game.executablePath, game);
@@ -250,21 +250,20 @@ bool GameLogRuntime::syncGamesWithDatabase()
 
 bool GameLogRuntime::restoreActiveSession()
 {
-    if (!sessionManager_ || !gameRepository_)
+    if (!sessionService_ || !gameService_)
     {
         return false;
     }
 
-    const std::optional<d::Session> session = sessionManager_->activeSession();
-
+    const std::optional<d::Session> session =
+        sessionService_->findActiveSession();
     if (!session)
     {
         activeGame_.reset();
         return true;
     }
 
-    const std::optional<d::Game> game = gameRepository_->findById(session->gameId);
-
+    const std::optional<d::Game> game = gameService_->findById(session->gameId);
     if (!game)
     {
         qCWarning(gamelogAgentLog)
@@ -275,18 +274,17 @@ bool GameLogRuntime::restoreActiveSession()
 
     activeGame_ = *game;
     gameClosedDuration_ = seconds::zero();
-
-    qCInfo(gamelogAgentLog) << "Restored active session" << session->id << "for game:" << game->title;
-
+    qCInfo(gamelogAgentLog)
+        << "Restored active session" << session->id << "for game:" << game->title;
     return true;
 }
 
-std::optional<d::Game> GameLogRuntime::matchTrackedGame(const ProcessInfo &process) const
+std::optional<d::Game>
+GameLogRuntime::matchTrackedGame(const ProcessInfo &process) const
 {
     if (process.steamAppId)
     {
         const auto steamGame = trackedSteamGames_.constFind(*process.steamAppId);
-
         if (steamGame != trackedSteamGames_.constEnd())
         {
             return steamGame.value();
@@ -295,15 +293,12 @@ std::optional<d::Game> GameLogRuntime::matchTrackedGame(const ProcessInfo &proce
 
     if (!process.executablePath.isEmpty())
     {
-        const auto pathGame =
-            trackedPathGames_.constFind(process.executablePath);
-
+        const auto pathGame = trackedPathGames_.constFind(process.executablePath);
         if (pathGame != trackedPathGames_.constEnd())
         {
             return pathGame.value();
         }
     }
-
     return std::nullopt;
 }
 
@@ -313,25 +308,23 @@ bool GameLogRuntime::processMatchesGame(
 {
     if (game.steamAppId && *game.steamAppId > 0 && process.steamAppId)
     {
-        return *process.steamAppId == static_cast<std::uint32_t>(*game.steamAppId);
+        return *process.steamAppId ==
+            static_cast<std::uint32_t>(*game.steamAppId);
     }
-
-    return !game.executablePath.isEmpty() &&
-           process.executablePath == game.executablePath;
+    return !game.executablePath.isEmpty()
+        && process.executablePath == game.executablePath;
 }
 
 bool GameLogRuntime::startNewSession(const d::Game &game)
 {
-    if (!sessionManager_)
+    if (!sessionService_)
     {
         qCWarning(gamelogAgentLog)
-            << "Cannot start a session because SessionManager is unavailable.";
+            << "Cannot start a session because SessionService is unavailable.";
         return false;
     }
 
-    const std::optional<d::Session> session =
-        sessionManager_->startAutomaticSession(game.id);
-
+    const auto session = sessionService_->startAutomaticSession(game.id);
     if (!session)
     {
         qCWarning(gamelogAgentLog)
@@ -341,33 +334,22 @@ bool GameLogRuntime::startNewSession(const d::Game &game)
 
     activeGame_ = game;
     gameClosedDuration_ = seconds::zero();
-
     qCInfo(gamelogAgentLog)
         << "Started session" << session->id << "for game:" << game.title;
-
     return true;
 }
 
 bool GameLogRuntime::stopActiveSession()
 {
-    if (!sessionManager_)
+    if (!sessionService_ || !activeGame_)
     {
         qCWarning(gamelogAgentLog)
-            << "Cannot stop the session because SessionManager is unavailable.";
-        return false;
-    }
-
-    if (!activeGame_)
-    {
-        qCWarning(gamelogAgentLog)
-            << "Cannot stop the session because no active game is known.";
+            << "Cannot stop the session because SessionService or the active game is unavailable.";
         return false;
     }
 
     const QString gameTitle = activeGame_->title;
-    const std::optional<d::Session> endedSession =
-        sessionManager_->endActiveSession();
-
+    const auto endedSession = sessionService_->endActiveSession();
     if (!endedSession)
     {
         qCWarning(gamelogAgentLog)
@@ -378,10 +360,8 @@ bool GameLogRuntime::stopActiveSession()
 
     activeGame_.reset();
     gameClosedDuration_ = seconds::zero();
-
     qCInfo(gamelogAgentLog)
-        << "Stopped session" << endedSession->id << "for game:"
-        << gameTitle;
+        << "Stopped session" << endedSession->id << "for game:" << gameTitle;
     return true;
 }
 

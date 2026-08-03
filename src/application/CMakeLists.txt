@@ -1,6 +1,10 @@
 add_library(gamelog-application STATIC
     GameLogRuntime.cpp
     GameLogRuntime.h
+    services/GameService.h
+    services/GameService.cpp
+    services/SessionService.h
+    services/SessionService.cpp
 )
 
 target_include_directories(gamelog-application

@@ -14,9 +14,12 @@
 #include "database/SessionRepository.h"
 #include "domain/Game.h"
 #include "domain/Session.h"
+#include "domain/query/GameQuery.h"
+#include "domain/query/SessionQuery.h"
 #include "process/ProcessInfo.h"
 #include "process/SteamProcessInspector.h"
-#include "sessions/SessionManager.h"
+#include "services/GameService.h"
+#include "services/SessionService.h"
 
 namespace gamelog::core::process {
 class ProcessSource;
@@ -25,8 +28,8 @@ class ProcessSource;
 namespace gamelog::application {
 
 /**
- * Owns the long-lived database, session, and process-tracking state used by
- * both --headless and --gui modes.
+ * Owns the long-lived resources used by both headless and GUI launch modes.
+ * Application operations flow through GameService and SessionService.
  */
 class GameLogRuntime
 {
@@ -56,10 +59,10 @@ public:
      */
     void update(std::chrono::seconds elapsed);
 
-    /**
-     * Direct in-process query used by the GUI.
-     * @return A list of all games.
-     */
+    [[nodiscard]] std::vector<core::domain::Game> searchGames(
+        const core::domain::query::GameQuery &query) const;
+    [[nodiscard]] std::vector<core::domain::Session> searchSessions(
+        const core::domain::query::SessionQuery &query) const;
     [[nodiscard]] std::vector<core::domain::Game> listGames() const;
 
     /**
@@ -92,6 +95,8 @@ private:
      * @brief interface for the sessions table.
      */
     std::optional<core::database::SessionRepository> sessionRepository_;
+    std::optional<services::GameService> gameService_;
+    std::optional<services::SessionService> sessionService_;
 
     /**
      * @brief interface for the session manager.
@@ -169,27 +174,11 @@ private:
      * @return A boolean describing if the active session was found.
      */
     [[nodiscard]] bool restoreActiveSession();
-
-    /**
-     * @breif Compares a process to the cached Steam/Path games, and returns the game associated with that process if found.
-     * @param process The process to check.
-     * @return A Game struct if it is found, nothing if otherwise
-     */
-    [[nodiscard]] std::optional<core::domain::Game> matchTrackedGame(const core::process::ProcessInfo &process) const;
-
-    /**
-     * @brief Checks if a process matches a game.
-     * @param process The process to check
-     * @param game The game to check
-     * @return A boolean describing if the process matches the game.
-     */
-    [[nodiscard]] bool processMatchesGame(const core::process::ProcessInfo &process, const core::domain::Game &game) const;
-
-    /**
-     * @brief Start a new session for the given game.
-     * @param game The game for which to start a session.
-     * @return A boolean describing if the session was started successfully.
-     */
+    [[nodiscard]] std::optional<core::domain::Game>
+    matchTrackedGame(const core::process::ProcessInfo &process) const;
+    [[nodiscard]] bool processMatchesGame(
+        const core::process::ProcessInfo &process,
+        const core::domain::Game &game) const;
     [[nodiscard]] bool startNewSession(const core::domain::Game &game);
 
     /**

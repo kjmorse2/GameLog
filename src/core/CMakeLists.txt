@@ -4,9 +4,12 @@ add_library(gamelog-core STATIC
         database/GameRepository.cpp
         database/SessionRepository.cpp
 
-        sessions/SessionManager.cpp
+#        sessions/SessionManager.cpp
         logging/LoggingCategories.cpp
         domain/Session.cpp
+        domain/query/GameQuery.h
+        domain/query/SessionQuery.h
+        domain/query/QueryOptions.h
         process/ProcfsProcessSource.cpp
         process/ProcessHelpers.cpp
         process/SteamProcessInspector.cpp
