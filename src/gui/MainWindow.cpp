@@ -24,8 +24,7 @@ MainWindow::MainWindow(
     auto *centralWidget = new QWidget{this};
     auto *layout = new QVBoxLayout{centralWidget};
 
-    auto *titleLabel = new QLabel{
-        QStringLiteral("GameLog library"), centralWidget};
+    auto *titleLabel = new QLabel{QStringLiteral("GameLog library"), centralWidget};
     QFont titleFont = titleLabel->font();
     titleFont.setPointSize(titleFont.pointSize() + 4);
     titleFont.setBold(true);

@@ -24,6 +24,13 @@ enum class RunMode
     Gui
 };
 
+/**
+ * @brief Check if ran program has arguments.
+ * @param argc of main.
+ * @param argv of main.
+ * @param argument char sequence to check for.
+ * @return boolean if it has that argument.
+ */
 bool hasArgument(int argc, char *argv[], const char *argument)
 {
     for (int index = 1; index < argc; ++index)
@@ -37,6 +44,12 @@ bool hasArgument(int argc, char *argv[], const char *argument)
     return false;
 }
 
+/**
+ * @brief Determine the run mode based on the command-line arguments.
+ * @param argc of main.
+ * @param argv of main.
+ * @return enum RunMode of the options above.
+ */
 std::optional<RunMode> determineRunMode(int argc, char *argv[])
 {
     const bool headless = hasArgument(argc, argv, "--headless");
@@ -51,15 +64,17 @@ std::optional<RunMode> determineRunMode(int argc, char *argv[])
     return headless ? RunMode::Headless : RunMode::Gui;
 }
 
+/**
+ * @brief Get the path to the GameLog runtime lock file.
+ * @return The path to the lock file, or an empty string if it cannot be determined.
+ */
 QString runtimeLockPath()
 {
-    QString runtimeDirectory =
-        QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    QString runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
 
     if (runtimeDirectory.isEmpty())
     {
-        runtimeDirectory =
-            QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+        runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     }
 
     QDir directory{runtimeDirectory};
@@ -119,8 +134,7 @@ int main(int argc, char *argv[])
 
     if (databasePath.isEmpty())
     {
-        qCCritical(gamelogDatabaseLog)
-            << "Failed to determine database path.";
+        qCCritical(gamelogDatabaseLog) << "Failed to determine database path.";
         return EXIT_FAILURE;
     }
 
@@ -147,8 +161,7 @@ int main(int argc, char *argv[])
 
     if (!runtime.start())
     {
-        qCCritical(gamelogAgentLog)
-            << "Failed to start the GameLog runtime.";
+        qCCritical(gamelogAgentLog) << "Failed to start the GameLog runtime.";
         return EXIT_FAILURE;
     }
 
