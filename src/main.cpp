@@ -102,8 +102,7 @@ int main(int argc, char *argv[])
 
     if (lockPath.isEmpty())
     {
-        qCCritical(gamelogCoreLog)
-            << "Failed to determine the GameLog runtime lock path.";
+        qCCritical(gamelogCoreLog) << "Failed to determine the GameLog runtime lock path.";
         return EXIT_FAILURE;
     }
 
@@ -112,13 +111,11 @@ int main(int argc, char *argv[])
 
     if (!runtimeLock.tryLock(0))
     {
-        qCCritical(gamelogCoreLog)
-            << "Another GameLog runtime already owns tracking and the database.";
+        qCCritical(gamelogCoreLog) << "Another GameLog runtime already owns tracking and the database.";
         return EXIT_FAILURE;
     }
 
-    const QString databasePath =
-        gamelog::core::database::DatabaseManager::resolveDatabasePath();
+    const QString databasePath = gamelog::core::database::DatabaseManager::resolveDatabasePath();
 
     if (databasePath.isEmpty())
     {
@@ -138,13 +135,11 @@ int main(int argc, char *argv[])
 
     QTimer updateTimer;
     updateTimer.setInterval(
-        static_cast<int>(
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                updateInterval)
-                .count()));
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+                    updateInterval)
+                    .count());
 
-    QObject::connect(
-        &updateTimer,
+    QObject::connect( &updateTimer,
         &QTimer::timeout,
         [&runtime, updateInterval] {
             runtime.update(updateInterval);

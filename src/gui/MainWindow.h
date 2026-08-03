@@ -15,9 +15,12 @@ namespace gamelog::gui {
 class MainWindow final : public QMainWindow
 {
 public:
-    explicit MainWindow(
-        application::GameLogRuntime &runtime,
-        QWidget *parent = nullptr);
+    /**
+     * @brief Constructs a new MainWindow.
+     * @param runtime
+     * @param parent
+     */
+    explicit MainWindow( application::GameLogRuntime &runtime, QWidget *parent = nullptr);
 
 private:
     void refreshLibrary();

@@ -17,7 +17,8 @@ using std::chrono::seconds;
 namespace gamelog::application {
 
 GameLogRuntime::GameLogRuntime(QString databasePath)
-    : databaseManager_{std::move(databasePath), QStringLiteral("GameLogRuntimeConnection")}
+    : databaseManager_{std::move(databasePath),
+    QStringLiteral("GameLogRuntimeConnection")}
 {
     databaseReady_ = databaseManager_.initialize();
 
@@ -54,8 +55,7 @@ bool GameLogRuntime::start()
 
     if (!syncGamesWithDatabase())
     {
-        qCWarning(gamelogAgentLog)
-            << "Failed to sync games with the database.";
+        qCWarning(gamelogAgentLog) << "Failed to sync games with the database.";
         processSource_.reset();
         return false;
     }
@@ -69,12 +69,8 @@ bool GameLogRuntime::start()
     running_ = true;
 
     qCInfo(gamelogAgentLog) << "GameLog runtime started";
-    qCInfo(gamelogAgentLog)
-        << "Database is:"
-        << (databaseManager_.isOpen() ? "open" : "closed");
-    qCInfo(gamelogAgentLog)
-        << "Database path:"
-        << databaseManager_.database().databaseName();
+    qCInfo(gamelogAgentLog) << "Database is:" << (databaseManager_.isOpen() ? "open" : "closed");
+    qCInfo(gamelogAgentLog) << "Database path:" << databaseManager_.database().databaseName();
 
     return true;
 }
@@ -101,22 +97,19 @@ void GameLogRuntime::update(seconds elapsed)
 {
     if (!running_)
     {
-        qCWarning(gamelogAgentLog)
-            << "Attempted to update a runtime that is not running.";
+        qCWarning(gamelogAgentLog) << "Attempted to update a runtime that is not running.";
         return;
     }
 
     if (!processSource_)
     {
-        qCWarning(gamelogAgentLog)
-            << "Process source is unavailable.";
+        qCWarning(gamelogAgentLog) << "Process source is unavailable.";
         return;
     }
 
     if (elapsed <= seconds::zero())
     {
-        qCWarning(gamelogAgentLog)
-            << "Runtime update received a non-positive elapsed duration.";
+        qCWarning(gamelogAgentLog) << "Runtime update received a non-positive elapsed duration.";
         return;
     }
 
@@ -240,8 +233,7 @@ bool GameLogRuntime::syncGamesWithDatabase()
 
         if (game.steamAppId && *game.steamAppId > 0)
         {
-            trackedSteamGames_.insert(
-                static_cast<std::uint32_t>(*game.steamAppId), game);
+            trackedSteamGames_.insert(static_cast<std::uint32_t>(*game.steamAppId), game);
         }
 
         if (!game.executablePath.isEmpty())
@@ -271,8 +263,7 @@ bool GameLogRuntime::restoreActiveSession()
         return true;
     }
 
-    const std::optional<d::Game> game =
-        gameRepository_->findById(session->gameId);
+    const std::optional<d::Game> game = gameRepository_->findById(session->gameId);
 
     if (!game)
     {
@@ -285,15 +276,12 @@ bool GameLogRuntime::restoreActiveSession()
     activeGame_ = *game;
     gameClosedDuration_ = seconds::zero();
 
-    qCInfo(gamelogAgentLog)
-        << "Restored active session" << session->id
-        << "for game:" << game->title;
+    qCInfo(gamelogAgentLog) << "Restored active session" << session->id << "for game:" << game->title;
 
     return true;
 }
 
-std::optional<d::Game>
-GameLogRuntime::matchTrackedGame(const ProcessInfo &process) const
+std::optional<d::Game> GameLogRuntime::matchTrackedGame(const ProcessInfo &process) const
 {
     if (process.steamAppId)
     {
@@ -325,8 +313,7 @@ bool GameLogRuntime::processMatchesGame(
 {
     if (game.steamAppId && *game.steamAppId > 0 && process.steamAppId)
     {
-        return *process.steamAppId ==
-               static_cast<std::uint32_t>(*game.steamAppId);
+        return *process.steamAppId == static_cast<std::uint32_t>(*game.steamAppId);
     }
 
     return !game.executablePath.isEmpty() &&

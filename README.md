@@ -22,6 +22,7 @@ See `docs/architecture.md` for a short overview.
 - C++23 compiler (GCC or Clang)
 - CMake
 - Qt 6 development packages (Core, Widgets, Sql, Network, Test)
+- libprocs 2 https://gitlab.alpinelinux.org/alpine/aports/-/tree/master/main/procps-ng?__goaway_challenge=cookie&__goaway_id=574b5f7ee2299d04a0b9fa1214bc2c1f&__goaway_referer=https%3A%2F%2Fpkgs.alpinelinux.org%2F
 
 Example Arch Linux package names:
 

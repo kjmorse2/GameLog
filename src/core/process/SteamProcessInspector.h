@@ -23,12 +23,14 @@ namespace gamelog::core::process {
         void annotate(std::vector<ProcessInfo> &processes);
 
     private:
+        /**
+         * @brief A struct for storing cached steam games loaded from the database.
+         */
         struct CacheEntry
         {
             QString executablePath;
 
-            std::optional<std::uint32_t>
-                    steamAppId;
+            std::optional<std::uint32_t> steamAppId;
         };
 
         QHash<qint64, CacheEntry> cache_;
