@@ -6,14 +6,20 @@
 #include "../../fixtures/TestDatabaseFixture.h"
 #include "database/DatabaseManager.h"
 #include "database/SessionRepository.h"
+#include "database/GameRepository.h"
+#include "application/services/SessionService.h"
+#include "application/services/GameService.h"
 
 using gamelog::core::database::DatabaseManager;
 using gamelog::core::database::SessionRepository;
+using gamelog::core::database::GameRepository;
 using gamelog::core::domain::Session;
 using gamelog::core::domain::SessionSource;
+using gamelog::application::services::SessionService;
+using gamelog::application::services::GameService;
 using gamelog::core::domain::SessionStatus;
 
-class SessionRepositoryTest : public QObject
+class SessionServiceTest : public QObject
 {
     Q_OBJECT
 
@@ -25,24 +31,27 @@ private slots:
     void findActiveSession_returnsInsertedActiveSession();
     void listSessionsForGame_returnsNewestFirstAndFiltersByGame();
     void listSessionsForGame_returnsEmptyWhenNoRowsExist();
-    void insert_persistsSessionAndAssignsId();
-    void insert_failsForUnknownGameId();
-    void update_persistsModifiedFields();
-    void update_returnsFalseForMissingRow();
-    void remove_deletesExistingRow();
-    void remove_returnsFalseForMissingRow();
+    void addSession_persistsSessionAndAssignsId();
+    void addSession_failsForUnknownGameId();
+    void updateSession_persistsModifiedFields();
+    void updateSession_returnsFalseForMissingRow();
+    void removeSession_deletesExistingRow();
+    void removeSession_returnsFalseForMissingRow();
 
 private:
-    int insertGame(const QString &title) const;
+    int addSessionGame(const QString &title) const;
     static Session makeSession(int gameId, const QDateTime &startUtc);
     static QDateTime utcDateTime(int year, int month, int day, int hour, int minute, int second);
 
     QString databasePath_;
     std::unique_ptr<DatabaseManager> manager_;
-    std::unique_ptr<SessionRepository> repository_;
+    std::unique_ptr<GameRepository> game_repo_;
+    std::unique_ptr<GameService> game_service_;
+    std::unique_ptr<SessionRepository> service_repo_;
+    std::unique_ptr<SessionService> service_;
 };
 
-void SessionRepositoryTest::init()
+void SessionServiceTest::init()
 {
     databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(
             QString{"session-repository-%1"}.arg(QTest::currentTestFunction()));
@@ -51,17 +60,24 @@ void SessionRepositoryTest::init()
     manager_ = std::make_unique<DatabaseManager>(databasePath_, connectionName);
     QVERIFY(manager_->initialize());
 
-    repository_ = std::make_unique<SessionRepository>(manager_->database());
+    game_repo_ = std::make_unique<GameRepository>(manager_->database());
+    game_service_ = std::make_unique<GameService>(*game_repo_);
+
+    service_repo_ = std::make_unique<SessionRepository>(manager_->database());
+    service_ = std::make_unique<SessionService>(*service_repo_, *game_service_);
 }
 
-void SessionRepositoryTest::cleanup()
+void SessionServiceTest::cleanup()
 {
-    repository_.reset();
+    game_repo_.reset();
+    service_repo_.reset();
+    game_service_.reset();
+    service_.reset();
     manager_.reset();
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath_);
 }
 
-int SessionRepositoryTest::insertGame(const QString &title) const
+int SessionServiceTest::addSessionGame(const QString &title) const
 {
     QSqlQuery query{manager_->database()};
     query.prepare(
@@ -93,7 +109,7 @@ int SessionRepositoryTest::insertGame(const QString &title) const
     return query.lastInsertId().toInt();
 }
 
-Session SessionRepositoryTest::makeSession(int gameId, const QDateTime &startUtc)
+Session SessionServiceTest::makeSession(int gameId, const QDateTime &startUtc)
 {
     Session session;
     session.gameId = gameId;
@@ -105,27 +121,27 @@ Session SessionRepositoryTest::makeSession(int gameId, const QDateTime &startUtc
     return session;
 }
 
-QDateTime SessionRepositoryTest::utcDateTime(
+QDateTime SessionServiceTest::utcDateTime(
         int year, int month, int day, int hour, int minute, int second)
 {
     return QDateTime{{year, month, day}, {hour, minute, second}, QTimeZone::UTC};
 }
 
-void SessionRepositoryTest::findActiveSession_returnsNulloptWhenNoActiveSessionExists()
+void SessionServiceTest::findActiveSession_returnsNulloptWhenNoActiveSessionExists()
 {
-    const auto active = repository_->findActiveSession();
+    const auto active = service_->findActiveSession();
     QVERIFY(!active.has_value());
 }
 
-void SessionRepositoryTest::findActiveSession_returnsInsertedActiveSession()
+void SessionServiceTest::findActiveSession_returnsInsertedActiveSession()
 {
-    const int gameId = insertGame("Elden Ring");
+    const int gameId = addSessionGame("Elden Ring");
     QVERIFY(gameId > 0);
 
     Session session = makeSession(gameId, utcDateTime(2026, 7, 1, 12, 34, 56));
-    QVERIFY(repository_->insert(session));
+    QVERIFY(service_->addSession(session));
 
-    const auto active = repository_->findActiveSession();
+    const auto active = service_->findActiveSession();
     QVERIFY(active.has_value());
     QCOMPARE(active->id, session.id);
     QCOMPARE(active->gameId, gameId);
@@ -136,10 +152,10 @@ void SessionRepositoryTest::findActiveSession_returnsInsertedActiveSession()
     QCOMPARE(active->status, SessionStatus::Active);
 }
 
-void SessionRepositoryTest::listSessionsForGame_returnsNewestFirstAndFiltersByGame()
+void SessionServiceTest::listSessionsForGame_returnsNewestFirstAndFiltersByGame()
 {
-    const int gameOneId = insertGame("Game One");
-    const int gameTwoId = insertGame("Game Two");
+    const int gameOneId = addSessionGame("Game One");
+    const int gameTwoId = addSessionGame("Game Two");
     QVERIFY(gameOneId > 0);
     QVERIFY(gameTwoId > 0);
 
@@ -153,11 +169,11 @@ void SessionRepositoryTest::listSessionsForGame_returnsNewestFirstAndFiltersByGa
 
     Session otherGame = makeSession(gameTwoId, utcDateTime(2026, 1, 3, 8, 0, 0));
 
-    QVERIFY(repository_->insert(oldest));
-    QVERIFY(repository_->insert(newest));
-    QVERIFY(repository_->insert(otherGame));
+    QVERIFY(service_->addSession(oldest));
+    QVERIFY(service_->addSession(newest));
+    QVERIFY(service_->addSession(otherGame));
 
-    const auto sessions = repository_->listSessionsForGame(gameOneId);
+    const auto sessions = service_->listSessionsForGame(gameOneId);
     QCOMPARE(sessions.size(), 2);
     QCOMPARE(sessions[0].id, newest.id);
     QCOMPARE(sessions[1].id, oldest.id);
@@ -165,18 +181,18 @@ void SessionRepositoryTest::listSessionsForGame_returnsNewestFirstAndFiltersByGa
     QCOMPARE(sessions[1].gameId, gameOneId);
 }
 
-void SessionRepositoryTest::listSessionsForGame_returnsEmptyWhenNoRowsExist()
+void SessionServiceTest::listSessionsForGame_returnsEmptyWhenNoRowsExist()
 {
-    const int gameId = insertGame("No Sessions");
+    const int gameId = addSessionGame("No Sessions");
     QVERIFY(gameId > 0);
 
-    const auto sessions = repository_->listSessionsForGame(gameId);
+    const auto sessions = service_->listSessionsForGame(gameId);
     QVERIFY(sessions.empty());
 }
 
-void SessionRepositoryTest::insert_persistsSessionAndAssignsId()
+void SessionServiceTest::addSession_persistsSessionAndAssignsId()
 {
-    const int gameId = insertGame("Hades");
+    const int gameId = addSessionGame("Hades");
     QVERIFY(gameId > 0);
 
     Session session = makeSession(gameId, utcDateTime(2026, 5, 5, 18, 10, 0));
@@ -185,10 +201,10 @@ void SessionRepositoryTest::insert_persistsSessionAndAssignsId()
     session.endTimestamp = utcDateTime(2026, 5, 5, 18, 40, 0);
     session.trackedDuration = std::chrono::seconds{1800};
 
-    QVERIFY(repository_->insert(session));
+    QVERIFY(service_->addSession(session));
     QVERIFY(session.id > 0);
 
-    const auto sessions = repository_->listSessionsForGame(gameId);
+    const auto sessions = service_->listSessionsForGame(gameId);
     QCOMPARE(sessions.size(), 1);
     QCOMPARE(sessions[0].id, session.id);
     QCOMPARE(sessions[0].source, SessionSource::Manual);
@@ -196,29 +212,29 @@ void SessionRepositoryTest::insert_persistsSessionAndAssignsId()
     QVERIFY(sessions[0].endTimestamp.has_value());
 }
 
-void SessionRepositoryTest::insert_failsForUnknownGameId()
+void SessionServiceTest::addSession_failsForUnknownGameId()
 {
     Session session = makeSession(999999, utcDateTime(2026, 6, 1, 10, 0, 0));
-    QVERIFY(!repository_->insert(session));
+    QVERIFY(!service_->addSession(session));
     QCOMPARE(session.id, 0);
 }
 
-void SessionRepositoryTest::update_persistsModifiedFields()
+void SessionServiceTest::updateSession_persistsModifiedFields()
 {
-    const int gameId = insertGame("Terraria");
+    const int gameId = addSessionGame("Terraria");
     QVERIFY(gameId > 0);
 
     Session session = makeSession(gameId, utcDateTime(2026, 3, 1, 11, 0, 0));
-    QVERIFY(repository_->insert(session));
+    QVERIFY(service_->addSession(session));
 
     session.source = SessionSource::Manual;
     session.status = SessionStatus::Completed;
     session.endTimestamp = utcDateTime(2026, 3, 1, 11, 45, 0);
     session.trackedDuration = std::chrono::seconds{2700};
 
-    QVERIFY(repository_->update(session));
+    QVERIFY(service_->updateSession(session));
 
-    const auto sessions = repository_->listSessionsForGame(gameId);
+    const auto sessions = service_->listSessionsForGame(gameId);
     QCOMPARE(sessions.size(), 1);
     QCOMPARE(sessions[0].id, session.id);
     QCOMPARE(sessions[0].source, SessionSource::Manual);
@@ -228,35 +244,35 @@ void SessionRepositoryTest::update_persistsModifiedFields()
     QCOMPARE(sessions[0].trackedDuration, std::chrono::seconds{2700});
 }
 
-void SessionRepositoryTest::update_returnsFalseForMissingRow()
+void SessionServiceTest::updateSession_returnsFalseForMissingRow()
 {
-    const int gameId = insertGame("Missing Session");
+    const int gameId = addSessionGame("Missing Session");
     QVERIFY(gameId > 0);
 
     Session session = makeSession(gameId, utcDateTime(2026, 4, 2, 9, 15, 0));
     session.id = 999999;
 
-    QVERIFY(!repository_->update(session));
+    QVERIFY(!service_->updateSession(session));
 }
 
-void SessionRepositoryTest::remove_deletesExistingRow()
+void SessionServiceTest::removeSession_deletesExistingRow()
 {
-    const int gameId = insertGame("Delete Session");
+    const int gameId = addSessionGame("Delete Session");
     QVERIFY(gameId > 0);
 
     Session session = makeSession(gameId, utcDateTime(2026, 2, 2, 20, 0, 0));
-    QVERIFY(repository_->insert(session));
+    QVERIFY(service_->addSession(session));
 
-    QVERIFY(repository_->remove(session.id));
-    const auto sessions = repository_->listSessionsForGame(gameId);
+    QVERIFY(service_->removeSession(session.id));
+    const auto sessions = service_->listSessionsForGame(gameId);
     QVERIFY(sessions.empty());
 }
 
-void SessionRepositoryTest::remove_returnsFalseForMissingRow()
+void SessionServiceTest::removeSession_returnsFalseForMissingRow()
 {
-    QVERIFY(!repository_->remove(999999));
+    QVERIFY(!service_->removeSession(999999));
 }
 
-QTEST_GUILESS_MAIN(SessionRepositoryTest)
+QTEST_GUILESS_MAIN(SessionServiceTest)
 
-#include "SessionRepositoryTest.moc"
+#include "SessionServiceTest.moc"

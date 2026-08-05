@@ -2,15 +2,21 @@
 
 #include "fixtures/TestDatabaseFixture.h"
 #include "database/DatabaseManager.h"
-#include "database/GameRepository.h"
+#include "application/services/GameService.h"
+#include "domain/Game.h"
 
 #include <memory>
 
-using gamelog::core::database::DatabaseManager;
-using gamelog::core::database::GameRepository;
-using gamelog::core::domain::Game;
+namespace gamelog::core::database {
+    class DatabaseManager;
+}
 
-class GameRepositoryTest : public QObject
+using gamelog::core::database::DatabaseManager;
+using gamelog::application::services::GameService;
+using gamelog::core::domain::Game;
+using gamelog::core::database::GameRepository;
+
+class GameServiceTest : public QObject
 {
     Q_OBJECT
 
@@ -20,14 +26,14 @@ private slots:
 
     void findById_returnsNulloptForMissingId();
     void findById_returnsInsertedGame();
-    void findAll_returnsGamesOrderedByTitleCaseInsensitive();
-    void findAll_returnsEmptyWhenNoRowsExist();
-    void insert_persistsAllFieldsAndAssignsId();
-    void insert_handlesUnsetOptionalFields();
-    void update_persistsModifiedFields();
-    void update_returnsTrueForMissingRow();
-    void remove_deletesExistingRow();
-    void remove_returnsTrueForMissingRow();
+    void listGames_returnsGamesOrderedByTitleCaseInsensitive();
+    void listGames_returnsEmptyWhenNoRowsExist();
+    void addGame_persistsAllFieldsAndAssignsId();
+    void addGame_handlesUnsetOptionalFields();
+    void updateGame_persistsModifiedFields();
+    void updateGame_returnsTrueForMissingRow();
+    void removeGame_deletesExistingRow();
+    void removeGame_returnsTrueForMissingRow();
 
 private:
     static Game makeGame(const QString &title);
@@ -35,29 +41,31 @@ private:
     QString databasePath_;
     std::unique_ptr<DatabaseManager> manager_;
     std::unique_ptr<GameRepository> repository_;
+    std::unique_ptr<GameService> service_;
 };
 
-void GameRepositoryTest::init()
+void GameServiceTest::init()
 {
     QTest::failOnWarning();
-    databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(
-            QString{"game-repository-%1"}.arg(QTest::currentTestFunction()));
+    databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(QString{"game-repository-%1"}.arg(QTest::currentTestFunction()));
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("game-repository");
 
     manager_ = std::make_unique<DatabaseManager>(databasePath_, connectionName);
     QVERIFY(manager_->initialize());
 
     repository_ = std::make_unique<GameRepository>(manager_->database());
+    service_ = std::make_unique<GameService>(*repository_);
 }
 
-void GameRepositoryTest::cleanup()
+void GameServiceTest::cleanup()
 {
+    service_.reset();
     repository_.reset();
     manager_.reset();
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath_);
 }
 
-Game GameRepositoryTest::makeGame(const QString &title)
+Game GameServiceTest::makeGame(const QString &title)
 {
     Game game;
     game.title = title;
@@ -69,18 +77,18 @@ Game GameRepositoryTest::makeGame(const QString &title)
     return game;
 }
 
-void GameRepositoryTest::findById_returnsNulloptForMissingId()
+void GameServiceTest::findById_returnsNulloptForMissingId()
 {
-    const auto game = repository_->findById(999999);
+    const auto game = service_->findById(999999);
     QVERIFY(!game.has_value());
 }
 
-void GameRepositoryTest::findById_returnsInsertedGame()
+void GameServiceTest::findById_returnsInsertedGame()
 {
     Game game = makeGame("Stardew");
-    QVERIFY(repository_->insert(game));
+    QVERIFY(service_->addGame(game));
 
-    const auto loaded = repository_->findById(game.id);
+    const auto loaded = service_->findById(game.id);
     QVERIFY(loaded.has_value());
     QCOMPARE(loaded->id, game.id);
     QCOMPARE(loaded->title, game.title);
@@ -93,61 +101,61 @@ void GameRepositoryTest::findById_returnsInsertedGame()
     QCOMPARE(loaded->trackingEnabled, game.trackingEnabled);
 }
 
-void GameRepositoryTest::findAll_returnsGamesOrderedByTitleCaseInsensitive()
+void GameServiceTest::listGames_returnsGamesOrderedByTitleCaseInsensitive()
 {
     Game zelda = makeGame("zelda");
     Game alpha = makeGame("Alpha");
     Game beta = makeGame("beta");
 
-    QVERIFY(repository_->insert(zelda));
-    QVERIFY(repository_->insert(alpha));
-    QVERIFY(repository_->insert(beta));
+    QVERIFY(service_->addGame(zelda));
+    QVERIFY(service_->addGame(alpha));
+    QVERIFY(service_->addGame(beta));
 
-    const auto games = repository_->findAll();
+    const auto games = service_->listGames();
     QCOMPARE(games.size(), 3);
     QCOMPARE(games[0].title, QString("Alpha"));
     QCOMPARE(games[1].title, QString("beta"));
     QCOMPARE(games[2].title, QString("zelda"));
 }
 
-void GameRepositoryTest::findAll_returnsEmptyWhenNoRowsExist()
+void GameServiceTest::listGames_returnsEmptyWhenNoRowsExist()
 {
-    const auto games = repository_->findAll();
+    const auto games = service_->listGames();
     QVERIFY(games.empty());
 }
 
-void GameRepositoryTest::insert_persistsAllFieldsAndAssignsId()
+void GameServiceTest::addGame_persistsAllFieldsAndAssignsId()
 {
     Game game = makeGame("Cyberpunk");
-    QVERIFY(repository_->insert(game));
+    QVERIFY(service_->addGame(game));
     QVERIFY(game.id > 0);
 
-    const auto loaded = repository_->findById(game.id);
+    const auto loaded = service_->findById(game.id);
     QVERIFY(loaded.has_value());
     QCOMPARE(loaded->title, QString("Cyberpunk"));
     QVERIFY(loaded->steamAppId.has_value());
     QVERIFY(loaded->artworkPath.has_value());
 }
 
-void GameRepositoryTest::insert_handlesUnsetOptionalFields()
+void GameServiceTest::addGame_handlesUnsetOptionalFields()
 {
     Game game = makeGame("Portal");
     game.steamAppId.reset();
     game.artworkPath.reset();
 
-    QVERIFY(repository_->insert(game));
+    QVERIFY(service_->addGame(game));
     QVERIFY(game.id > 0);
 
-    const auto loaded = repository_->findById(game.id);
+    const auto loaded = service_->findById(game.id);
     QVERIFY(loaded.has_value());
     QVERIFY(!loaded->steamAppId.has_value());
     QVERIFY(!loaded->artworkPath.has_value());
 }
 
-void GameRepositoryTest::update_persistsModifiedFields()
+void GameServiceTest::updateGame_persistsModifiedFields()
 {
     Game game = makeGame("Factorio");
-    QVERIFY(repository_->insert(game));
+    QVERIFY(service_->addGame(game));
 
     game.title = "Factorio 2";
     game.executablePath = "/games/factorio2";
@@ -156,9 +164,9 @@ void GameRepositoryTest::update_persistsModifiedFields()
     game.artworkPath.reset();
     game.trackingEnabled = false;
 
-    QVERIFY(repository_->update(game));
+    QVERIFY(service_->updateGame(game));
 
-    const auto loaded = repository_->findById(game.id);
+    const auto loaded = service_->findById(game.id);
     QVERIFY(loaded.has_value());
     QCOMPARE(loaded->title, QString("Factorio 2"));
     QCOMPARE(loaded->executablePath, QString("/games/factorio2"));
@@ -168,28 +176,28 @@ void GameRepositoryTest::update_persistsModifiedFields()
     QVERIFY(!loaded->trackingEnabled);
 }
 
-void GameRepositoryTest::update_returnsTrueForMissingRow()
+void GameServiceTest::updateGame_returnsTrueForMissingRow()
 {
     Game game = makeGame("Missing");
     game.id = 999999;
-    QVERIFY(repository_->update(game));
+    QVERIFY(service_->updateGame(game));
 }
 
-void GameRepositoryTest::remove_deletesExistingRow()
+void GameServiceTest::removeGame_deletesExistingRow()
 {
     Game game = makeGame("DeleteMe");
-    QVERIFY(repository_->insert(game));
+    QVERIFY(service_->addGame(game));
 
-    QVERIFY(repository_->remove(game.id));
-    const auto loaded = repository_->findById(game.id);
+    QVERIFY(service_->removeGame(game.id));
+    const auto loaded = service_->findById(game.id);
     QVERIFY(!loaded.has_value());
 }
 
-void GameRepositoryTest::remove_returnsTrueForMissingRow()
+void GameServiceTest::removeGame_returnsTrueForMissingRow()
 {
-    QVERIFY(repository_->remove(999999));
+    QVERIFY(service_->removeGame(999999));
 }
 
-QTEST_GUILESS_MAIN(GameRepositoryTest)
+QTEST_GUILESS_MAIN(GameServiceTest)
 
-#include "GameRepositoryTest.moc"
+#include "GameServiceTest.moc"

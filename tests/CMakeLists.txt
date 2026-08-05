@@ -80,6 +80,7 @@ function(add_gamelog_database_test target_name source_file)
             ${target_name}
             PRIVATE
             gamelog-test-support
+            gamelog-application
             Qt6::Sql
     )
 
@@ -100,13 +101,13 @@ add_gamelog_database_test(
 )
 
 add_gamelog_database_test(
-        gamelog-game-repository-test
-        integration/database/GameRepositoryTest.cpp
+        gamelog-game-service-test
+        integration/services/GameServiceTest.cpp
 )
 
 add_gamelog_database_test(
-        gamelog-session-repository-test
-        integration/database/SessionRepositoryTest.cpp
+        gamelog-session-service-test
+        integration/services/SessionServiceTest.cpp
 )
 
 

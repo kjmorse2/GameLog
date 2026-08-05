@@ -252,19 +252,30 @@ bool GameRepository::insert(domain::Game &game)
 bool GameRepository::update(const domain::Game &game)
 {
     QSqlQuery query{database_};
-    query.prepare(QStringLiteral(
-        "UPDATE games SET title = :title, executable_path = :executable_path, "
-        "executable_name = :executable_name, steam_app_id = :steam_app_id, "
-        "artwork_path = :artwork_path, tracking_enabled = :tracking_enabled "
-        "WHERE id = :id"));
-
+    if(!query.prepare(QStringLiteral(
+        "UPDATE games "
+        "SET title = :title, "
+        "executable_path = :executable_path, "
+        "executable_name = :executable_name, "
+        "steam_app_id = :steam_app_id, "
+        "artwork_path = :artwork_path, "
+        "tracking_enabled = :tracking_enabled "
+        "WHERE id = :game_id")))
+    {
+        qCWarning(gamelogDatabaseLog) << "Failed to prepare game update:" << query.lastError().text();
+        return false;
+    }
     query.bindValue(QStringLiteral(":title"), game.title);
     query.bindValue(QStringLiteral(":executable_path"), game.executablePath);
     query.bindValue(QStringLiteral(":executable_name"), game.executableName);
     bindNullableInt(query, QStringLiteral(":steam_app_id"), game.steamAppId);
     bindNullableString(query, QStringLiteral(":artwork_path"), game.artworkPath);
     query.bindValue(QStringLiteral(":tracking_enabled"), game.trackingEnabled);
-    query.bindValue(QStringLiteral(":id"), game.id);
+    query.bindValue(QStringLiteral(":game_id"), game.id);
+
+    qDebug() << "SQL:" << query.lastQuery();
+    qDebug() << "Bound value count:" << query.boundValues().size();
+    qDebug() << "Bound values:" << query.boundValues();
 
     if (!query.exec())
     {
@@ -273,7 +284,7 @@ bool GameRepository::update(const domain::Game &game)
         return false;
     }
 
-    return query.numRowsAffected() == 1;
+    return true;
 }
 
 bool GameRepository::remove(std::int64_t id)
@@ -291,7 +302,7 @@ bool GameRepository::remove(std::int64_t id)
         return false;
     }
 
-    return query.numRowsAffected() == 1;
+    return true;
 }
 
 } // namespace gamelog::core::database

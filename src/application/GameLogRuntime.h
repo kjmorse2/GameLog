@@ -101,7 +101,7 @@ private:
     /**
      * @brief interface for the session manager.
      */
-    std::optional<core::sessions::SessionManager> sessionManager_;
+    // std::optional<core::sessions::SessionManager> sessionManager_;
 
     /**
      * @brief Libprocs2 based process inspector helper.
