@@ -6,7 +6,6 @@
 #include <optional>
 #include <vector>
 
-#include <QHash>
 #include <QString>
 
 #include "database/DatabaseManager.h"
@@ -63,6 +62,7 @@ public:
         const core::domain::query::GameQuery &query) const;
     [[nodiscard]] std::vector<core::domain::Session> searchSessions(
         const core::domain::query::SessionQuery &query) const;
+
     [[nodiscard]] std::vector<core::domain::Game> listGames() const;
 
     /**
@@ -76,6 +76,9 @@ public:
      * @return a boolean indicating success of reload.
      */
     [[nodiscard]] bool reloadTrackedGames();
+
+    services::GameService * getGameService();
+    services::GameService * getSessionService();
 
 private:
     // DatabaseManager must outlive every repository and service that uses its

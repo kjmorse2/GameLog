@@ -3,6 +3,7 @@
 #include "application/GameLogRuntime.h"
 #include "domain/Game.h"
 #include "domain/Session.h"
+#include "library/LibraryView.h"
 
 #include <QFont>
 #include <QLabel>
@@ -30,64 +31,16 @@ MainWindow::MainWindow(
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
 
+    auto *libraryViewWidget = new LibraryView{centralWidget, runtime.getGameService()};
+
     statusLabel_ = new QLabel{centralWidget};
-    gameList_ = new QListWidget{centralWidget};
-    auto *reloadButton = new QPushButton{
-        QStringLiteral("Reload library"), centralWidget};
 
     layout->addWidget(titleLabel);
     layout->addWidget(statusLabel_);
-    layout->addWidget(gameList_, 1);
-    layout->addWidget(reloadButton);
+    layout->addWidget(libraryViewWidget);
 
     setCentralWidget(centralWidget);
-
-    connect(
-        reloadButton,
-        &QPushButton::clicked,
-        this,
-        [this] {
-            static_cast<void>(runtime_.reloadTrackedGames());
-            refreshLibrary();
-        });
-
-    refreshLibrary();
 }
 
-void MainWindow::refreshLibrary()
-{
-    gameList_->clear();
-
-    const auto games = runtime_.listGames();
-
-    for (const core::domain::Game &game : games)
-    {
-        QString label = game.title;
-
-        if (!game.trackingEnabled)
-        {
-            label += QStringLiteral(" (tracking disabled)");
-        }
-
-        gameList_->addItem(label);
-    }
-
-    const auto session = runtime_.activeSession();
-
-    if (session)
-    {
-        statusLabel_->setText(
-            QStringLiteral("Active session #%1 for game ID %2 | %3 games")
-                .arg(session->id)
-                .arg(session->gameId)
-                .arg(static_cast<qulonglong>(games.size())));
-    }
-    else
-    {
-        statusLabel_->setText(
-            QStringLiteral("No active session | %1 games")
-                .arg(static_cast<qulonglong>(games.size())));
-    }
-}
 
 } // namespace gamelog::gui

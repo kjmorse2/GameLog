@@ -1,10 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <optional>
 #include <vector>
 
-#include <QString>
 
 #include "database/GameRepository.h"
 #include "domain/Game.h"
@@ -18,15 +16,15 @@ namespace gamelog::application::services {
  * Callers describe general searches with GameQuery or use the semantic
  * convenience methods. SQL remains entirely behind GameRepository.
  */
-class GameService
+class GameService : public QObject
 {
+Q_OBJECT
 public:
     explicit GameService(core::database::GameRepository &repository);
-
+    ~GameService() override = default;
     [[nodiscard]] std::vector<core::domain::Game>
     search(const core::domain::query::GameQuery &query) const;
 
-    [[nodiscard]] std::vector<core::domain::Game> listGames() const;
     [[nodiscard]] std::vector<core::domain::Game> listTrackedGames() const;
     [[nodiscard]] std::optional<core::domain::Game>
     findById(std::int64_t id) const;
@@ -38,6 +36,12 @@ public:
     [[nodiscard]] bool addGame(core::domain::Game &game);
     [[nodiscard]] bool updateGame(const core::domain::Game &game);
     [[nodiscard]] bool removeGame(std::int64_t id);
+
+public slots:
+    void listGames() const;
+
+signals:
+    void gamesFound(std::vector<core::domain::Game> games) const;
 
 private:
     core::database::GameRepository &repository_;

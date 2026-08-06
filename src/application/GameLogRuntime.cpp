@@ -371,4 +371,9 @@ void GameLogRuntime::resetPendingStart() noexcept
     gameOpenDuration_ = seconds::zero();
 }
 
+services::GameService * GameLogRuntime::getGameService()
+{
+    return &gameService_.value();
+}
+
 } // namespace gamelog::application

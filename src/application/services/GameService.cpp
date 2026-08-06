@@ -27,9 +27,9 @@ GameService::search(const core::domain::query::GameQuery &query) const
     return repository_.query(query);
 }
 
-std::vector<core::domain::Game> GameService::listGames() const
+void GameService::listGames() const
 {
-    return search({});
+    emit gamesFound(search({}));
 }
 
 std::vector<core::domain::Game> GameService::listTrackedGames() const

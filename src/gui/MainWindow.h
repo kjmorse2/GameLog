@@ -23,11 +23,8 @@ public:
     explicit MainWindow( application::GameLogRuntime &runtime, QWidget *parent = nullptr);
 
 private:
-    void refreshLibrary();
-
     application::GameLogRuntime &runtime_;
     QLabel *statusLabel_{nullptr};
-    QListWidget *gameList_{nullptr};
 };
 
 } // namespace gamelog::gui
