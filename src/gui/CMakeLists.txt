@@ -3,11 +3,13 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 add_library(gamelog-gui STATIC
     MainWindow.cpp
     MainWindow.h
+    mainwindow.ui
     library/LibraryView.h
     library/LibraryView.cpp
     library/libraryview.ui
-        library/RefreshButton.cpp
-        library/RefreshButton.h
+    calander/CalanderView.cpp
+    calander/CalanderView.h
+        calander/calanderview.ui
 )
 
 target_include_directories(gamelog-gui
