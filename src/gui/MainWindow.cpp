@@ -8,6 +8,15 @@
 
 #include "ui_mainwindow.h"
 
+static void initializeGUIResources()
+{
+    static const bool initialized = [] {
+        Q_INIT_RESOURCE(images);
+        return true;
+    }();
+
+    static_cast<void>(initialized);
+}
 namespace gamelog::gui {
 
 MainWindow::MainWindow(application::GameLogRuntime &runtime, QWidget *parent):
@@ -15,6 +24,7 @@ MainWindow::MainWindow(application::GameLogRuntime &runtime, QWidget *parent):
     ui(new Ui::MainWindow),
     runtime_{runtime}
 {
+    initializeGUIResources();
     ui->setupUi(this);
     auto *libraryViewWidget = new LibraryView{ui->libraryTab, runtime.getGameService()};
     ui->libraryTabLayout->addWidget(libraryViewWidget);

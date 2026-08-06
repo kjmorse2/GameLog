@@ -9,7 +9,11 @@ add_library(gamelog-gui STATIC
     library/libraryview.ui
     calander/CalanderView.cpp
     calander/CalanderView.h
-        calander/calanderview.ui
+    calander/calanderview.ui
+    game_card/GameCard.cpp
+    game_card/GameCard.h
+    game_card/gamecard.ui
+    ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
 )
 
 target_include_directories(gamelog-gui

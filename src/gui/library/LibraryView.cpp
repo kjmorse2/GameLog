@@ -6,8 +6,8 @@
 
 #include "LibraryView.h"
 
-#include <QPushButton>
 #include <QObject>
+#include "gui/game_card/GameCard.h"
 
 #include "ui_libraryview.h"
 
@@ -17,6 +17,10 @@ LibraryView::LibraryView(QWidget *parent, GameService *service) :
     QWidget(parent), ui(new Ui::LibraryView), service(service)
 {
     ui->setupUi(this);
+    ui->gridLayout->setContentsMargins(0, 0, 0, 0);
+    ui->gridLayout->setSpacing(12);
+    ui->gridLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
     connect(ui->refreshButton, &QPushButton::clicked, service, &GameService::listGames);
     connect(service, &GameService::gamesFound, this, &LibraryView::displayAllGames);
     service->listGames();
@@ -29,15 +33,14 @@ LibraryView::~LibraryView()
 
 void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game> &games)
 {
-    ui->gameListWidget->clear();
-    gameList_ = games;
-    for (const auto &game : gameList_)
+    int columns = 4;
+
+    for (int i = 0; i < games.size(); ++i)
     {
-        QString label = game.title;
-        if (!game.trackingEnabled)
-        {
-            label += QStringLiteral(" (tracking disabled)");
-        }
-        ui->gameListWidget->addItem(label);
+        int row = i / columns;
+        int col = i % columns;
+
+        auto *gameCard = new GameCard(ui->gameGridContainer, games[i]);
+        ui->gameGridLayout->addWidget(gameCard, row, col);
     }
 }
