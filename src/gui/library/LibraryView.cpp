@@ -33,12 +33,12 @@ LibraryView::~LibraryView()
 
 void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game> &games)
 {
-    int columns = 4;
 
     for (int i = 0; i < games.size(); ++i)
     {
-        int row = i / columns;
-        int col = i % columns;
+        constexpr int columns = 4;
+        const int row = i / columns;
+        const int col = i % columns;
 
         auto *gameCard = new GameCard(ui->gameGridContainer, games[i]);
         ui->gameGridLayout->addWidget(gameCard, row, col);
