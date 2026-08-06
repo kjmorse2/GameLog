@@ -376,4 +376,9 @@ services::GameService * GameLogRuntime::getGameService()
     return &gameService_.value();
 }
 
+services::SessionService * GameLogRuntime::getSessionService()
+{
+    return &sessionService_.value();
+}
+
 } // namespace gamelog::application

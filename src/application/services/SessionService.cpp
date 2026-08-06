@@ -54,7 +54,8 @@ SessionService::listSessionsForGame(int gameId) const
 std::optional<core::domain::Session>
 SessionService::startAutomaticSession(int gameId)
 {
-    if (activeSession_ || !gameService_.findById(gameId))
+    auto requestedGame = gameService_.findById(gameId);
+    if (activeSession_ || !requestedGame)
     {
         qCWarning(gamelogAgentLog)
             << "Cannot start an automatic session for game" << gameId;
@@ -74,6 +75,7 @@ SessionService::startAutomaticSession(int gameId)
     }
 
     activeSession_ = session;
+    emit sessionStarted(requestedGame.value());
     return activeSession_;
 }
 
@@ -99,6 +101,7 @@ std::optional<core::domain::Session> SessionService::endActiveSession()
     }
 
     activeSession_.reset();
+    emit sessionStopped();
     return completed;
 }
 

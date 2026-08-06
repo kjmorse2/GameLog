@@ -78,7 +78,7 @@ public:
     [[nodiscard]] bool reloadTrackedGames();
 
     services::GameService * getGameService();
-    services::GameService * getSessionService();
+    services::SessionService * getSessionService();
 
 private:
     // DatabaseManager must outlive every repository and service that uses its

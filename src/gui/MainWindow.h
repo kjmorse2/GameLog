@@ -1,8 +1,9 @@
 #ifndef GAMELOG_MAINWINDOW_H
 #define GAMELOG_MAINWINDOW_H
 
-#include <QWidget>
 #include <QMainWindow>
+
+#include "domain/Game.h"
 
 class QLabel;
 class QListWidget;
@@ -33,10 +34,15 @@ public:
     explicit MainWindow(application::GameLogRuntime &runtime, QWidget *parent = nullptr);
     ~MainWindow() override;
 
+private slots:
+    void onSessionStarted(const core::domain::Game & game);
+    void onSessionEnded();
 private:
     Ui::MainWindow *ui;
     application::GameLogRuntime &runtime_;
-    QLabel *statusLabel_{nullptr};
+    QLabel *statusActiveLabel_;
+    QLabel *statusTitleLabel_;
+    QLabel *statusTimeLabel_;
 };
 
 } // namespace gamelog::gui

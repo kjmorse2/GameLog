@@ -33,6 +33,15 @@ LibraryView::~LibraryView()
 
 void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game> &games)
 {
+    while (QLayoutItem *item = ui->gameGridLayout->takeAt(0))
+    {
+        if (QWidget *widget = item->widget())
+        {
+            widget->setParent(nullptr);
+            delete widget;
+        }
+        delete item;
+    }
 
     for (int i = 0; i < games.size(); ++i)
     {

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "database/SessionRepository.h"
+#include "domain/Game.h"
 #include "domain/Session.h"
 #include "domain/query/SessionQuery.h"
 
@@ -15,8 +16,9 @@ class GameService;
 /**
  * Application-facing session operations and lifecycle facade.
  */
-class SessionService
+class SessionService : public QObject
 {
+Q_OBJECT
 public:
     SessionService(
         core::database::SessionRepository &repository,
@@ -36,6 +38,10 @@ public:
     [[nodiscard]] bool addSession(core::domain::Session &session);
     [[nodiscard]] bool updateSession(const core::domain::Session &session);
     [[nodiscard]] bool removeSession(int sessionId);
+
+signals:
+    void sessionStarted(core::domain::Game requestedGame);
+    void sessionStopped();
 
 private:
     core::database::SessionRepository &repository_;
