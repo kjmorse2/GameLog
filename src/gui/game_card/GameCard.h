@@ -20,7 +20,7 @@ class GameCard : public QWidget
     Q_OBJECT
 
 public:
-    explicit GameCard(QWidget *parent = nullptr, gamelog::core::domain::Game game = {});
+    explicit GameCard(QWidget *parent = nullptr, const gamelog::core::domain::Game& game = {});
     ~GameCard() override;
 
     [[nodiscard]] QSize sizeHint() const override;

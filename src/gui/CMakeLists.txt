@@ -7,12 +7,12 @@ add_library(gamelog-gui STATIC
     library/LibraryView.h
     library/LibraryView.cpp
     library/libraryview.ui
-    calander/CalanderView.cpp
-    calander/CalanderView.h
-    calander/calanderview.ui
     game_card/GameCard.cpp
     game_card/GameCard.h
     game_card/gamecard.ui
+    calendar/CalendarView.cpp
+    calendar/CalendarView.h
+    calendar/calendarview.ui
     ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
 )
 

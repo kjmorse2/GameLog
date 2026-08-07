@@ -154,4 +154,9 @@ bool SessionService::removeSession(int sessionId)
     return true;
 }
 
+std::optional<std::vector<core::domain::Session>> SessionService::getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const
+{
+
+}
+
 } // namespace gamelog::application::services

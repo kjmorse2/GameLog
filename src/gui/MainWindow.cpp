@@ -6,7 +6,7 @@
 
 #include "application/GameLogRuntime.h"
 #include "application/services/SessionService.h"
-#include "calander/CalanderView.h"
+#include "calendar/CalendarView.h"
 #include "library/LibraryView.h"
 
 #include "ui_mainwindow.h"
@@ -32,8 +32,7 @@ MainWindow::MainWindow(application::GameLogRuntime &runtime, QWidget *parent):
     auto *libraryViewWidget = new LibraryView{ui->libraryTab, runtime.getGameService()};
     ui->libraryTabLayout->addWidget(libraryViewWidget);
 
-    auto *calanderViewWidget = new CalanderView{ui->calanderTab};
-    ui->calanderTabLayout->addWidget(calanderViewWidget);
+    ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab});
 
     statusActiveLabel_ = new QLabel{ui->statusBar};
     statusTitleLabel_ = new QLabel{ui->statusBar};

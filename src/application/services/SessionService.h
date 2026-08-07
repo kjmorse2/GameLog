@@ -24,15 +24,13 @@ public:
         core::database::SessionRepository &repository,
         const GameService &gameService);
 
-    [[nodiscard]] std::vector<core::domain::Session>
-    search(const core::domain::query::SessionQuery &query) const;
+    [[nodiscard]] std::vector<core::domain::Session> search(const core::domain::query::SessionQuery &query) const;
+    [[nodiscard]] std::vector<core::domain::Session> getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const;
 
     [[nodiscard]] std::optional<core::domain::Session> findActiveSession() const;
-    [[nodiscard]] std::vector<core::domain::Session>
-    listSessionsForGame(int gameId) const;
+    [[nodiscard]] std::vector<core::domain::Session> listSessionsForGame(int gameId) const;
 
-    [[nodiscard]] std::optional<core::domain::Session>
-    startAutomaticSession(int gameId);
+    [[nodiscard]] std::optional<core::domain::Session> startAutomaticSession(int gameId);
     [[nodiscard]] std::optional<core::domain::Session> endActiveSession();
 
     [[nodiscard]] bool addSession(core::domain::Session &session);
