@@ -20,13 +20,37 @@ class GameCard : public QWidget
     Q_OBJECT
 
 public:
+    /**
+     * A visual Game Card widget.
+     * @param parent The QWidget parent.
+     * @param game The Game object to construct from.
+     */
     explicit GameCard(QWidget *parent = nullptr, const gamelog::core::domain::Game& game = {});
     ~GameCard() override;
 
+    /**
+     * Returns the recommended size for the widget.
+     * @return
+     */
     [[nodiscard]] QSize sizeHint() const override;
+
+    /**
+     * Returns the minimum size for the widget.
+     * @return
+     */
     [[nodiscard]] QSize minimumSizeHint() const override;
 
+    /**
+     * Returns whether the widget has a height for a given width.
+     * @return
+     */
     [[nodiscard]] bool hasHeightForWidth() const override;
+
+    /**
+     * Returns the height for the given width.
+     * @param width The width to get height for.
+     * @return The calculated height for the width.
+     */
     [[nodiscard]] int heightForWidth(int width) const override;
 
 private:

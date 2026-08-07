@@ -23,7 +23,7 @@ CalendarView::~CalendarView()
     delete ui;
 }
 
-void CalendarView::onPageChanged(int year, int month);
+void CalendarView::onPageChanged(int year, int month)
 {
     return;
 }

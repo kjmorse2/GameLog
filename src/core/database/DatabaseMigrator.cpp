@@ -25,7 +25,8 @@ static void initializeMigrationResources()
 
 namespace gamelog::core::database {
 
-    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase &database) : database_{database}
+    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase &database) :
+    database_{database}
     {
         initializeMigrationResources();
     }
@@ -35,8 +36,7 @@ namespace gamelog::core::database {
         // The migrator only operates on a live connection.
         if (!database_.isValid() || !database_.isOpen())
         {
-            qCWarning(gamelogDatabaseLog)
-                    << "Cannot run migrations on a closed or invalid database.";
+            qCWarning(gamelogDatabaseLog) << "Cannot run migrations on a closed or invalid database.";
             return false;
         }
 

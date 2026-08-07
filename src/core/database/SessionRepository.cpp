@@ -12,65 +12,68 @@
 #include <QStringList>
 #include <QVariant>
 
+using gamelog::core::domain::SessionSource;
+using gamelog::core::domain::SessionStatus;
+using gamelog::core::domain::query::SessionQuery;
+using gamelog::core::domain::query::SessionSortField;
+using gamelog::core::domain::query::SortDirection;
+
 namespace gamelog::core::database {
 namespace {
 
-using domain::query::SessionQuery;
-using domain::query::SessionSortField;
-using domain::query::SortDirection;
 
-QString sourceToString(domain::SessionSource source)
+QString sourceToString(SessionSource source)
 {
     switch (source)
     {
-        case domain::SessionSource::Automatic:
+        case SessionSource::Automatic:
             return QStringLiteral("automatic");
-        case domain::SessionSource::Manual:
+        case SessionSource::Manual:
             return QStringLiteral("manual");
     }
     return QStringLiteral("automatic");
 }
 
-QString statusToString(domain::SessionStatus status)
+QString statusToString(SessionStatus status)
 {
     switch (status)
     {
-        case domain::SessionStatus::Active:
+        case SessionStatus::Active:
             return QStringLiteral("active");
-        case domain::SessionStatus::Completed:
+        case SessionStatus::Completed:
             return QStringLiteral("completed");
-        case domain::SessionStatus::Interrupted:
+        case SessionStatus::Interrupted:
             return QStringLiteral("interrupted");
     }
     return QStringLiteral("interrupted");
 }
 
-std::optional<domain::SessionSource> sourceFromString(const QString &value)
+std::optional<SessionSource> sourceFromString(const QString &value)
 {
     if (value == QStringLiteral("automatic"))
     {
-        return domain::SessionSource::Automatic;
+        return SessionSource::Automatic;
     }
     if (value == QStringLiteral("manual"))
     {
-        return domain::SessionSource::Manual;
+        return SessionSource::Manual;
     }
     return std::nullopt;
 }
 
-std::optional<domain::SessionStatus> statusFromString(const QString &value)
+std::optional<SessionStatus> statusFromString(const QString &value)
 {
     if (value == QStringLiteral("active"))
     {
-        return domain::SessionStatus::Active;
+        return SessionStatus::Active;
     }
     if (value == QStringLiteral("completed"))
     {
-        return domain::SessionStatus::Completed;
+        return SessionStatus::Completed;
     }
     if (value == QStringLiteral("interrupted"))
     {
-        return domain::SessionStatus::Interrupted;
+        return SessionStatus::Interrupted;
     }
     return std::nullopt;
 }
@@ -90,7 +93,7 @@ QString dateTimeToDatabase(const QDateTime &value)
     return value.toUTC().toString(Qt::ISODateWithMs);
 }
 
-std::optional<domain::Session> sessionFromQuery(const QSqlQuery &query)
+std::optional<Session> sessionFromQuery(const QSqlQuery &query)
 {
     const auto source =
         sourceFromString(query.value(QStringLiteral("source")).toString());
@@ -104,7 +107,7 @@ std::optional<domain::Session> sessionFromQuery(const QSqlQuery &query)
         return std::nullopt;
     }
 
-    domain::Session session;
+    Session session;
     session.id = query.value(QStringLiteral("id")).toInt();
     session.gameId = query.value(QStringLiteral("game_id")).toInt();
     session.startTimestamp = dateTimeFromDatabase(
@@ -177,12 +180,11 @@ void appendInPredicate(
 
 } // namespace
 
-SessionRepository::SessionRepository(const QSqlDatabase &database)
-    : database_{database}
+SessionRepository::SessionRepository(const QSqlDatabase &database) :
+    database_{database}
 {}
 
-std::vector<domain::Session>
-SessionRepository::query(const SessionQuery &specification) const
+vector<Session> SessionRepository::query(const SessionQuery &specification) const
 {
     QString sql = QStringLiteral(
         "SELECT id, game_id, start_timestamp_utc, end_timestamp_utc, "
@@ -210,7 +212,7 @@ SessionRepository::query(const SessionQuery &specification) const
         predicates, bindings);
 
     QList<QVariant> sources;
-    for (const domain::SessionSource source : specification.sources)
+    for (const SessionSource source : specification.sources)
     {
         sources.push_back(sourceToString(source));
     }
@@ -219,7 +221,7 @@ SessionRepository::query(const SessionQuery &specification) const
         predicates, bindings);
 
     QList<QVariant> statuses;
-    for (const domain::SessionStatus status : specification.statuses)
+    for (const SessionStatus status : specification.statuses)
     {
         statuses.push_back(statusToString(status));
     }
@@ -328,7 +330,7 @@ SessionRepository::query(const SessionQuery &specification) const
         return {};
     }
 
-    std::vector<domain::Session> sessions;
+    vector<Session> sessions;
     while (sqlQuery.next())
     {
         if (const auto session = sessionFromQuery(sqlQuery))
@@ -339,7 +341,7 @@ SessionRepository::query(const SessionQuery &specification) const
     return sessions;
 }
 
-bool SessionRepository::insert(domain::Session &session)
+bool SessionRepository::insert(Session &session)
 {
     if (session.id != 0)
     {
@@ -385,7 +387,7 @@ bool SessionRepository::insert(domain::Session &session)
     return true;
 }
 
-bool SessionRepository::update(const domain::Session &session)
+bool SessionRepository::update(const Session &session)
 {
     if (session.id <= 0)
     {

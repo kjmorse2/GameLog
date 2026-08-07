@@ -6,19 +6,23 @@
 #include <optional>
 #include <vector>
 
-#include <QString>
-
 #include "database/DatabaseManager.h"
 #include "database/GameRepository.h"
 #include "database/SessionRepository.h"
 #include "domain/Game.h"
 #include "domain/Session.h"
-#include "domain/query/GameQuery.h"
-#include "domain/query/SessionQuery.h"
 #include "process/ProcessInfo.h"
 #include "process/SteamProcessInspector.h"
 #include "services/GameService.h"
 #include "services/SessionService.h"
+
+using std::vector;
+using std::optional;
+using gamelog::core::domain::Game;
+using gamelog::core::domain::Session;
+using gamelog::core::process::ProcessInfo;
+using std::chrono::seconds;
+
 
 namespace gamelog::core::process {
 class ProcessSource;
@@ -56,20 +60,13 @@ public:
      * Updates the runtime.
      * @param elapsed The time that has elapsed since the last update.
      */
-    void update(std::chrono::seconds elapsed);
-
-    [[nodiscard]] std::vector<core::domain::Game> searchGames(
-        const core::domain::query::GameQuery &query) const;
-    [[nodiscard]] std::vector<core::domain::Session> searchSessions(
-        const core::domain::query::SessionQuery &query) const;
-
-    [[nodiscard]] std::vector<core::domain::Game> listGames() const;
+    void update(seconds elapsed);
 
     /**
      * Returns the currently active session, including a restored handoff.
      * @return The active session if one exists.
      */
-    [[nodiscard]] std::optional<core::domain::Session> activeSession() const;
+    [[nodiscard]] optional<Session> activeSession() const;
 
     /**
      * Refreshes the process-matching cache after library edits.
@@ -92,19 +89,14 @@ private:
     /**
      * @brief interface for the games table.
      */
-    std::optional<core::database::GameRepository> gameRepository_;
+    optional<core::database::GameRepository> gameRepository_;
 
     /**
      * @brief interface for the sessions table.
      */
-    std::optional<core::database::SessionRepository> sessionRepository_;
-    std::optional<services::GameService> gameService_;
-    std::optional<services::SessionService> sessionService_;
-
-    /**
-     * @brief interface for the session manager.
-     */
-    // std::optional<core::sessions::SessionManager> sessionManager_;
+    optional<core::database::SessionRepository> sessionRepository_;
+    optional<services::GameService> gameService_;
+    optional<services::SessionService> sessionService_;
 
     /**
      * @brief Libprocs2 based process inspector helper.
@@ -119,22 +111,22 @@ private:
     /**
      * @brief A cache of tracked Steam games, loaded from database.
      */
-    QHash<std::uint32_t, core::domain::Game> trackedSteamGames_;
+    QHash<std::uint32_t, Game> trackedSteamGames_;
 
     /**
      * @brief A cache of tracked games by path, loaded from database.
      */
-    QHash<QString, core::domain::Game> trackedPathGames_;
+    QHash<QString, Game> trackedPathGames_;
 
     /**
      * @brief Game struct for active game session, if there is one.
      */
-    std::optional<core::domain::Game> activeGame_;
+    optional<Game> activeGame_;
 
     /**
      * @brief The ID of the game that is pending to be started.
      */
-    std::optional<int> pendingGameId_;
+    optional<int> pendingGameId_;
 
     /**
      * @brief Indicates if the runtime is currently running.
@@ -149,22 +141,22 @@ private:
     /**
      * @brief Tracks seconds since session started
      */
-    std::chrono::seconds gameOpenDuration_{0};
+    seconds gameOpenDuration_{0};
 
     /**
      * @brief Tracks seconds since game from active session closed.
      */
-    std::chrono::seconds gameClosedDuration_{0};
+    seconds gameClosedDuration_{0};
 
     /**
      * @breif Controls how long a game must be open to start a session.
      */
-    static constexpr std::chrono::seconds kStartGracePeriod{30};
+    static constexpr seconds kStartGracePeriod{30};
 
     /**
      * @breif Controls how long a game must be closed to end a session.
      */
-    static constexpr std::chrono::seconds kEndGracePeriod{30};
+    static constexpr seconds kEndGracePeriod{30};
 
     /**
      * Synchronizes the games with the database into the cached QHashes.
@@ -177,12 +169,28 @@ private:
      * @return A boolean describing if the active session was found.
      */
     [[nodiscard]] bool restoreActiveSession();
-    [[nodiscard]] std::optional<core::domain::Game>
-    matchTrackedGame(const core::process::ProcessInfo &process) const;
-    [[nodiscard]] bool processMatchesGame(
-        const core::process::ProcessInfo &process,
-        const core::domain::Game &game) const;
-    [[nodiscard]] bool startNewSession(const core::domain::Game &game);
+
+    /**
+     * Matches a process to the tracked games.
+     * @param process The process to chec
+     * @return The game, if one is found that matches.
+     */
+    [[nodiscard]] optional<Game> matchTrackedGame(const ProcessInfo &process) const;
+
+    /**
+     * Checks if a process matches a game.
+     * @param process The process to check.
+     * @param game The game to check.
+     * @return A boolean describing if the process matches the game.
+     */
+    [[nodiscard]] static bool processMatchesGame(const ProcessInfo &process, const Game &game) ;
+
+    /**
+     * Starts a new session for the given game.
+     * @param game The game to start a session for.
+     * @return A boolean describing if the session was started successfully.
+     */
+    [[nodiscard]] bool startNewSession(const Game &game);
 
     /**
      * @brief End the active session.

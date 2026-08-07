@@ -1,5 +1,4 @@
 #include "application/services/SessionService.h"
-
 #include "application/services/GameService.h"
 #include "logging/LoggingCategories.h"
 
@@ -9,23 +8,25 @@
 
 #include <QDateTime>
 
+using gamelog::core::domain::SessionSource;
+using gamelog::core::domain::SessionStatus;
+
 namespace gamelog::application::services {
 
-SessionService::SessionService(
-    core::database::SessionRepository &repository,
-    const GameService &gameService)
-    : repository_{repository}, gameService_{gameService}
+SessionService::SessionService( SessionRepository &repository, const GameService &gameService)
+    : repository_{repository},
+    gameService_{gameService}
 {
     restoreActiveSession();
 }
 
-std::vector<core::domain::Session>
-SessionService::search(const core::domain::query::SessionQuery &query) const
+vector<Session>
+SessionService::search(const SessionQuery &query) const
 {
     return repository_.query(query);
 }
 
-std::optional<core::domain::Session>
+optional<Session>
 SessionService::findActiveSession() const
 {
     return activeSession_;
@@ -33,25 +34,23 @@ SessionService::findActiveSession() const
 
 void SessionService::restoreActiveSession()
 {
-    core::domain::query::SessionQuery query;
-    query.statuses = {core::domain::SessionStatus::Active};
+    SessionQuery query;
+    query.statuses = {SessionStatus::Active};
     query.limit = 1;
 
     auto sessions = search(query);
-    activeSession_ = sessions.empty()
-        ? std::nullopt
-        : std::optional<core::domain::Session>{std::move(sessions.front())};
+    activeSession_ = sessions.empty() ? std::nullopt : optional{std::move(sessions.front())};
 }
 
-std::vector<core::domain::Session>
+vector<Session>
 SessionService::listSessionsForGame(int gameId) const
 {
-    core::domain::query::SessionQuery query;
+    SessionQuery query;
     query.gameIds = {gameId};
     return search(query);
 }
 
-std::optional<core::domain::Session>
+optional<Session>
 SessionService::startAutomaticSession(int gameId)
 {
     auto requestedGame = gameService_.findById(gameId);
@@ -62,12 +61,12 @@ SessionService::startAutomaticSession(int gameId)
         return std::nullopt;
     }
 
-    core::domain::Session session;
+    Session session;
     session.gameId = gameId;
     session.startTimestamp = QDateTime::currentDateTimeUtc();
     session.trackedDuration = std::chrono::seconds::zero();
-    session.source = core::domain::SessionSource::Automatic;
-    session.status = core::domain::SessionStatus::Active;
+    session.source = SessionSource::Automatic;
+    session.status = SessionStatus::Active;
 
     if (!repository_.insert(session))
     {
@@ -79,21 +78,21 @@ SessionService::startAutomaticSession(int gameId)
     return activeSession_;
 }
 
-std::optional<core::domain::Session> SessionService::endActiveSession()
+optional<Session> SessionService::endActiveSession()
 {
     if (!activeSession_)
     {
         return std::nullopt;
     }
 
-    core::domain::Session completed = *activeSession_;
+    Session completed = *activeSession_;
     const QDateTime endedAt = QDateTime::currentDateTimeUtc();
     completed.endTimestamp = endedAt;
     using DurationRep = std::chrono::seconds::rep;
     completed.trackedDuration = std::chrono::seconds{
         static_cast<DurationRep>(
             std::max<qint64>(0, completed.startTimestamp.secsTo(endedAt)))};
-    completed.status = core::domain::SessionStatus::Completed;
+    completed.status = SessionStatus::Completed;
 
     if (!repository_.update(completed))
     {
@@ -105,9 +104,9 @@ std::optional<core::domain::Session> SessionService::endActiveSession()
     return completed;
 }
 
-bool SessionService::addSession(core::domain::Session &session)
+bool SessionService::addSession(Session &session)
 {
-    if (session.status == core::domain::SessionStatus::Active && activeSession_)
+    if (session.status == SessionStatus::Active && activeSession_)
     {
         return false;
     }
@@ -116,21 +115,21 @@ bool SessionService::addSession(core::domain::Session &session)
     {
         return false;
     }
-    if (session.status == core::domain::SessionStatus::Active)
+    if (session.status == SessionStatus::Active)
     {
         activeSession_ = session;
     }
     return true;
 }
 
-bool SessionService::updateSession(const core::domain::Session &session)
+bool SessionService::updateSession(const Session &session)
 {
     if (!repository_.update(session))
     {
         return false;
     }
 
-    if (session.status == core::domain::SessionStatus::Active)
+    if (session.status == SessionStatus::Active)
     {
         activeSession_ = session;
     }
@@ -154,9 +153,9 @@ bool SessionService::removeSession(int sessionId)
     return true;
 }
 
-std::optional<std::vector<core::domain::Session>> SessionService::getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const
+vector<Session> SessionService::getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const
 {
-
+    return{};
 }
 
 } // namespace gamelog::application::services

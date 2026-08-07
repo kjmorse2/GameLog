@@ -24,15 +24,42 @@ class CalendarView : public QWidget
     Q_OBJECT
 
 public:
+    /**
+     * Creates a new CalendarView.
+     * @param parent The parent widget.
+     * @param gameService The game service to query/edit for games.
+     * @param sessionService The session service to querey/edit  for sessions
+     */
     explicit CalendarView(QWidget *parent = nullptr, GameService *gameService = nullptr, SessionService *sessionService = nullptr);
     ~CalendarView() override;
 
 private:
+    /**
+     * @brief ui pointer from QT
+     */
     Ui::CalendarView *ui{};
+
+    /**
+     * @brief The game service to query/edit for games.
+     */
     GameService *gameService_{};
+
+    /**
+     * @brief the session service to query/edit for sessions
+     */
     SessionService *sessionService_{};
+
+    /**
+     * @brief The calendar widget.
+     */
     QCalendarWidget *calendar_;
 private slots:
+
+    /**
+     * Called when the calendar page is changed.
+     * @param year The year the calendar is on
+     * @param month The month the calendar is on.
+     */
     void onPageChanged(int year, int month);
 };
 

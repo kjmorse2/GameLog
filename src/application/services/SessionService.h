@@ -8,6 +8,13 @@
 #include "domain/Session.h"
 #include "domain/query/SessionQuery.h"
 
+using std::vector;
+using std::optional;
+using gamelog::core::domain::Session;
+using gamelog::core::domain::Game;
+using gamelog::core::domain::query::SessionQuery;
+using gamelog::core::database::SessionRepository;
+
 namespace gamelog::application::services {
 
 class GameService;
@@ -20,31 +27,29 @@ class SessionService : public QObject
 {
 Q_OBJECT
 public:
-    SessionService(
-        core::database::SessionRepository &repository,
-        const GameService &gameService);
+    SessionService( SessionRepository &repository, const GameService &gameService);
 
-    [[nodiscard]] std::vector<core::domain::Session> search(const core::domain::query::SessionQuery &query) const;
-    [[nodiscard]] std::vector<core::domain::Session> getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const;
+    [[nodiscard]] vector<Session> search(const SessionQuery &query) const;
+    [[nodiscard]] vector<Session> getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const;
 
-    [[nodiscard]] std::optional<core::domain::Session> findActiveSession() const;
-    [[nodiscard]] std::vector<core::domain::Session> listSessionsForGame(int gameId) const;
+    [[nodiscard]] optional<Session> findActiveSession() const;
+    [[nodiscard]] vector<Session> listSessionsForGame(int gameId) const;
 
-    [[nodiscard]] std::optional<core::domain::Session> startAutomaticSession(int gameId);
-    [[nodiscard]] std::optional<core::domain::Session> endActiveSession();
+    [[nodiscard]] optional<Session> startAutomaticSession(int gameId);
+    [[nodiscard]] optional<Session> endActiveSession();
 
-    [[nodiscard]] bool addSession(core::domain::Session &session);
-    [[nodiscard]] bool updateSession(const core::domain::Session &session);
+    [[nodiscard]] bool addSession(Session &session);
+    [[nodiscard]] bool updateSession(const Session &session);
     [[nodiscard]] bool removeSession(int sessionId);
 
 signals:
-    void sessionStarted(core::domain::Game requestedGame);
+    void sessionStarted(Game requestedGame);
     void sessionStopped();
 
 private:
-    core::database::SessionRepository &repository_;
+    SessionRepository &repository_;
     const GameService &gameService_;
-    std::optional<core::domain::Session> activeSession_;
+    optional<Session> activeSession_;
 
     void restoreActiveSession();
 };

@@ -8,6 +8,10 @@
 #include "domain/Game.h"
 #include "domain/query/GameQuery.h"
 
+using std::vector;
+using gamelog::core::domain::Game;
+using gamelog::core::domain::query::GameQuery;
+
 namespace gamelog::core::database {
 
 /**
@@ -16,13 +20,38 @@ namespace gamelog::core::database {
 class GameRepository
 {
 public:
+    /**
+     * Constructs a GameRepository
+     * @param database The database to read from.
+     */
     explicit GameRepository(const QSqlDatabase &database);
 
-    [[nodiscard]] std::vector<domain::Game>
-    query(const domain::query::GameQuery &specification) const;
+    /**
+     * Queries the database for games matching the given specification.
+     * @param specification The query specification.
+     * @return A vector of games matching the specification.
+     */
+    [[nodiscard]] vector<Game> query(const GameQuery &specification) const;
 
-    [[nodiscard]] bool insert(domain::Game &game);
-    [[nodiscard]] bool update(const domain::Game &game);
+    /**
+     * Inserts a game into the database.
+     * @param game The game to insert.
+     * @return True if the game was inserted, false otherwise.
+     */
+    [[nodiscard]] bool insert(Game &game);
+
+    /**
+     * Updates a game in the database.
+     * @param game The game to update.
+     * @return True if the game was updated, false otherwise.
+     */
+    [[nodiscard]] bool update(const Game &game);
+
+    /**
+     * Removes a Game from the database.
+     * @param id The ID of the game to remove.
+     * @return True if the game was removed, false otherwise.
+     */
     [[nodiscard]] bool remove(std::int64_t id);
 
 private:

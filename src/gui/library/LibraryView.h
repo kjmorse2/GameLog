@@ -23,16 +23,35 @@ class LibraryView : public QWidget
     Q_OBJECT
 
 public:
+    /**
+     * Constructs a LibraryView.
+     * @param parent The parent widget.
+     * @param service The Game service to querey Games for.
+     */
     explicit LibraryView(QWidget *parent = nullptr, gamelog::application::services::GameService *service = nullptr);
     ~LibraryView() override;
 
-    void displayAllGames(const std::vector<gamelog::core::domain::Game>&);
+    /**
+     * Displays all games in the library.
+     * @param games The list of games to display.
+     */
+    void displayAllGames(const std::vector<Game>& games);
 
 private:
+    /**
+     * @brief UI pointer from QT
+     */
     Ui::LibraryView *ui{};
-    std::vector<gamelog::core::domain::Game> gameList_;
-    gamelog::application::services::GameService *service;
 
+    /**
+     * @brief The list of games on display in the library.
+     */
+    std::vector<Game> gameList_;
+
+    /**
+     * @brief The Game service to query Games for.
+     */
+    gamelog::application::services::GameService *service;
 };
 
 

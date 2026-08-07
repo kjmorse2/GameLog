@@ -59,7 +59,7 @@ namespace gamelog::core::database {
         /**
          * @brief Reports whether a migration version is already recorded.
          * @param version to check if it is applied.
-         * @param Optional boolean. False if not applied, true if applied, and null if version does not exist.
+         * @return Optional boolean. False if not applied, true if applied, and null if version does not exist.
          */
         [[nodiscard]] std::optional<bool> isApplied(int version) const;
 
