@@ -153,9 +153,12 @@ bool SessionService::removeSession(int sessionId)
     return true;
 }
 
-vector<Session> SessionService::getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const
+vector<Session> SessionService::getSessionsInTimeRange(const QDateTime &startDate, const QDateTime &endDate) const
 {
-    return{};
+    SessionQuery query;
+    query.startedAtOrAfter = startDate;
+    query.startedBefore =  endDate;
+    return search(query);
 }
 
 } // namespace gamelog::application::services

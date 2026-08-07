@@ -32,7 +32,7 @@ MainWindow::MainWindow(application::GameLogRuntime &runtime, QWidget *parent):
     auto *libraryViewWidget = new LibraryView{ui->libraryTab, runtime.getGameService()};
     ui->libraryTabLayout->addWidget(libraryViewWidget);
 
-    ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab});
+    ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getGameService(), runtime.getSessionService()});
 
     statusActiveLabel_ = new QLabel{ui->statusBar};
     statusTitleLabel_ = new QLabel{ui->statusBar};

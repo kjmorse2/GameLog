@@ -4,6 +4,7 @@
 
 // You may need to build the project (run Qt uic code generator) to get "ui_CalendarView.h" resolved
 
+#include <QTextCharFormat>
 #include "CalendarView.h"
 #include "ui_calendarview.h"
 
@@ -16,6 +17,7 @@ CalendarView::CalendarView(QWidget *parent, GameService *gameService, SessionSer
     sessionService_ = sessionService;
     calendar_ = ui->calendarWidget;
     connect(calendar_, &QCalendarWidget::currentPageChanged, this, &CalendarView::onPageChanged);
+    emit calendar_->currentPageChanged(calendar_->monthShown(), calendar_->yearShown());
 }
 
 CalendarView::~CalendarView()
@@ -25,5 +27,17 @@ CalendarView::~CalendarView()
 
 void CalendarView::onPageChanged(int year, int month)
 {
-    return;
+    QDateTime startDate = QDateTime{QDate(year, month, 1), QTime{0, 0}};
+    QDateTime endDate = QDateTime{QDate(year, (month + 1) % 12, 1), QTime{0,0 }};
+    vector<Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate,  endDate);
+    for (const auto& session : foundSessions)
+    {
+        QDate date = session.startTimestamp.date();
+
+        QTextCharFormat format;
+        format.setBackground(QBrush{Qt::red});
+        format.setForeground(QBrush{Qt::white});
+
+        ui->calendarWidget->setDateTextFormat(date, format);
+    }
 }

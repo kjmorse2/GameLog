@@ -30,7 +30,6 @@ public:
     SessionService( SessionRepository &repository, const GameService &gameService);
 
     [[nodiscard]] vector<Session> search(const SessionQuery &query) const;
-    [[nodiscard]] vector<Session> getSessionsInDateRange(const QDate &startDate, const QDate &endDate) const;
 
     [[nodiscard]] optional<Session> findActiveSession() const;
     [[nodiscard]] vector<Session> listSessionsForGame(int gameId) const;
@@ -41,6 +40,8 @@ public:
     [[nodiscard]] bool addSession(Session &session);
     [[nodiscard]] bool updateSession(const Session &session);
     [[nodiscard]] bool removeSession(int sessionId);
+public slots:
+    [[nodiscard]] vector<Session> getSessionsInTimeRange(const QDateTime &startDate, const QDateTime &endDate) const;
 
 signals:
     void sessionStarted(Game requestedGame);
