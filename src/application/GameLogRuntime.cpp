@@ -281,23 +281,20 @@ bool GameLogRuntime::startNewSession(const d::Game &game)
 {
     if (!sessionService_)
     {
-        qCWarning(gamelogAgentLog)
-            << "Cannot start a session because SessionService is unavailable.";
+        qCWarning(gamelogAgentLog) << "Cannot start a session because SessionService is unavailable.";
         return false;
     }
 
     const auto session = sessionService_->startAutomaticSession(game.id);
     if (!session)
     {
-        qCWarning(gamelogAgentLog)
-            << "Failed to start session for:" << game.title;
+        qCWarning(gamelogAgentLog) << "Failed to start session for:" << game.title;
         return false;
     }
 
     activeGame_ = game;
     gameClosedDuration_ = seconds::zero();
-    qCInfo(gamelogAgentLog)
-        << "Started session" << session->id << "for game:" << game.title;
+    qCInfo(gamelogAgentLog) << "Started session" << session->id << "for game:" << game.title;
     return true;
 }
 

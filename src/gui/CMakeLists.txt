@@ -13,6 +13,9 @@ add_library(gamelog-gui STATIC
     calendar/CalendarView.cpp
     calendar/CalendarView.h
     calendar/calendarview.ui
+    live_window/LiveWindow.cpp
+    live_window/LiveWindow.h
+    live_window/livewindow.ui
     ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
 )
 

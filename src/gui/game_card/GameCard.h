@@ -25,7 +25,7 @@ public:
      * @param parent The QWidget parent.
      * @param game The Game object to construct from.
      */
-    explicit GameCard(QWidget *parent = nullptr, const gamelog::core::domain::Game& game = {});
+    explicit GameCard(QWidget *parent = nullptr, const gamelog::core::domain::Game& game = emptyGameCard);
     ~GameCard() override;
 
     /**
@@ -55,6 +55,7 @@ public:
 
 private:
     Ui::GameCard *ui;
+    inline static const gamelog::core::domain::Game emptyGameCard = {-1, QStringLiteral(""), QStringLiteral(""), QStringLiteral(""), -1, QStringLiteral(""), false};
 };
 
 

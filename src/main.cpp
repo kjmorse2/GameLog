@@ -14,6 +14,7 @@
 #include "application/GameLogRuntime.h"
 #include "database/DatabaseManager.h"
 #include "gui/MainWindow.h"
+#include "gui/live_window/LiveWindow.h"
 #include "logging/LoggingCategories.h"
 
 namespace {
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
 
     std::unique_ptr<QCoreApplication> application;
 
-    if (*mode == RunMode::Gui)
+    if (*mode == RunMode::Gui || *mode == RunMode::Live)
     {
         application = std::make_unique<QApplication>(argc, argv);
     }
@@ -188,12 +189,17 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    std::unique_ptr<gamelog::gui::MainWindow> mainWindow;
+    std::unique_ptr<QMainWindow> mainWindow;
 
     if (*mode == RunMode::Gui)
     {
         mainWindow =
             std::make_unique<gamelog::gui::MainWindow>(runtime);
+        mainWindow->show();
+    }
+    if (*mode == RunMode::Live)
+    {
+        mainWindow = std::make_unique<gamelog::gui::LiveWindow>(runtime);
         mainWindow->show();
     }
     else

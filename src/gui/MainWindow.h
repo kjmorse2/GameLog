@@ -2,7 +2,6 @@
 #define GAMELOG_MAINWINDOW_H
 
 #include <QMainWindow>
-
 #include "domain/Game.h"
 
 class QLabel;
