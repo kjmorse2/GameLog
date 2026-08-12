@@ -21,7 +21,15 @@ namespace {
 enum class RunMode
 {
     Headless,
-    Gui
+    Gui,
+    Live
+};
+
+std::map<const char*, RunMode> RunModeMap
+{
+    {"--headless", RunMode::Headless},
+    {"--gui", RunMode::Gui},
+    {"--live", RunMode::Live}
 };
 
 /**
@@ -40,7 +48,6 @@ bool hasArgument(int argc, char *argv[], const char *argument)
             return true;
         }
     }
-
     return false;
 }
 
@@ -52,16 +59,32 @@ bool hasArgument(int argc, char *argv[], const char *argument)
  */
 std::optional<RunMode> determineRunMode(int argc, char *argv[])
 {
-    const bool headless = hasArgument(argc, argv, "--headless");
-    const bool gui = hasArgument(argc, argv, "--gui");
-
-    if (headless && gui)
+    std::vector<const char*> runModesArguments;
+    // Extract keys using a loop
+    for (auto & it : RunModeMap)
     {
-        return std::nullopt;
+        runModesArguments.push_back(it.first);
     }
 
-    // Launching gamelog directly is equivalent to --gui.
-    return headless ? RunMode::Headless : RunMode::Gui;
+    std::optional<RunMode> foundRunMode = std::nullopt;
+    int numOfModes = 0;
+
+    for (auto runMode : runModesArguments)
+    {
+        for (int index = 1; index < argc; ++index)
+        {
+            if (std::strcmp(argv[index], runMode) == 0)
+            {
+                numOfModes++;
+                foundRunMode = RunModeMap.at(runMode);
+            }
+        }
+    }
+    if (numOfModes == 1)
+    {
+        return foundRunMode;
+    }
+    return std::nullopt;
 }
 
 /**

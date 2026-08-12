@@ -17,7 +17,7 @@ CalendarView::CalendarView(QWidget *parent, GameService *gameService, SessionSer
     sessionService_ = sessionService;
     calendar_ = ui->calendarWidget;
     connect(calendar_, &QCalendarWidget::currentPageChanged, this, &CalendarView::onPageChanged);
-    emit calendar_->currentPageChanged(calendar_->monthShown(), calendar_->yearShown());
+    emit calendar_->currentPageChanged(calendar_->yearShown(), calendar_->monthShown());
 }
 
 CalendarView::~CalendarView()
