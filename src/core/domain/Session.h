@@ -5,8 +5,8 @@
 
 #include <QDateTime>
 
-namespace gamelog::core::domain {
-
+namespace gamelog::core::domain
+{
     enum class SessionSource
     {
         Automatic,
@@ -25,14 +25,14 @@ namespace gamelog::core::domain {
      * @param sourceString the string to convert.
      * @return the corresponding SessionSource enum.
      */
-    SessionSource sessionSourceFromString(const QString &sourceString);
+    SessionSource sessionSourceFromString(const QString& sourceString);
 
     /**
      * @brief Converts a string to a SessionStatus enum.
      * @param statusString the string to convert.
      * @return the corresponding SessionStatus enum.
      */
-    SessionStatus sessionStatusFromString(const QString &statusString);
+    SessionStatus sessionStatusFromString(const QString& statusString);
 
     /**
      * @brief Represents one tracked play session.
@@ -56,5 +56,4 @@ namespace gamelog::core::domain {
         SessionSource source{SessionSource::Automatic};
         SessionStatus status{SessionStatus::Active};
     };
-
 } // namespace gamelog::core::domain

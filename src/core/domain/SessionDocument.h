@@ -3,7 +3,8 @@
 #include <QDateTime>
 #include <QString>
 
-namespace gamelog::core::domain {
+namespace gamelog::core::domain
+{
     /**
      * @brief Stores the rich-text note document associated with a session.
      */

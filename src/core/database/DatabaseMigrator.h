@@ -6,8 +6,8 @@
 #include <QSqlDatabase>
 #include <QString>
 
-namespace gamelog::core::database {
-
+namespace gamelog::core::database
+{
     /**
      * @brief Metadata for one ordered schema migration.
      *
@@ -41,7 +41,7 @@ namespace gamelog::core::database {
         /**
          * @brief Uses an existing open database connection.
          */
-        explicit DatabaseMigrator(const QSqlDatabase &database);
+        explicit DatabaseMigrator(const QSqlDatabase& database);
 
         /**
          * @brief Ensures the migration ledger exists and applies pending steps.
@@ -68,21 +68,20 @@ namespace gamelog::core::database {
          * @param migration the Migration to apply
          * @return boolean describing success.
          */
-        [[nodiscard]] bool applyMigration(const Migration &migration);
+        [[nodiscard]] bool applyMigration(const Migration& migration);
 
         /**
          * @brief Reads a SQL script from a Qt resource path.
          * @param resourcePath The path to the Qt resource containing the SQL.
          * @return The SQL script as a string, or std::nullopt if reading fails.
          */
-        [[nodiscard]] static std::optional<QString> readMigration(const QString &resourcePath);
+        [[nodiscard]] static std::optional<QString> readMigration(const QString& resourcePath);
 
         /**
          * @brief Returns the compiled-in migration list in application order.
          */
-        [[nodiscard]] static const std::vector<Migration> &knownMigrations();
+        [[nodiscard]] static const std::vector<Migration>& knownMigrations();
 
         QSqlDatabase database_;
     };
-
 } // namespace gamelog::core::database

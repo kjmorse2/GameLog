@@ -17,103 +17,97 @@
 #include "gui/live_window/LiveWindow.h"
 #include "logging/LoggingCategories.h"
 
-namespace {
-
-enum class RunMode
+namespace
 {
-    Headless,
-    Gui,
-    Live
-};
+    enum class RunMode
+    {
+        Headless,
+        Gui,
+        Live
+    };
 
-std::map<const char*, RunMode> RunModeMap
-{
-    {"--headless", RunMode::Headless},
-    {"--gui", RunMode::Gui},
-    {"--live", RunMode::Live}
-};
+    std::map<const char *, RunMode> RunModeMap{{"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}};
 
-/**
+    /**
  * @brief Check if ran program has arguments.
  * @param argc of main.
  * @param argv of main.
  * @param argument char sequence to check for.
  * @return boolean if it has that argument.
  */
-bool hasArgument(int argc, char *argv[], const char *argument)
-{
-    for (int index = 1; index < argc; ++index)
+    bool hasArgument(int argc, char* argv[], const char* argument)
     {
-        if (std::strcmp(argv[index], argument) == 0)
+        for (int index = 1; index < argc; ++index)
         {
-            return true;
+            if (std::strcmp(argv[index], argument) == 0)
+            {
+                return true;
+            }
         }
+        return false;
     }
-    return false;
-}
 
-/**
+    /**
  * @brief Determine the run mode based on the command-line arguments.
  * @param argc of main.
  * @param argv of main.
  * @return enum RunMode of the options above.
  */
-std::optional<RunMode> determineRunMode(int argc, char *argv[])
-{
-    std::vector<const char*> runModesArguments;
-    // Extract keys using a loop
-    for (auto & it : RunModeMap)
+    std::optional<RunMode> determineRunMode(int argc, char* argv[])
     {
-        runModesArguments.push_back(it.first);
-    }
-
-    std::optional<RunMode> foundRunMode = std::nullopt;
-    int numOfModes = 0;
-
-    for (auto runMode : runModesArguments)
-    {
-        for (int index = 1; index < argc; ++index)
+        std::vector<const char *> runModesArguments;
+        // Extract keys using a loop
+        for (auto& it: RunModeMap)
         {
-            if (std::strcmp(argv[index], runMode) == 0)
+            runModesArguments.push_back(it.first);
+        }
+
+        std::optional<RunMode> foundRunMode = std::nullopt;
+        int numOfModes = 0;
+
+        for (auto runMode: runModesArguments)
+        {
+            for (int index = 1; index < argc; ++index)
             {
-                numOfModes++;
-                foundRunMode = RunModeMap.at(runMode);
+                if (std::strcmp(argv[index], runMode) == 0)
+                {
+                    numOfModes++;
+                    foundRunMode = RunModeMap.at(runMode);
+                }
             }
         }
+        if (numOfModes == 1)
+        {
+            return foundRunMode;
+        }
+        return std::nullopt;
     }
-    if (numOfModes == 1)
-    {
-        return foundRunMode;
-    }
-    return std::nullopt;
-}
 
-/**
+    /**
  * @brief Get the path to the GameLog runtime lock file.
  * @return The path to the lock file, or an empty string if it cannot be determined.
  */
-QString runtimeLockPath()
-{
-    QString runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
-
-    if (runtimeDirectory.isEmpty())
+    QString runtimeLockPath()
     {
-        runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+        QString runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+
+        if (runtimeDirectory.isEmpty())
+        {
+            runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+        }
+
+        QDir directory{runtimeDirectory};
+
+        if (!directory.mkpath(QStringLiteral("gamelog")))
+        {
+            return {};
+        }
+
+        return directory.filePath(QStringLiteral("gamelog/runtime.lock"));
     }
-
-    QDir directory{runtimeDirectory};
-
-    if (!directory.mkpath(QStringLiteral("gamelog")))
-    {
-        return {};
-    }
-
-    return directory.filePath(QStringLiteral("gamelog/runtime.lock"));
-}
-
 } // namespace
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     const std::optional<RunMode> mode = determineRunMode(argc, argv);
 
@@ -167,21 +161,23 @@ int main(int argc, char *argv[])
     QObject::connect(
         application.get(),
         &QCoreApplication::aboutToQuit,
-        [&runtime] { runtime.stop(); });
+        [&runtime] {
+            runtime.stop();
+        }
+    );
 
     constexpr std::chrono::seconds updateInterval{5};
 
     QTimer updateTimer;
-    updateTimer.setInterval(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-                    updateInterval)
-                    .count());
+    updateTimer.setInterval(std::chrono::duration_cast<std::chrono::milliseconds>(updateInterval).count());
 
-    QObject::connect( &updateTimer,
+    QObject::connect(
+        &updateTimer,
         &QTimer::timeout,
         [&runtime, updateInterval] {
             runtime.update(updateInterval);
-        });
+        }
+    );
 
     if (!runtime.start())
     {
@@ -193,8 +189,7 @@ int main(int argc, char *argv[])
 
     if (*mode == RunMode::Gui)
     {
-        mainWindow =
-            std::make_unique<gamelog::gui::MainWindow>(runtime);
+        mainWindow = std::make_unique<gamelog::gui::MainWindow>(runtime);
         mainWindow->show();
     }
     if (*mode == RunMode::Live)

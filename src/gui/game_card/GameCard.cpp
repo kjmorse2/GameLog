@@ -9,8 +9,7 @@
 
 using gamelog::core::domain::Game;
 
-GameCard::GameCard(QWidget *parent, const Game& game) :
-    QWidget(parent), ui(new Ui::GameCard)
+GameCard::GameCard(QWidget* parent, const Game& game) : QWidget(parent), ui(new Ui::GameCard)
 {
     ui->setupUi(this);
 
@@ -18,12 +17,9 @@ GameCard::GameCard(QWidget *parent, const Game& game) :
     ui->gameArtLabel->setScaledContents(false);
 
     QPixmap imageMap = QPixmap(QStringLiteral(":images/GameArtPlaceholder.png"));
-    imageMap = imageMap.scaled(ui->gameArtLabel->size(),
-        Qt::KeepAspectRatioByExpanding,
-        Qt::SmoothTransformation);
+    imageMap = imageMap.scaled(ui->gameArtLabel->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     ui->gameArtLabel->setPixmap(imageMap);
     ui->gameTitleLabel->setText(game.title);
-
 }
 
 GameCard::~GameCard()

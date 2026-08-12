@@ -23,10 +23,9 @@ static void initializeMigrationResources()
     static_cast<void>(initialized);
 }
 
-namespace gamelog::core::database {
-
-    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase &database) :
-    database_{database}
+namespace gamelog::core::database
+{
+    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase& database) : database_{database}
     {
         initializeMigrationResources();
     }
@@ -47,7 +46,7 @@ namespace gamelog::core::database {
         }
 
         // Apply each compiled-in migration in order.
-        for (const Migration &migration: knownMigrations())
+        for (const Migration& migration: knownMigrations())
         {
             const std::optional<bool> applied = isApplied(migration.version);
 
@@ -75,14 +74,15 @@ namespace gamelog::core::database {
         // Keep the migration ledger as a tiny, dependency-free table.
 
         if (QSqlQuery query{database_}; !query.exec(
-                    R"(
+            R"(
                 CREATE TABLE IF NOT EXISTS schema_migrations
                 (
                     version INTEGER PRIMARY KEY,
                     name TEXT NOT NULL UNIQUE,
                     applied_at_utc TEXT NOT NULL
                 )
-            )"))
+            )"
+        ))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to create schema_migrations table:" << query.lastError().text();
             return false;
@@ -96,12 +96,13 @@ namespace gamelog::core::database {
         // A single existence check is enough because version is the primary key.
         QSqlQuery query{database_};
         query.prepare(
-                R"(
+            R"(
             SELECT 1
             FROM schema_migrations
             WHERE version = :version
             LIMIT 1
-        )");
+        )"
+        );
         query.bindValue(":version", version);
 
         if (!query.exec())
@@ -114,7 +115,7 @@ namespace gamelog::core::database {
         return query.next();
     }
 
-    bool DatabaseMigrator::applyMigration(const Migration &migration)
+    bool DatabaseMigrator::applyMigration(const Migration& migration)
     {
         // Read the SQL script first so we can fail before opening the transaction.
         const std::optional<QString> sql = readMigration(migration.resourcePath);
@@ -135,7 +136,7 @@ namespace gamelog::core::database {
 
         // Execute the script in discrete chunks so future migrations can bundle
         // multiple statements without depending on SQLite semicolon parsing.
-        for (const QString &statement: statements)
+        for (const QString& statement: statements)
         {
             const QString trimmed = statement.trimmed();
 
@@ -156,12 +157,13 @@ namespace gamelog::core::database {
 
         QSqlQuery record{database_};
         record.prepare(
-                R"(
+            R"(
             INSERT INTO schema_migrations
                 (version, name, applied_at_utc)
             VALUES
                 (:version, :name, :applied_at_utc)
-        )");
+        )"
+        );
         record.bindValue(":version", migration.version);
         record.bindValue(":name", migration.name);
         record.bindValue(":applied_at_utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
@@ -185,7 +187,7 @@ namespace gamelog::core::database {
         return true;
     }
 
-    std::optional<QString> DatabaseMigrator::readMigration(const QString &resourcePath)
+    std::optional<QString> DatabaseMigrator::readMigration(const QString& resourcePath)
     {
         // Resource-backed scripts stay in sync with the compiled binary.
         QFile file{resourcePath};
@@ -198,15 +200,11 @@ namespace gamelog::core::database {
         return QString::fromUtf8(file.readAll());
     }
 
-    const std::vector<Migration> &DatabaseMigrator::knownMigrations()
+    const std::vector<Migration>& DatabaseMigrator::knownMigrations()
     {
         // Keep this list ordered so migration application stays deterministic.
-        static const std::vector<Migration> migrations{
-                {.version = 1,
-                 .name = "initial_schema",
-                 .resourcePath = ":/migrations/001_initial_schema.sql"}};
+        static const std::vector<Migration> migrations{{.version = 1, .name = "initial_schema", .resourcePath = ":/migrations/001_initial_schema.sql"}};
 
         return migrations;
     }
-
 } // namespace gamelog::core::database

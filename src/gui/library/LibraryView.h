@@ -13,9 +13,12 @@
 #include "domain/Game.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
+
+namespace Ui
+{
     class LibraryView;
 }
+
 QT_END_NAMESPACE
 
 class LibraryView : public QWidget
@@ -28,7 +31,8 @@ public:
      * @param parent The parent widget.
      * @param service The Game service to querey Games for.
      */
-    explicit LibraryView(QWidget *parent = nullptr, gamelog::application::services::GameService *service = nullptr);
+    explicit LibraryView(QWidget* parent = nullptr, gamelog::application::services::GameService* service = nullptr);
+
     ~LibraryView() override;
 
     /**
@@ -41,7 +45,7 @@ private:
     /**
      * @brief UI pointer from QT
      */
-    Ui::LibraryView *ui{};
+    Ui::LibraryView* ui{};
 
     /**
      * @brief The list of games on display in the library.
@@ -51,7 +55,7 @@ private:
     /**
      * @brief The Game service to query Games for.
      */
-    gamelog::application::services::GameService *service;
+    gamelog::application::services::GameService* service;
 };
 
 

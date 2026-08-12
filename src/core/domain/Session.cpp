@@ -2,8 +2,9 @@
 
 #include <stdexcept>
 
-namespace gamelog::core::domain {
-    SessionSource sessionSourceFromString(const QString &sourceString)
+namespace gamelog::core::domain
+{
+    SessionSource sessionSourceFromString(const QString& sourceString)
     {
         if (sourceString == "automatic" || sourceString == "Automatic")
         {
@@ -16,7 +17,7 @@ namespace gamelog::core::domain {
         throw std::invalid_argument("Invalid session source string: " + sourceString.toStdString());
     }
 
-    SessionStatus sessionStatusFromString(const QString &statusString)
+    SessionStatus sessionStatusFromString(const QString& statusString)
     {
         if (statusString == "active" || statusString == "Active")
         {

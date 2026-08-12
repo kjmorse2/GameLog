@@ -10,9 +10,12 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
+
+namespace Ui
+{
     class GameCard;
 }
+
 QT_END_NAMESPACE
 
 class GameCard : public QWidget
@@ -25,7 +28,8 @@ public:
      * @param parent The QWidget parent.
      * @param game The Game object to construct from.
      */
-    explicit GameCard(QWidget *parent = nullptr, const gamelog::core::domain::Game& game = emptyGameCard);
+    explicit GameCard(QWidget* parent = nullptr, const gamelog::core::domain::Game& game = emptyGameCard);
+
     ~GameCard() override;
 
     /**
@@ -54,7 +58,7 @@ public:
     [[nodiscard]] int heightForWidth(int width) const override;
 
 private:
-    Ui::GameCard *ui;
+    Ui::GameCard* ui;
     inline static const gamelog::core::domain::Game emptyGameCard = {-1, QStringLiteral(""), QStringLiteral(""), QStringLiteral(""), -1, QStringLiteral(""), false};
 };
 

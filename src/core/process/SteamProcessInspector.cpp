@@ -6,21 +6,20 @@
 
 #include "process/ProcessHelpers.h"
 
-namespace gamelog::core::process {
-
-    void SteamProcessInspector::annotate(std::vector<ProcessInfo> &processes)
+namespace gamelog::core::process
+{
+    void SteamProcessInspector::annotate(std::vector<ProcessInfo>& processes)
     {
         QSet<qint64> livePids;
         livePids.reserve(static_cast<qsizetype>(processes.size()));
 
-        for (ProcessInfo &process: processes)
+        for (ProcessInfo& process: processes)
         {
             livePids.insert(process.pid);
 
             auto cached = cache_.find(process.pid);
 
-            if (cached == cache_.end() ||
-                cached->executablePath != process.executablePath)
+            if (cached == cache_.end() || cached->executablePath != process.executablePath)
             {
                 CacheEntry entry;
                 entry.executablePath = process.executablePath;
@@ -45,5 +44,4 @@ namespace gamelog::core::process {
             }
         }
     }
-
 } // namespace gamelog::core::process

@@ -1,20 +1,20 @@
 add_library(gamelog-application STATIC
-    GameLogRuntime.cpp
-    GameLogRuntime.h
-    services/GameService.h
-    services/GameService.cpp
-    services/SessionService.h
-    services/SessionService.cpp
+        GameLogRuntime.cpp
+        GameLogRuntime.h
+        services/GameService.h
+        services/GameService.cpp
+        services/SessionService.h
+        services/SessionService.cpp
 )
 
 target_include_directories(gamelog-application
-    PUBLIC
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         ${CMAKE_CURRENT_SOURCE_DIR}/../core
 )
 
 target_link_libraries(gamelog-application
-    PUBLIC
+        PUBLIC
         gamelog-core
         Qt6::Core
         Qt6::Sql

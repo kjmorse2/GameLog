@@ -11,9 +11,9 @@
 
 #include "ui_livewindow.h"
 
-namespace gamelog::gui {
-    LiveWindow::LiveWindow(application::GameLogRuntime& runtime, QWidget *parent) :
-        QMainWindow(parent), gameLogRuntime(runtime), ui(new Ui::LiveWindow)
+namespace gamelog::gui
+{
+    LiveWindow::LiveWindow(application::GameLogRuntime& runtime, QWidget* parent) : QMainWindow(parent), gameLogRuntime(runtime), ui(new Ui::LiveWindow)
     {
         ui->setupUi(this);
         connect(gameLogRuntime.getSessionService(), &application::services::SessionService::sessionStarted, this, &LiveWindow::onSessionStarted);
@@ -25,7 +25,7 @@ namespace gamelog::gui {
     void LiveWindow::onSessionStarted(Game game)
     {
         std::optional<Session> session = gameLogRuntime.activeSession();
-        QGridLayout *layout = ui->mainGridLayout;
+        QGridLayout* layout = ui->mainGridLayout;
         QDateTime startTime = session->startTimestamp;
         int activeGameId = session->gameId;
         std::optional<Game> activeGame = gameLogRuntime.getGameService()->findById(activeGameId).value();
@@ -36,7 +36,7 @@ namespace gamelog::gui {
 
         // Create and add the new widget
         ui->cardWidget = new GameCard(ui->centralwidget, activeGame.value());
-        layout->addWidget(ui->cardWidget, 0, 0);  // Insert at position 0 (first)
+        layout->addWidget(ui->cardWidget, 0, 0); // Insert at position 0 (first)
 
         qint64 miliSecondsDiff = startTime.msecsTo(QDateTime::currentDateTimeUtc());
         currentTime = QTime(0, 0).addMSecs(miliSecondsDiff);
@@ -49,7 +49,6 @@ namespace gamelog::gui {
         ui->timeLabel->setText(currentTime.toString());
         currentTime = currentTime.addSecs(1);
     }
-
 
 
     LiveWindow::~LiveWindow()

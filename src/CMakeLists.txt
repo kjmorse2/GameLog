@@ -3,11 +3,11 @@ add_subdirectory(application)
 add_subdirectory(gui)
 
 add_executable(gamelog
-    main.cpp
+        main.cpp
 )
 
 target_link_libraries(gamelog
-    PRIVATE
+        PRIVATE
         gamelog-application
         gamelog-gui
         Qt6::Core

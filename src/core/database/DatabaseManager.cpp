@@ -11,11 +11,9 @@
 #include <QSqlQuery>
 #include <QStandardPaths>
 
-namespace gamelog::core::database {
-    DatabaseManager::DatabaseManager(QString databasePath, QString connectionName) :
-        databasePath_{std::move(databasePath)},
-        connectionName_{std::move(connectionName)}
-    {}
+namespace gamelog::core::database
+{
+    DatabaseManager::DatabaseManager(QString databasePath, QString connectionName) : databasePath_{std::move(databasePath)}, connectionName_{std::move(connectionName)} {}
 
     DatabaseManager::~DatabaseManager()
     {
@@ -50,9 +48,15 @@ namespace gamelog::core::database {
         return runMigrations();
     }
 
-    bool DatabaseManager::isOpen() const { return database_.isOpen(); }
+    bool DatabaseManager::isOpen() const
+    {
+        return database_.isOpen();
+    }
 
-    QSqlDatabase DatabaseManager::database() const { return database_; }
+    QSqlDatabase DatabaseManager::database() const
+    {
+        return database_;
+    }
 
     bool DatabaseManager::openDatabase()
     {
@@ -127,7 +131,7 @@ namespace gamelog::core::database {
         return QDir{dataDirectory}.filePath("gamelog.sqlite");
     }
 
-    QString DatabaseManager::resolveDatabasePath(const QString &commandLinePath)
+    QString DatabaseManager::resolveDatabasePath(const QString& commandLinePath)
     {
         // Command-line overrides win when they are present.
         if (!commandLinePath.isEmpty())
@@ -146,5 +150,4 @@ namespace gamelog::core::database {
         // Fall back to the default per-user location.
         return defaultDatabasePath();
     }
-
 } // namespace gamelog::core::database

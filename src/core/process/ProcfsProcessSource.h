@@ -2,7 +2,8 @@
 
 #include "process/ProcessSource.h"
 
-namespace gamelog::core::process {
+namespace gamelog::core::process
+{
     /**
      * @brief Enumerates processes from the Linux /proc filesystem.
      */

@@ -6,8 +6,8 @@
 #include <QString>
 #include <QtTypes>
 
-namespace gamelog::core::process {
-
+namespace gamelog::core::process
+{
     struct ProcessInfo
     {
         /**
@@ -30,5 +30,4 @@ namespace gamelog::core::process {
          */
         std::optional<std::uint32_t> steamAppId;
     };
-
 } // namespace gamelog::core::process

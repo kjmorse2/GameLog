@@ -9,9 +9,10 @@
 
 #include <libproc2/pids.h>
 
-namespace gamelog::core::process {
-    namespace {
-
+namespace gamelog::core::process
+{
+    namespace
+    {
         enum ResultIndex
         {
             ResultPid,
@@ -19,14 +20,13 @@ namespace gamelog::core::process {
             ResultExecutable,
             ResultCount
         };
-
     } // namespace
 
     std::vector<ProcessInfo> ProcfsProcessSource::listProcesses()
     {
         // Ask libproc2 for only the fields we actually need for detection.
         std::array requestedItems{PIDS_ID_PID, PIDS_CMD, PIDS_EXE};
-        pids_info *info = nullptr;
+        pids_info* info = nullptr;
         const int creationResult = procps_pids_new(&info, requestedItems.data(), requestedItems.size());
 
         if (creationResult < 0)
@@ -35,7 +35,7 @@ namespace gamelog::core::process {
             return {};
         }
 
-        pids_fetch *fetched = procps_pids_reap(info, PIDS_FETCH_TASKS_ONLY);
+        pids_fetch* fetched = procps_pids_reap(info, PIDS_FETCH_TASKS_ONLY);
 
         if (fetched == nullptr)
         {
@@ -59,7 +59,7 @@ namespace gamelog::core::process {
         // fill.
         for (int index = 0; index < totalProcesses; ++index)
         {
-            pids_stack *stack = fetched->stacks[index];
+            pids_stack* stack = fetched->stacks[index];
 
             if (stack == nullptr)
             {
@@ -67,8 +67,8 @@ namespace gamelog::core::process {
             }
 
             const int pid = PIDS_VAL(ResultPid, s_int, stack);
-            const char *command = PIDS_VAL(ResultCommand, str, stack);
-            const char *executable = PIDS_VAL(ResultExecutable, str, stack);
+            const char* command = PIDS_VAL(ResultCommand, str, stack);
+            const char* executable = PIDS_VAL(ResultExecutable, str, stack);
 
             ProcessInfo process;
             process.pid = static_cast<qint64>(pid);

@@ -11,154 +11,145 @@
 using gamelog::core::domain::SessionSource;
 using gamelog::core::domain::SessionStatus;
 
-namespace gamelog::application::services {
-
-SessionService::SessionService( SessionRepository &repository, const GameService &gameService)
-    : repository_{repository},
-    gameService_{gameService}
+namespace gamelog::application::services
 {
-    restoreActiveSession();
-}
-
-vector<Session>
-SessionService::search(const SessionQuery &query) const
-{
-    return repository_.query(query);
-}
-
-optional<Session>
-SessionService::findActiveSession() const
-{
-    return activeSession_;
-}
-
-void SessionService::restoreActiveSession()
-{
-    SessionQuery query;
-    query.statuses = {SessionStatus::Active};
-    query.limit = 1;
-
-    auto sessions = search(query);
-    activeSession_ = sessions.empty() ? std::nullopt : optional{std::move(sessions.front())};
-}
-
-vector<Session>
-SessionService::listSessionsForGame(int gameId) const
-{
-    SessionQuery query;
-    query.gameIds = {gameId};
-    return search(query);
-}
-
-optional<Session>
-SessionService::startAutomaticSession(int gameId)
-{
-    auto requestedGame = gameService_.findById(gameId);
-    if (activeSession_ || !requestedGame)
+    SessionService::SessionService(SessionRepository& repository, const GameService& gameService)
+        : repository_{repository}, gameService_{gameService}
     {
-        qCWarning(gamelogAgentLog)
-            << "Cannot start an automatic session for game" << gameId;
-        return std::nullopt;
+        restoreActiveSession();
     }
 
-    Session session;
-    session.gameId = gameId;
-    session.startTimestamp = QDateTime::currentDateTimeUtc();
-    session.trackedDuration = std::chrono::seconds::zero();
-    session.source = SessionSource::Automatic;
-    session.status = SessionStatus::Active;
-
-    if (!repository_.insert(session))
+    vector<Session> SessionService::search(const SessionQuery& query) const
     {
-        return std::nullopt;
+        return repository_.query(query);
     }
 
-    activeSession_ = session;
-    emit sessionStarted(requestedGame.value());
-    return activeSession_;
-}
-
-optional<Session> SessionService::endActiveSession()
-{
-    if (!activeSession_)
+    optional<Session> SessionService::findActiveSession() const
     {
-        return std::nullopt;
+        return activeSession_;
     }
 
-    Session completed = *activeSession_;
-    const QDateTime endedAt = QDateTime::currentDateTimeUtc();
-    completed.endTimestamp = endedAt;
-    using DurationRep = std::chrono::seconds::rep;
-    completed.trackedDuration = std::chrono::seconds{
-        static_cast<DurationRep>(
-            std::max<qint64>(0, completed.startTimestamp.secsTo(endedAt)))};
-    completed.status = SessionStatus::Completed;
-
-    if (!repository_.update(completed))
+    void SessionService::restoreActiveSession()
     {
-        return std::nullopt;
+        SessionQuery query;
+        query.statuses = {SessionStatus::Active};
+        query.limit = 1;
+
+        auto sessions = search(query);
+        activeSession_ = sessions.empty() ? std::nullopt : optional{std::move(sessions.front())};
     }
 
-    activeSession_.reset();
-    emit sessionStopped();
-    return completed;
-}
-
-bool SessionService::addSession(Session &session)
-{
-    if (session.status == SessionStatus::Active && activeSession_)
+    vector<Session> SessionService::listSessionsForGame(int gameId) const
     {
-        return false;
+        SessionQuery query;
+        query.gameIds = {gameId};
+        return search(query);
     }
 
-    if (!repository_.insert(session))
+    optional<Session> SessionService::startAutomaticSession(int gameId)
     {
-        return false;
-    }
-    if (session.status == SessionStatus::Active)
-    {
+        auto requestedGame = gameService_.findById(gameId);
+        if (activeSession_ || !requestedGame)
+        {
+            qCWarning(gamelogAgentLog) << "Cannot start an automatic session for game" << gameId;
+            return std::nullopt;
+        }
+
+        Session session;
+        session.gameId = gameId;
+        session.startTimestamp = QDateTime::currentDateTimeUtc();
+        session.trackedDuration = std::chrono::seconds::zero();
+        session.source = SessionSource::Automatic;
+        session.status = SessionStatus::Active;
+
+        if (!repository_.insert(session))
+        {
+            return std::nullopt;
+        }
+
         activeSession_ = session;
-    }
-    return true;
-}
-
-bool SessionService::updateSession(const Session &session)
-{
-    if (!repository_.update(session))
-    {
-        return false;
+        emit sessionStarted(requestedGame.value());
+        return activeSession_;
     }
 
-    if (session.status == SessionStatus::Active)
+    optional<Session> SessionService::endActiveSession()
     {
-        activeSession_ = session;
-    }
-    else if (activeSession_ && activeSession_->id == session.id)
-    {
+        if (!activeSession_)
+        {
+            return std::nullopt;
+        }
+
+        Session completed = *activeSession_;
+        const QDateTime endedAt = QDateTime::currentDateTimeUtc();
+        completed.endTimestamp = endedAt;
+        using DurationRep = std::chrono::seconds::rep;
+        completed.trackedDuration = std::chrono::seconds{static_cast<DurationRep>(std::max<qint64>(0, completed.startTimestamp.secsTo(endedAt)))};
+        completed.status = SessionStatus::Completed;
+
+        if (!repository_.update(completed))
+        {
+            return std::nullopt;
+        }
+
         activeSession_.reset();
+        emit sessionStopped();
+        return completed;
     }
-    return true;
-}
 
-bool SessionService::removeSession(int sessionId)
-{
-    if (!repository_.remove(sessionId))
+    bool SessionService::addSession(Session& session)
     {
-        return false;
+        if (session.status == SessionStatus::Active && activeSession_)
+        {
+            return false;
+        }
+
+        if (!repository_.insert(session))
+        {
+            return false;
+        }
+        if (session.status == SessionStatus::Active)
+        {
+            activeSession_ = session;
+        }
+        return true;
     }
-    if (activeSession_ && activeSession_->id == sessionId)
+
+    bool SessionService::updateSession(const Session& session)
     {
-        activeSession_.reset();
+        if (!repository_.update(session))
+        {
+            return false;
+        }
+
+        if (session.status == SessionStatus::Active)
+        {
+            activeSession_ = session;
+        }
+        else if (activeSession_&& activeSession_->id == session.id)
+        {
+            activeSession_.reset();
+        }
+        return true;
     }
-    return true;
-}
 
-vector<Session> SessionService::getSessionsInTimeRange(const QDateTime &startDate, const QDateTime &endDate) const
-{
-    SessionQuery query;
-    query.startedAtOrAfter = startDate;
-    query.startedBefore =  endDate;
-    return search(query);
-}
+    bool SessionService::removeSession(int sessionId)
+    {
+        if (!repository_.remove(sessionId))
+        {
+            return false;
+        }
+        if (activeSession_&& activeSession_->id == sessionId)
+        {
+            activeSession_.reset();
+        }
+        return true;
+    }
 
+    vector<Session> SessionService::getSessionsInTimeRange(const QDateTime& startDate, const QDateTime& endDate) const
+    {
+        SessionQuery query;
+        query.startedAtOrAfter = startDate;
+        query.startedBefore = endDate;
+        return search(query);
+    }
 } // namespace gamelog::application::services

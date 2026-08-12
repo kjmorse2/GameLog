@@ -13,8 +13,7 @@
 
 using gamelog::application::services::GameService;
 
-LibraryView::LibraryView(QWidget *parent, GameService *service) :
-    QWidget(parent), ui(new Ui::LibraryView), service(service)
+LibraryView::LibraryView(QWidget* parent, GameService* service) : QWidget(parent), ui(new Ui::LibraryView), service(service)
 {
     ui->setupUi(this);
     ui->gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -31,11 +30,11 @@ LibraryView::~LibraryView()
     delete ui;
 }
 
-void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game> &games)
+void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game>& games)
 {
-    while (QLayoutItem *item = ui->gameGridLayout->takeAt(0))
+    while (QLayoutItem* item = ui->gameGridLayout->takeAt(0))
     {
-        if (QWidget *widget = item->widget())
+        if (QWidget* widget = item->widget())
         {
             widget->setParent(nullptr);
             delete widget;
@@ -49,7 +48,7 @@ void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game>
         const int row = i / columns;
         const int col = i % columns;
 
-        auto *gameCard = new GameCard(ui->gameGridContainer, games[i]);
+        auto* gameCard = new GameCard(ui->gameGridContainer, games[i]);
         ui->gameGridLayout->addWidget(gameCard, row, col);
     }
 }

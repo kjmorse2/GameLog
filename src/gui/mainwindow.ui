@@ -1,86 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>805</width>
-    <height>491</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>GameLog</string>
-  </property>
-  <widget class="QWidget" name="centralWidget">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-     <horstretch>2</horstretch>
-     <verstretch>2</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="toolTipDuration">
-    <number>-1</number>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QTabWidget" name="mainTabWidget">
-      <property name="tabPosition">
-       <enum>QTabWidget::TabPosition::West</enum>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="libraryTab">
-       <property name="layoutDirection">
-        <enum>Qt::LayoutDirection::LeftToRight</enum>
-       </property>
-       <attribute name="title">
-        <string>Library</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="libraryTabLayout"/>
-      </widget>
-      <widget class="QWidget" name="calanderTab">
-       <attribute name="title">
-        <string>Calander</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="calanderTabLayout"/>
-      </widget>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>805</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
-   <addaction name="menuHelp"/>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
- </widget>
- <resources/>
- <connections/>
+    <class>MainWindow</class>
+    <widget class="QMainWindow" name="MainWindow">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>805</width>
+                <height>491</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>GameLog</string>
+        </property>
+        <widget class="QWidget" name="centralWidget">
+            <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>2</horstretch>
+                    <verstretch>2</verstretch>
+                </sizepolicy>
+            </property>
+            <property name="toolTipDuration">
+                <number>-1</number>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                    <widget class="QTabWidget" name="mainTabWidget">
+                        <property name="tabPosition">
+                            <enum>QTabWidget::TabPosition::West</enum>
+                        </property>
+                        <property name="currentIndex">
+                            <number>0</number>
+                        </property>
+                        <widget class="QWidget" name="libraryTab">
+                            <property name="layoutDirection">
+                                <enum>Qt::LayoutDirection::LeftToRight</enum>
+                            </property>
+                            <attribute name="title">
+                                <string>Library</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="libraryTabLayout"/>
+                        </widget>
+                        <widget class="QWidget" name="calanderTab">
+                            <attribute name="title">
+                                <string>Calander</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="calanderTabLayout"/>
+                        </widget>
+                    </widget>
+                </item>
+            </layout>
+        </widget>
+        <widget class="QMenuBar" name="menuBar">
+            <property name="geometry">
+                <rect>
+                    <x>0</x>
+                    <y>0</y>
+                    <width>805</width>
+                    <height>24</height>
+                </rect>
+            </property>
+            <widget class="QMenu" name="menuFile">
+                <property name="title">
+                    <string>File</string>
+                </property>
+            </widget>
+            <widget class="QMenu" name="menuEdit">
+                <property name="title">
+                    <string>Edit</string>
+                </property>
+            </widget>
+            <widget class="QMenu" name="menuHelp">
+                <property name="title">
+                    <string>Help</string>
+                </property>
+            </widget>
+            <addaction name="menuFile"/>
+            <addaction name="menuEdit"/>
+            <addaction name="menuHelp"/>
+        </widget>
+        <widget class="QStatusBar" name="statusBar"/>
+    </widget>
+    <resources/>
+    <connections/>
 </ui>

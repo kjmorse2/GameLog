@@ -4,7 +4,8 @@
 
 #include <QString>
 
-namespace gamelog::core::domain {
+namespace gamelog::core::domain
+{
     /**
      * @brief Describes one registered game entry.
      *

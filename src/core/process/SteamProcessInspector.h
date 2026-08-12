@@ -9,8 +9,8 @@
 
 #include "process/ProcessInfo.h"
 
-namespace gamelog::core::process {
-
+namespace gamelog::core::process
+{
     class SteamProcessInspector
     {
     public:
@@ -20,7 +20,7 @@ namespace gamelog::core::process {
          * Environment information is read only for new processes,
          * processes whose executable has changed, or reused PIDs.
          */
-        void annotate(std::vector<ProcessInfo> &processes);
+        void annotate(std::vector<ProcessInfo>& processes);
 
     private:
         /**
@@ -35,5 +35,4 @@ namespace gamelog::core::process {
 
         QHash<qint64, CacheEntry> cache_;
     };
-
 } // namespace gamelog::core::process

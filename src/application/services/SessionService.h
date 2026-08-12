@@ -15,44 +15,53 @@ using gamelog::core::domain::Game;
 using gamelog::core::domain::query::SessionQuery;
 using gamelog::core::database::SessionRepository;
 
-namespace gamelog::application::services {
+namespace gamelog::application::services
+{
+    class GameService;
 
-class GameService;
 
-
-/**
+    /**
  * Application-facing session operations and lifecycle facade.
  */
-class SessionService : public QObject
-{
-Q_OBJECT
-public:
-    SessionService( SessionRepository &repository, const GameService &gameService);
+    class SessionService : public QObject
+    {
+        Q_OBJECT
 
-    [[nodiscard]] vector<Session> search(const SessionQuery &query) const;
+    public:
+        SessionService(SessionRepository& repository, const GameService& gameService);
 
-    [[nodiscard]] optional<Session> findActiveSession() const;
-    [[nodiscard]] vector<Session> listSessionsForGame(int gameId) const;
+        [[nodiscard]] vector<Session> search(const SessionQuery& query) const;
 
-    [[nodiscard]] optional<Session> startAutomaticSession(int gameId);
-    [[nodiscard]] optional<Session> endActiveSession();
+        [[nodiscard]] optional<Session> findActiveSession() const;
 
-    [[nodiscard]] bool addSession(Session &session);
-    [[nodiscard]] bool updateSession(const Session &session);
-    [[nodiscard]] bool removeSession(int sessionId);
-public slots:
-    [[nodiscard]] vector<Session> getSessionsInTimeRange(const QDateTime &startDate, const QDateTime &endDate) const;
+        [[nodiscard]] vector<Session> listSessionsForGame(int gameId) const;
 
-signals:
-    void sessionStarted(Game requestedGame);
-    void sessionStopped();
+        [[nodiscard]] optional<Session> startAutomaticSession(int gameId);
 
-private:
-    SessionRepository &repository_;
-    const GameService &gameService_;
-    optional<Session> activeSession_;
+        [[nodiscard]] optional<Session> endActiveSession();
 
-    void restoreActiveSession();
-};
+        [[nodiscard]] bool addSession(Session& session);
 
+        [[nodiscard]] bool updateSession(const Session& session);
+
+        [[nodiscard]] bool removeSession(int sessionId);
+
+    public
+        slots:
+
+        [[nodiscard]] vector<Session> getSessionsInTimeRange(const QDateTime& startDate, const QDateTime& endDate) const;
+
+        signals:
+
+        void sessionStarted(Game requestedGame);
+
+        void sessionStopped();
+
+    private:
+        SessionRepository& repository_;
+        const GameService& gameService_;
+        optional<Session> activeSession_;
+
+        void restoreActiveSession();
+    };
 } // namespace gamelog::application::services

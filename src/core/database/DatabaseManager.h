@@ -3,8 +3,8 @@
 #include <QSqlDatabase>
 #include <QString>
 
-namespace gamelog::core::database {
-
+namespace gamelog::core::database
+{
     /**
      * @brief Owns one Qt SQL connection and applies the initial schema setup.
      */
@@ -15,13 +15,17 @@ namespace gamelog::core::database {
          * @brief Creates a manager for a specific database path and connection name.
          */
         DatabaseManager(QString databasePath, QString connectionName);
+
         ~DatabaseManager();
 
         // Copy constructors
-        DatabaseManager(const DatabaseManager &) = delete;
-        DatabaseManager &operator=(const DatabaseManager &) = delete;
-        DatabaseManager(DatabaseManager &&) = delete;
-        DatabaseManager &operator=(DatabaseManager &&) = delete;
+        DatabaseManager(const DatabaseManager&) = delete;
+
+        DatabaseManager& operator=(const DatabaseManager&) = delete;
+
+        DatabaseManager(DatabaseManager&&) = delete;
+
+        DatabaseManager& operator=(DatabaseManager&&) = delete;
 
         /**
          * @brief Opens the database, applies PRAGMA settings, and runs migrations.
@@ -56,7 +60,7 @@ namespace gamelog::core::database {
          * 2. GAMELOG_DATABASE_PATH environment variable
          * 3. QStandardPaths application-data location
          */
-        [[nodiscard]] static QString resolveDatabasePath(const QString &commandLinePath = {});
+        [[nodiscard]] static QString resolveDatabasePath(const QString& commandLinePath = {});
 
     private:
         /**
@@ -91,5 +95,4 @@ namespace gamelog::core::database {
          */
         QSqlDatabase database_;
     };
-
 } // namespace gamelog::core::database

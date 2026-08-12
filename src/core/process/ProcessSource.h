@@ -4,7 +4,8 @@
 
 #include "process/ProcessInfo.h"
 
-namespace gamelog::core::process {
+namespace gamelog::core::process
+{
     /**
      * @brief Abstracts process enumeration so the agent can swap sources later.
      */
