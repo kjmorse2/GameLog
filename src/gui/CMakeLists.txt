@@ -16,6 +16,9 @@ add_library(gamelog-gui STATIC
         live_window/LiveWindow.cpp
         live_window/LiveWindow.h
         live_window/livewindow.ui
+        text_editor/TextEditor.cpp
+        text_editor/TextEditor.h
+        text_editor/texteditor.ui
         ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
 )
 
