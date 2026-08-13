@@ -35,7 +35,9 @@ namespace gamelog::gui
     private
         slots:
 
-        void onSessionStarted(Game game);
+        void onSessionStarted(const Game& game);
+
+        void onSessionFinished();
 
         void updateTimerText();
 

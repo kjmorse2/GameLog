@@ -31,7 +31,7 @@
        </widget>
       </item>
       <item row="0" column="2">
-       <widget class="TextEditor" name="widget" native="true"/>
+       <widget class="TextEditor" name="textEditor" native="true"/>
       </item>
      </layout>
     </item>

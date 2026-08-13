@@ -9,11 +9,9 @@
 #include <QPalette>
 #include <QSignalBlocker>
 #include <QTextBlockFormat>
-#include <QTextCharFormat>
 #include <QTextCursor>
 #include <QTextEdit>
 #include <QTextList>
-#include <QTextListFormat>
 #include <QToolButton>
 
 TextEditor::TextEditor(QWidget *parent) :
@@ -43,10 +41,15 @@ TextEditor::TextEditor(QWidget *parent) :
 
     updateToolbarState();
 
-    ui->textEdit->setDisabled(true);
+    setAbleToEdit(false);
 }
 
 TextEditor::~TextEditor() { delete ui; }
+
+void TextEditor::setAbleToEdit(bool enabled)
+{
+    ui->textEdit->setDisabled(!enabled);
+}
 
 void TextEditor::toggleBold()
 {

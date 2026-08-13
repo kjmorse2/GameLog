@@ -10,10 +10,16 @@ QT_END_NAMESPACE
 
 class TextEditor : public QWidget
 {
-    Q_OBJECT public:
+    Q_OBJECT
+    public:
+
     explicit TextEditor(QWidget *parent = nullptr);
 
     ~TextEditor() override;
+
+    public slots:
+    void setAbleToEdit(bool disabled);
+
 
 private slots:
     void applyHeading(int index);
