@@ -32,9 +32,9 @@ private
 
     void findById_returnsInsertedGame();
 
-    void listGames_returnsGamesOrderedByTitleCaseInsensitive();
+    void listTrackedGames_returnsGamesOrderedByTitleCaseInsensitive();
 
-    void listGames_returnsEmptyWhenNoRowsExist();
+    void listTrackedGames_returnsEmptyWhenNoRowsExist();
 
     void addGame_persistsAllFieldsAndAssignsId();
 
@@ -114,7 +114,7 @@ void GameServiceTest::findById_returnsInsertedGame()
     QCOMPARE(loaded->trackingEnabled, game.trackingEnabled);
 }
 
-void GameServiceTest::listGames_returnsGamesOrderedByTitleCaseInsensitive()
+void GameServiceTest::listTrackedGames_returnsGamesOrderedByTitleCaseInsensitive()
 {
     Game zelda = makeGame("zelda");
     Game alpha = makeGame("Alpha");
@@ -124,16 +124,16 @@ void GameServiceTest::listGames_returnsGamesOrderedByTitleCaseInsensitive()
     QVERIFY(service_->addGame(alpha));
     QVERIFY(service_->addGame(beta));
 
-    const auto games = service_->listGames();
+    const auto games = service_->listTrackedGames();
     QCOMPARE(games.size(), 3);
     QCOMPARE(games[0].title, QString("Alpha"));
     QCOMPARE(games[1].title, QString("beta"));
     QCOMPARE(games[2].title, QString("zelda"));
 }
 
-void GameServiceTest::listGames_returnsEmptyWhenNoRowsExist()
+void GameServiceTest::listTrackedGames_returnsEmptyWhenNoRowsExist()
 {
-    const auto games = service_->listGames();
+    const auto games = service_->listTrackedGames();
     QVERIFY(games.empty());
 }
 
