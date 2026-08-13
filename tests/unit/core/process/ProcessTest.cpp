@@ -3,11 +3,13 @@
 #include "process/ProcfsProcessSource.h"
 #include "process/ProcessInfo.h"
 
-    class ProcessTest : public QObject
+class ProcessTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots:
+
     void detectsSomeProcesses();
 };
 
@@ -21,4 +23,5 @@ void ProcessTest::detectsSomeProcesses()
 
 
 QTEST_APPLESS_MAIN(ProcessTest)
+
 #include "ProcessTest.moc"

@@ -39,7 +39,7 @@ option(
         OFF
 )
 
-if(GAMELOG_ENABLE_INSTALL)
+if (GAMELOG_ENABLE_INSTALL)
     install(TARGETS gamelog RUNTIME DESTINATION bin)
 
     install(PROGRAMS
@@ -56,4 +56,4 @@ if(GAMELOG_ENABLE_INSTALL)
             packaging/applications/gamelog.desktop
             DESTINATION share/applications
     )
-endif()
+endif ()

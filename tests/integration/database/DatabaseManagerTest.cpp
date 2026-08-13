@@ -9,17 +9,19 @@
 
 using gamelog::core::database::DatabaseManager;
 
-namespace {
-    bool tableExists(QSqlDatabase database, const QString &tableName)
+namespace
+{
+    bool tableExists(QSqlDatabase database, const QString& tableName)
     {
         QSqlQuery query{database};
         query.prepare(
-                R"(
+            R"(
                     SELECT 1
                     FROM sqlite_master
                     WHERE type = 'table' AND name = :table_name
                     LIMIT 1
-                )");
+                )"
+        );
         query.bindValue(":table_name", tableName);
 
         return query.exec() && query.next();
@@ -30,19 +32,31 @@ class DatabaseManagerTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots:
+
     void init();
+
     void cleanup();
 
     void initialize_opensDatabaseAndRunsMigrations();
+
     void initialize_failsForEmptyConnectionName();
+
     void initialize_failsWhenConnectionAlreadyExists();
+
     void isOpen_isFalseBeforeInitialize();
+
     void database_isInvalidBeforeInitialize();
+
     void database_isValidAndOpenAfterInitialize();
+
     void defaultDatabasePath_returnsSQLitePath();
+
     void resolveDatabasePath_prefersCommandLinePath();
+
     void resolveDatabasePath_usesEnvironmentPathWithoutCommandLinePath();
+
     void resolveDatabasePath_fallsBackToDefaultPath();
 
 private:

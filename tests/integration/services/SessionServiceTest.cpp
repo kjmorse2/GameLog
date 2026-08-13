@@ -23,24 +23,38 @@ class SessionServiceTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots:
+
     void init();
+
     void cleanup();
 
     void findActiveSession_returnsNulloptWhenNoActiveSessionExists();
+
     void findActiveSession_returnsInsertedActiveSession();
+
     void listSessionsForGame_returnsNewestFirstAndFiltersByGame();
+
     void listSessionsForGame_returnsEmptyWhenNoRowsExist();
+
     void addSession_persistsSessionAndAssignsId();
+
     void addSession_failsForUnknownGameId();
+
     void updateSession_persistsModifiedFields();
+
     void updateSession_returnsFalseForMissingRow();
+
     void removeSession_deletesExistingRow();
+
     void removeSession_returnsFalseForMissingRow();
 
 private:
-    int addSessionGame(const QString &title) const;
-    static Session makeSession(int gameId, const QDateTime &startUtc);
+    int addSessionGame(const QString& title) const;
+
+    static Session makeSession(int gameId, const QDateTime& startUtc);
+
     static QDateTime utcDateTime(int year, int month, int day, int hour, int minute, int second);
 
     QString databasePath_;
@@ -53,8 +67,7 @@ private:
 
 void SessionServiceTest::init()
 {
-    databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(
-            QString{"session-repository-%1"}.arg(QTest::currentTestFunction()));
+    databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(QString{"session-repository-%1"}.arg(QTest::currentTestFunction()));
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("session-repository");
 
     manager_ = std::make_unique<DatabaseManager>(databasePath_, connectionName);
@@ -77,11 +90,11 @@ void SessionServiceTest::cleanup()
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath_);
 }
 
-int SessionServiceTest::addSessionGame(const QString &title) const
+int SessionServiceTest::addSessionGame(const QString& title) const
 {
     QSqlQuery query{manager_->database()};
     query.prepare(
-            R"(
+        R"(
                 INSERT INTO games
                 (
                     title,
@@ -96,7 +109,8 @@ int SessionServiceTest::addSessionGame(const QString &title) const
                     :executable_name,
                     1
                 )
-            )");
+            )"
+    );
     query.bindValue(":title", title);
     query.bindValue(":executable_path", "/games/" + title.toLower());
     query.bindValue(":executable_name", title.toLower() + ".bin");
@@ -109,7 +123,7 @@ int SessionServiceTest::addSessionGame(const QString &title) const
     return query.lastInsertId().toInt();
 }
 
-Session SessionServiceTest::makeSession(int gameId, const QDateTime &startUtc)
+Session SessionServiceTest::makeSession(int gameId, const QDateTime& startUtc)
 {
     Session session;
     session.gameId = gameId;
@@ -121,8 +135,7 @@ Session SessionServiceTest::makeSession(int gameId, const QDateTime &startUtc)
     return session;
 }
 
-QDateTime SessionServiceTest::utcDateTime(
-        int year, int month, int day, int hour, int minute, int second)
+QDateTime SessionServiceTest::utcDateTime(int year, int month, int day, int hour, int minute, int second)
 {
     return QDateTime{{year, month, day}, {hour, minute, second}, QTimeZone::UTC};
 }

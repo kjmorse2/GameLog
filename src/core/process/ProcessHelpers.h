@@ -4,26 +4,43 @@
 #include <optional>
 
 #include <QByteArray>
+#include <QHash>
+#include <QString>
 #include <QtTypes>
+
+#include "domain/Game.h"
 
 namespace gamelog::core::process
 {
+    struct ProcessInfo;
+
     class ProcessHelpers
     {
     public:
         /**
-         * @brief Reads an envirometn variable for a process with a provided pid
-         * @param pid The pid of the process to examine.
-         * @param variableName The name of the environment variable to read.
-         * @return The value of the environment variable, or std::nullopt if it could not be read.
+         * Reads an environment variable for a process with a provided pid.
          */
         [[nodiscard]] static std::optional<QByteArray> readProcessEnvironmentValue(qint64 pid, const QByteArray& variableName);
 
         /**
-         * @brief Reads the Steam App ID for a process with a provided pid.
-         * @param pid The pid of the process to examine.
-         * @return The Steam App ID, or std::nullopt if it could not be read.
+         * Reads the Steam App ID for a process with a provided pid.
          */
         [[nodiscard]] static std::optional<std::uint32_t> readSteamAppId(qint64 pid);
+
+        /**
+         * Finds the tracked game matching a process without copying either index.
+         * The returned pointer refers to an element in one of the supplied hashes
+         * and remains valid only while those hashes are not modified.
+         */
+        [[nodiscard]] static const domain::Game* matchTrackedGame(
+            const ProcessInfo& process,
+            const QHash<std::uint32_t, domain::Game>& trackedSteamGames,
+            const QHash<QString, domain::Game>& trackedPathGames
+        ) noexcept;
+
+        /**
+         * Checks whether one process corresponds to one game.
+         */
+        [[nodiscard]] static bool processMatchesGame(const ProcessInfo& process, const domain::Game& game) noexcept;
     };
 } // namespace gamelog::core::process

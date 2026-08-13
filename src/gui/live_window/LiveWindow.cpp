@@ -24,7 +24,7 @@ namespace gamelog::gui
 
     void LiveWindow::onSessionStarted(Game game)
     {
-        std::optional<Session> session = gameLogRuntime.activeSession();
+        std::optional<Session> session = gameLogRuntime.getSessionService()->findActiveSession();
         QGridLayout* layout = ui->mainGridLayout;
         QDateTime startTime = session->startTimestamp;
         int activeGameId = session->gameId;

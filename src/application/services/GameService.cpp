@@ -1,14 +1,14 @@
 #include "application/services/GameService.h"
 
-#include <utility>
+#include "logging/LoggingCategories.h"
 
-using gamelog::core::domain::query::GameQuery;
+#include <utility>
 
 namespace gamelog::application::services
 {
     namespace
     {
-        template<typename T> optional<T> firstOrNull(vector<T> values)
+        template<typename T> std::optional<T> firstOrNull(std::vector<T> values)
         {
             if (values.empty())
             {
@@ -21,7 +21,7 @@ namespace gamelog::application::services
     GameService::GameService(core::database::GameRepository& repository)
         : repository_{repository} {}
 
-    vector<Game> GameService::search(const GameQuery& query) const
+    std::vector<core::domain::Game> GameService::search(const core::domain::query::GameQuery& query) const
     {
         return repository_.query(query);
     }
@@ -31,49 +31,102 @@ namespace gamelog::application::services
         emit gamesFound(search({}));
     }
 
-    vector<Game> GameService::listTrackedGames() const
+    std::vector<core::domain::Game> GameService::listTrackedGames() const
     {
-        GameQuery query;
+        core::domain::query::GameQuery query;
         query.trackingEnabled = true;
         return search(query);
     }
 
-    optional<Game> GameService::findById(std::int64_t id) const
+    std::optional<core::domain::Game> GameService::findById(std::int64_t id) const
     {
-        GameQuery query;
+        core::domain::query::GameQuery query;
         query.ids = {id};
         query.limit = 1;
         return firstOrNull(search(query));
     }
 
-    optional<Game> GameService::findByExecutableName(const QString& name) const
+    std::optional<core::domain::Game> GameService::findByExecutableName(const QString& name) const
     {
-        GameQuery query;
+        core::domain::query::GameQuery query;
         query.executableName = name;
         query.limit = 1;
         return firstOrNull(search(query));
     }
 
-    optional<Game> GameService::findByExecutablePath(const QString& path) const
+    std::optional<core::domain::Game> GameService::findByExecutablePath(const QString& path) const
     {
-        GameQuery query;
+        core::domain::query::GameQuery query;
         query.executablePath = path;
         query.limit = 1;
         return firstOrNull(search(query));
     }
 
-    bool GameService::addGame(Game& game)
+    bool GameService::addGame(core::domain::Game& game)
     {
-        return repository_.insert(game);
+        if (!repository_.insert(game))
+        {
+            return false;
+        }
+
+        syncGamesWithDatabase();
+        return true;
     }
 
-    bool GameService::updateGame(const Game& game)
+    bool GameService::updateGame(const core::domain::Game& game)
     {
-        return repository_.update(game);
+        if (!repository_.update(game))
+        {
+            return false;
+        }
+
+        syncGamesWithDatabase();
+        return true;
     }
 
     bool GameService::removeGame(std::int64_t id)
     {
-        return repository_.remove(id);
+        if (!repository_.remove(id))
+        {
+            return false;
+        }
+
+        syncGamesWithDatabase();
+        return true;
+    }
+
+    void GameService::syncGamesWithDatabase()
+    {
+        trackedPathGames_.clear();
+        trackedSteamGames_.clear();
+
+        for (const core::domain::Game& game: listTrackedGames())
+        {
+            if (game.steamAppId && *game.steamAppId > 0)
+            {
+                trackedSteamGames_.insert(static_cast<std::uint32_t>(*game.steamAppId), game);
+            }
+            if (!game.executablePath.isEmpty())
+            {
+                trackedPathGames_.insert(game.executablePath, game);
+            }
+        }
+
+        qCInfo(gamelogAgentLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.size() << "path-based games.";
+    }
+
+    const QHash<std::uint32_t, core::domain::Game>& GameService::trackedSteamGames() const noexcept
+    {
+        return trackedSteamGames_;
+    }
+
+    const QHash<QString, core::domain::Game>& GameService::trackedPathGames() const noexcept
+    {
+        return trackedPathGames_;
+    }
+
+    bool GameService::hasTrackedSteamGames() const noexcept
+    {
+        return !trackedSteamGames_.isEmpty();
     }
 } // namespace gamelog::application::services

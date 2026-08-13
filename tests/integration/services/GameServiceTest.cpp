@@ -7,7 +7,8 @@
 
 #include <memory>
 
-namespace gamelog::core::database {
+namespace gamelog::core::database
+{
     class DatabaseManager;
 }
 
@@ -20,23 +21,35 @@ class GameServiceTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots:
+
     void init();
+
     void cleanup();
 
     void findById_returnsNulloptForMissingId();
+
     void findById_returnsInsertedGame();
+
     void listGames_returnsGamesOrderedByTitleCaseInsensitive();
+
     void listGames_returnsEmptyWhenNoRowsExist();
+
     void addGame_persistsAllFieldsAndAssignsId();
+
     void addGame_handlesUnsetOptionalFields();
+
     void updateGame_persistsModifiedFields();
+
     void updateGame_returnsTrueForMissingRow();
+
     void removeGame_deletesExistingRow();
+
     void removeGame_returnsTrueForMissingRow();
 
 private:
-    static Game makeGame(const QString &title);
+    static Game makeGame(const QString& title);
 
     QString databasePath_;
     std::unique_ptr<DatabaseManager> manager_;
@@ -65,7 +78,7 @@ void GameServiceTest::cleanup()
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath_);
 }
 
-Game GameServiceTest::makeGame(const QString &title)
+Game GameServiceTest::makeGame(const QString& title)
 {
     Game game;
     game.title = title;

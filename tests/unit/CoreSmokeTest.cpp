@@ -7,8 +7,11 @@ class CoreSmokeTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots:
+
     void gameDefaultsAreSensible();
+
     void sessionDefaultsAreSensible();
 };
 

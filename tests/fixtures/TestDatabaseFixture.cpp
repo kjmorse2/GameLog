@@ -6,9 +6,9 @@
 #include <QFile>
 #include <QFileInfo>
 
-namespace gamelog::tests::fixtures {
-
-    QString createFreshTestDatabasePath(const QString &namePrefix)
+namespace gamelog::tests::fixtures
+{
+    QString createFreshTestDatabasePath(const QString& namePrefix)
     {
         const QString baseDirectory = QDir::temp().filePath("gamelog-test-databases");
         QDir directory;
@@ -24,12 +24,12 @@ namespace gamelog::tests::fixtures {
         return databasePath;
     }
 
-    QString createUniqueConnectionName(const QString &namePrefix)
+    QString createUniqueConnectionName(const QString& namePrefix)
     {
         return namePrefix + "-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
     }
 
-    void cleanupDatabaseArtifacts(const QString &databasePath)
+    void cleanupDatabaseArtifacts(const QString& databasePath)
     {
         QFile::remove(databasePath);
         QFile::remove(databasePath + "-wal");
@@ -44,5 +44,4 @@ namespace gamelog::tests::fixtures {
             QFile::remove(databasePath);
         }
     }
-
 } // namespace gamelog::tests::fixtures

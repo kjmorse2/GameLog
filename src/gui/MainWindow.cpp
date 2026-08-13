@@ -21,13 +21,13 @@ static void initializeGUIResources()
     static_cast<void>(initialized);
 }
 
-namespace gamelog::gui {
-    MainWindow::MainWindow(application::GameLogRuntime &runtime, QWidget *parent) :
-        QMainWindow{parent}, ui(new Ui::MainWindow), runtime_{runtime}
+namespace gamelog::gui
+{
+    MainWindow::MainWindow(application::GameLogRuntime& runtime, QWidget* parent) : QMainWindow{parent}, ui(new Ui::MainWindow), runtime_{runtime}
     {
         initializeGUIResources();
         ui->setupUi(this);
-        auto *libraryViewWidget = new LibraryView{ui->libraryTab, runtime.getGameService()};
+        auto* libraryViewWidget = new LibraryView{ui->libraryTab, runtime.getGameService()};
         ui->libraryTabLayout->addWidget(libraryViewWidget);
 
         ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getGameService(), runtime.getSessionService()});
@@ -47,9 +47,12 @@ namespace gamelog::gui {
         onSessionEnded();
     }
 
-    MainWindow::~MainWindow() { delete ui; }
+    MainWindow::~MainWindow()
+    {
+        delete ui;
+    }
 
-    void MainWindow::onSessionStarted(const core::domain::Game &game)
+    void MainWindow::onSessionStarted(const core::domain::Game& game)
     {
         statusActiveLabel_->setText("Active");
         statusTitleLabel_->setText(game.title);
