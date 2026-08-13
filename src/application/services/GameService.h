@@ -30,19 +30,19 @@ namespace gamelog::application::services
 
         ~GameService() override = default;
 
-        [[nodiscard]] std::vector<core::domain::Game> search(const core::domain::query::GameQuery& query) const;
+        [[nodiscard]] std::vector<Game> search(const core::domain::query::GameQuery& query) const;
 
-        [[nodiscard]] std::vector<core::domain::Game> listTrackedGames() const;
+        [[nodiscard]] std::vector<Game> listTrackedGames() const;
 
-        [[nodiscard]] std::optional<core::domain::Game> findById(std::int64_t id) const;
+        [[nodiscard]] std::optional<Game> findById(std::int64_t id) const;
 
-        [[nodiscard]] std::optional<core::domain::Game> findByExecutableName(const QString& name) const;
+        [[nodiscard]] std::optional<Game> findByExecutableName(const QString& name) const;
 
-        [[nodiscard]] std::optional<core::domain::Game> findByExecutablePath(const QString& path) const;
+        [[nodiscard]] std::optional<Game> findByExecutablePath(const QString& path) const;
 
-        [[nodiscard]] bool addGame(core::domain::Game& game);
+        [[nodiscard]] bool addGame(Game& game);
 
-        [[nodiscard]] bool updateGame(const core::domain::Game& game);
+        [[nodiscard]] bool updateGame(const Game& game);
 
         [[nodiscard]] bool removeGame(std::int64_t id);
 
@@ -55,9 +55,9 @@ namespace gamelog::application::services
          * Read-only access to the service-owned process-matching indexes.
          * References remain valid until the next cache refresh.
          */
-        [[nodiscard]] const QHash<std::uint32_t, core::domain::Game>& trackedSteamGames() const noexcept;
+        [[nodiscard]] const QHash<std::uint32_t, Game>& trackedSteamGames() const noexcept;
 
-        [[nodiscard]] const QHash<QString, core::domain::Game>& trackedPathGames() const noexcept;
+        [[nodiscard]] const QHash<QString, Game>& trackedPathGames() const noexcept;
 
         [[nodiscard]] bool hasTrackedSteamGames() const noexcept;
 
@@ -71,11 +71,11 @@ namespace gamelog::application::services
 
         signals:
 
-        void gamesFound(std::vector<core::domain::Game> games) const;
+        void gamesFound(std::vector<Game> games) const;
 
     private:
         core::database::GameRepository& repository_;
-        QHash<std::uint32_t, core::domain::Game> trackedSteamGames_;
-        QHash<QString, core::domain::Game> trackedPathGames_;
+        QHash<std::uint32_t, Game> trackedSteamGames_;
+        QHash<QString, Game> trackedPathGames_;
     };
 } // namespace gamelog::application::services

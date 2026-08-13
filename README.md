@@ -29,8 +29,7 @@ Example Arch Linux package names:
 - `cmake`
 - `qt6-base`
 - `qt6-tools` (if your environment separates Qt tooling)
-
-## Run
+- `libprocs`
 
 ## Repository layout
 
@@ -40,3 +39,12 @@ Example Arch Linux package names:
 - `tests`: starter Qt Test smoke test
 - `resources`: placeholder icons and migration directories
 - `packaging`: placeholder packaging/service files
+
+## TODO:
+
+- Add note-taking functionality.
+- Add automatic session pickup/dropoff, label cut off sessions as interrupted.
+- Add Summary screen for specific game.
+- Scan installed steam library for games.
+- Figure out artwork situation.
+- Stylesheets 
