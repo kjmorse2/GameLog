@@ -48,7 +48,7 @@ namespace gamelog::gui
         ui->textEditor->setAbleToEdit(true);
     }
 
-    void LiveWindow::onSessionFinished()
+    void LiveWindow::onSessionFinished(Session& completedSession)
     {
         clockTimer->stop();
 
@@ -64,6 +64,12 @@ namespace gamelog::gui
         ui->timeLabel->setText("Session Completed\n 00:00:00");
 
         ui->textEditor->setAbleToEdit(false);
+
+        completedSession.notes = ui->textEditor->getMarkdown();
+        if (!gameLogRuntime.getSessionService()->updateSession(completedSession))
+        {
+            qWarning() << "Failed to update session notes for session id:" << completedSession.id;
+        }
     }
 
     void LiveWindow::updateTimerText()

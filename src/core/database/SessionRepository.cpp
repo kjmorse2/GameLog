@@ -6,10 +6,8 @@
 
 #include <QDateTime>
 #include <QList>
-#include <QPair>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QStringList>
 #include <QVariant>
 
 using gamelog::core::domain::SessionSource;
@@ -125,6 +123,29 @@ namespace gamelog::core::database
         void bindEndTimestamp(QSqlQuery& query, const std::optional<QDateTime>& endTimestamp)
         {
             query.bindValue(QStringLiteral(":end_timestamp_utc"), endTimestamp ? QVariant{dateTimeToDatabase(*endTimestamp)} : QVariant{});
+        }
+
+        bool upsertSessionDocument(const QSqlDatabase& database, int sessionId, const QString& notes)
+        {
+            QSqlQuery notesQuery{database};
+            notesQuery.prepare(
+                QStringLiteral(
+                    "INSERT INTO session_documents (session_id, content, last_saved_timestamp_utc) "
+                    "VALUES (:session_id, :content, :last_saved_timestamp_utc) "
+                    "ON CONFLICT(session_id) DO UPDATE SET content = excluded.content, "
+                    "last_saved_timestamp_utc = excluded.last_saved_timestamp_utc"
+                )
+            );
+
+            notesQuery.bindValue(QStringLiteral(":session_id"), sessionId);
+            notesQuery.bindValue(QStringLiteral(":content"), notes);
+            notesQuery.bindValue(QStringLiteral(":last_saved_timestamp_utc"), dateTimeToDatabase(QDateTime::currentDateTimeUtc()));
+            if (!notesQuery.exec())
+            {
+                qCWarning(gamelogDatabaseLog) << "Failed to upsert session notes:" << notesQuery.lastError().text();
+                return false;
+            }
+            return true;
         }
 
         QString orderColumn(SessionSortField field)
@@ -305,6 +326,12 @@ namespace gamelog::core::database
             return false;
         }
 
+        if (!database_.transaction())
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to begin session insert transaction:" << database_.lastError().text();
+            return false;
+        }
+
         QSqlQuery query{database_};
         query.prepare(
             QStringLiteral(
@@ -323,6 +350,7 @@ namespace gamelog::core::database
         if (!query.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to insert session:" << query.lastError().text();
+            database_.rollback();
             return false;
         }
 
@@ -330,10 +358,25 @@ namespace gamelog::core::database
         if (!insertedId.isValid() || insertedId.toLongLong() <= 0)
         {
             qCWarning(gamelogDatabaseLog) << "Session insert returned no valid primary key.";
+            database_.rollback();
             return false;
         }
 
         session.id = insertedId.toInt();
+
+        if (!upsertSessionDocument(database_, session.id, session.notes))
+        {
+            database_.rollback();
+            return false;
+        }
+
+        if (!database_.commit())
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to commit session insert transaction:" << database_.lastError().text();
+            database_.rollback();
+            return false;
+        }
+
         return true;
     }
 
@@ -365,7 +408,13 @@ namespace gamelog::core::database
             qCWarning(gamelogDatabaseLog) << "Failed to update session:" << query.lastError().text();
             return false;
         }
-        return query.numRowsAffected() == 1;
+        bool numRowsAffected = query.numRowsAffected() == 1;
+
+        if (!upsertSessionDocument(database_, session.id, session.notes))
+        {
+            return false;
+        }
+        return numRowsAffected;
     }
 
     bool SessionRepository::remove(int sessionId)

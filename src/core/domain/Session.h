@@ -55,5 +55,6 @@ namespace gamelog::core::domain
         std::chrono::seconds trackedDuration{0};
         SessionSource source{SessionSource::Automatic};
         SessionStatus status{SessionStatus::Active};
+        QString notes{QStringLiteral("")};
     };
 } // namespace gamelog::core::domain

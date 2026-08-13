@@ -30,7 +30,13 @@ namespace gamelog::application::services
 
     std::optional<Session> SessionService::findActiveSession() const
     {
-        return activeSession_;
+        if (activeSession_)
+        {
+            return *activeSession_;
+        }
+
+        qCWarning(gamelogAgentLog) << "Active session was not found";
+        return std::nullopt;
     }
 
     std::vector<Session> SessionService::listSessionsForGame(int gameId) const
@@ -226,7 +232,7 @@ namespace gamelog::application::services
 
         qCInfo(gamelogAgentLog) << "Stopped session" << completed.id << "for game:" << gameTitle;
 
-        emit sessionStopped();
+        emit sessionStopped(completed);
         return completed;
     }
 

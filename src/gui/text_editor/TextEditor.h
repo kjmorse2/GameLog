@@ -15,6 +15,8 @@ class TextEditor : public QWidget
 
     explicit TextEditor(QWidget *parent = nullptr);
 
+    [[nodiscard]] QString getMarkdown();
+
     ~TextEditor() override;
 
     public slots:

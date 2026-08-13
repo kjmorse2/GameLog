@@ -66,17 +66,17 @@ namespace gamelog::application::services
 
         void sessionStarted(const core::domain::Game& requestedGame);
 
-        void sessionStopped();
+        void sessionStopped(Session& endedSession);
 
     private:
-        [[nodiscard]] std::optional<core::domain::Session> startAutomaticSession(const core::domain::Game& game);
+        [[nodiscard]] std::optional<Session> startAutomaticSession(const core::domain::Game& game);
 
         void resetPendingStart() noexcept;
 
         core::database::SessionRepository& repository_;
         const GameService& gameService_;
 
-        std::optional<core::domain::Session> activeSession_;
+        std::optional<Session> activeSession_;
         std::optional<core::domain::Game> activeGame_;
         std::optional<int> pendingGameId_;
 

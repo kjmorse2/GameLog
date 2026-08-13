@@ -234,3 +234,8 @@ qreal TextEditor::headingFontSize(int level) const
             return baseSize;
     }
 }
+
+QString TextEditor::getMarkdown()
+{
+    return ui->textEdit->toMarkdown();
+}

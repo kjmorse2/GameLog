@@ -202,8 +202,18 @@ namespace gamelog::core::database
 
     const std::vector<Migration>& DatabaseMigrator::knownMigrations()
     {
-        // Keep this list ordered so migration application stays deterministic.
-        static const std::vector<Migration> migrations{{.version = 1, .name = "initial_schema", .resourcePath = ":/migrations/001_initial_schema.sql"}};
+        // Keep this list ordered so migration application stays deterministic.econfig_session_documents
+        static const std::vector<Migration> migrations{
+            {.version = 1,
+                .name = "initial_schema",
+                .resourcePath = ":/migrations/001_initial_schema.sql"},
+            {.version = 2,
+                .name = "reconfig_session_documents_table",
+                .resourcePath = ":/migrations/002_reconfig_session_documents.sql"},
+            {.version = 3,
+                .name = "remove_format_from_session_documents",
+                .resourcePath = ":/migrations/003_remove_format_session_documents.sql"}
+        };
 
         return migrations;
     }

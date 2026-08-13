@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/migrations">
         <file>001_initial_schema.sql</file>
+        <file>002_reconfig_session_documents.sql</file>
+        <file>003_remove_format_session_documents.sql</file>
     </qresource>
 </RCC>
