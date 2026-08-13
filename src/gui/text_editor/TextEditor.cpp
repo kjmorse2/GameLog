@@ -14,8 +14,7 @@
 #include <QTextList>
 #include <QToolButton>
 
-TextEditor::TextEditor(QWidget *parent) :
-    QWidget{parent}, ui{new Ui::TextEditor}
+TextEditor::TextEditor(QWidget* parent) : QWidget{parent}, ui{new Ui::TextEditor}
 {
     ui->setupUi(this);
 
@@ -31,20 +30,44 @@ TextEditor::TextEditor(QWidget *parent) :
 
     connect(ui->bulletListButton, &QToolButton::clicked, this, &TextEditor::toggleBulletList);
 
-    connect(ui->zoomOutButton, &QToolButton::clicked, this, [this] { ui->textEdit->zoomOut(1); });
+    connect(
+        ui->zoomOutButton,
+        &QToolButton::clicked,
+        this,
+        [this] {
+            ui->textEdit->zoomOut(1);
+        }
+    );
 
-    connect(ui->zoomInButton, &QToolButton::clicked, this, [this] { ui->textEdit->zoomIn(1); });
+    connect(
+        ui->zoomInButton,
+        &QToolButton::clicked,
+        this,
+        [this] {
+            ui->textEdit->zoomIn(1);
+        }
+    );
 
     connect(ui->textEdit, &QTextEdit::cursorPositionChanged, this, &TextEditor::updateToolbarState);
 
-    connect(ui->textEdit, &QTextEdit::currentCharFormatChanged, this, [this](const QTextCharFormat &) { updateToolbarState(); });
+    connect(
+        ui->textEdit,
+        &QTextEdit::currentCharFormatChanged,
+        this,
+        [this](const QTextCharFormat&) {
+            updateToolbarState();
+        }
+    );
 
     updateToolbarState();
 
     setAbleToEdit(false);
 }
 
-TextEditor::~TextEditor() { delete ui; }
+TextEditor::~TextEditor()
+{
+    delete ui;
+}
 
 void TextEditor::setAbleToEdit(bool enabled)
 {
@@ -108,7 +131,10 @@ void TextEditor::updateToolbarState()
         // 3 = H3
         ui->headingComboBox->setCurrentIndex(headingLevel);
     }
-    else { ui->headingComboBox->setCurrentIndex(0); }
+    else
+    {
+        ui->headingComboBox->setCurrentIndex(0);
+    }
 }
 
 void TextEditor::applyHeading(int index)
@@ -151,14 +177,23 @@ void TextEditor::addLink()
     {
         const QString selectedText = cursor.selectedText();
 
-        if (selectedText.startsWith(QStringLiteral("http://")) || selectedText.startsWith(QStringLiteral("https://"))) { initialValue = selectedText; }
+        if (selectedText.startsWith(QStringLiteral("http://")) || selectedText.startsWith(QStringLiteral("https://")))
+        {
+            initialValue = selectedText;
+        }
     }
 
-    if (initialValue.isEmpty()) { initialValue = QStringLiteral("https://"); }
+    if (initialValue.isEmpty())
+    {
+        initialValue = QStringLiteral("https://");
+    }
 
     const QString url = QInputDialog::getText(this, tr("Insert Link"), tr("URL:"), QLineEdit::Normal, initialValue, &accepted);
 
-    if (!accepted || url.trimmed().isEmpty()) { return; }
+    if (!accepted || url.trimmed().isEmpty())
+    {
+        return;
+    }
 
     QTextCharFormat format;
     format.setAnchor(true);
@@ -186,7 +221,7 @@ void TextEditor::toggleBulletList()
 {
     QTextCursor cursor = ui->textEdit->textCursor();
 
-    QTextList *list = cursor.currentList();
+    QTextList* list = cursor.currentList();
 
     if (list)
     {
@@ -217,7 +252,10 @@ qreal TextEditor::headingFontSize(int level) const
 
     // Some fonts may not have a valid point size, e.g. if they
     // are specified in pixels. Give ourselves a sane fallback.
-    if (baseSize <= 0.0) { baseSize = 11.0; }
+    if (baseSize <= 0.0)
+    {
+        baseSize = 11.0;
+    }
 
     switch (level)
     {

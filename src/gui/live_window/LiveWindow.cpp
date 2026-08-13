@@ -25,7 +25,6 @@ namespace gamelog::gui
 
     void LiveWindow::onSessionStarted(const Game& game)
     {
-
         QGridLayout* layout = ui->mainGridLayout;
 
         // Remove and delete the old game card widget

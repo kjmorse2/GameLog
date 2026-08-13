@@ -2,7 +2,10 @@
 
 #include <QWidget>
 
-QT_BEGIN_NAMESPACE namespace Ui {
+QT_BEGIN_NAMESPACE
+
+namespace Ui
+{
     class TextEditor;
 }
 
@@ -11,19 +14,22 @@ QT_END_NAMESPACE
 class TextEditor : public QWidget
 {
     Q_OBJECT
-    public:
 
-    explicit TextEditor(QWidget *parent = nullptr);
+public:
+    explicit TextEditor(QWidget* parent = nullptr);
 
     [[nodiscard]] QString getMarkdown();
 
     ~TextEditor() override;
 
-    public slots:
+public
+    slots:
+
     void setAbleToEdit(bool disabled);
 
+private
+    slots:
 
-private slots:
     void applyHeading(int index);
 
     void toggleBold();
@@ -43,5 +49,5 @@ private:
 
     [[nodiscard]] qreal headingFontSize(int level) const;
 
-    Ui::TextEditor *ui{};
+    Ui::TextEditor* ui{};
 };

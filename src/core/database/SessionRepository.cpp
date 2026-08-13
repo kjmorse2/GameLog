@@ -130,10 +130,8 @@ namespace gamelog::core::database
             QSqlQuery notesQuery{database};
             notesQuery.prepare(
                 QStringLiteral(
-                    "INSERT INTO session_documents (session_id, content, last_saved_timestamp_utc) "
-                    "VALUES (:session_id, :content, :last_saved_timestamp_utc) "
-                    "ON CONFLICT(session_id) DO UPDATE SET content = excluded.content, "
-                    "last_saved_timestamp_utc = excluded.last_saved_timestamp_utc"
+                    "INSERT INTO session_documents (session_id, content, last_saved_timestamp_utc) " "VALUES (:session_id, :content, :last_saved_timestamp_utc) "
+                    "ON CONFLICT(session_id) DO UPDATE SET content = excluded.content, " "last_saved_timestamp_utc = excluded.last_saved_timestamp_utc"
                 )
             );
 
