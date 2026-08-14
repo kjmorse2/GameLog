@@ -9,7 +9,8 @@
 
 using gamelog::core::domain::Game;
 
-GameCard::GameCard(QWidget* parent, const Game& game) : QWidget(parent), ui(new Ui::GameCard)
+GameCard::GameCard(QWidget* parent, const Game& game): QWidget(parent),
+                                                       ui(new Ui::GameCard)
 {
     ui->setupUi(this);
 

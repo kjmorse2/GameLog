@@ -13,12 +13,14 @@ namespace
 
     const std::vector<QString> status_StringsReturnInterrupted{"interrupted", "Interrupted"};
 } // namespace
-class SessionTest : public QObject
+class SessionTest:public QObject
 {
     Q_OBJECT
 
 private
     slots:
+
+
 
     void parsesSourceFromString();
 
@@ -27,11 +29,11 @@ private
 
 void SessionTest::parsesSourceFromString()
 {
-    for (const QString& sourceString: source_StringsReturnAutomatic)
+    for(const QString& sourceString : source_StringsReturnAutomatic)
     {
         QCOMPARE(gamelog::core::domain::sessionSourceFromString(sourceString), gamelog::core::domain::SessionSource::Automatic);
     }
-    for (const QString& sourceString: source_StringsReturnManual)
+    for(const QString& sourceString : source_StringsReturnManual)
     {
         QCOMPARE(gamelog::core::domain::sessionSourceFromString(sourceString), gamelog::core::domain::SessionSource::Manual);
     }
@@ -39,15 +41,15 @@ void SessionTest::parsesSourceFromString()
 
 void SessionTest::parsesStatusFromString()
 {
-    for (const QString& statusString: status_StringsReturnActive)
+    for(const QString& statusString : status_StringsReturnActive)
     {
         QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString), gamelog::core::domain::SessionStatus::Active);
     }
-    for (const QString& statusString: status_StringsReturnCompleted)
+    for(const QString& statusString : status_StringsReturnCompleted)
     {
         QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString), gamelog::core::domain::SessionStatus::Completed);
     }
-    for (const QString& statusString: status_StringsReturnInterrupted)
+    for(const QString& statusString : status_StringsReturnInterrupted)
     {
         QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString), gamelog::core::domain::SessionStatus::Interrupted);
     }

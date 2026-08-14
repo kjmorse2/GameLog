@@ -27,5 +27,5 @@ namespace gamelog::core::domain
         QDateTime lastSavedTimestamp;
     };
 
-    QDebug operator<<(QDebug debug, const SessionDocument &document);
+    QDebug operator<<(QDebug debug, const SessionDocument& document);
 } // namespace gamelog::core::domain

@@ -15,7 +15,8 @@
 // resource initializer ensures the linker includes the resource object.
 static void initializeMigrationResources()
 {
-    static const bool initialized = [] {
+    static const bool initialized = []
+    {
         Q_INIT_RESOURCE(migrations);
         return true;
     }();
@@ -25,7 +26,7 @@ static void initializeMigrationResources()
 
 namespace gamelog::core::database
 {
-    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase& database) : database_{database}
+    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase& database): database_{database}
     {
         initializeMigrationResources();
     }
@@ -33,34 +34,34 @@ namespace gamelog::core::database
     bool DatabaseMigrator::applyPendingMigrations()
     {
         // The migrator only operates on a live connection.
-        if (!database_.isValid() || !database_.isOpen())
+        if(!database_.isValid() || !database_.isOpen())
         {
             qCWarning(gamelogDatabaseLog) << "Cannot run migrations on a closed or invalid database.";
             return false;
         }
 
         // Make sure the ledger exists before we inspect or record anything.
-        if (!ensureMigrationTable())
+        if(!ensureMigrationTable())
         {
             return false;
         }
 
         // Apply each compiled-in migration in order.
-        for (const Migration& migration: knownMigrations())
+        for(const Migration& migration : knownMigrations())
         {
             const std::optional<bool> applied = isApplied(migration.version);
 
-            if (!applied.has_value())
+            if(!applied.has_value())
             {
                 return false;
             }
 
-            if (*applied)
+            if(*applied)
             {
                 continue;
             }
 
-            if (!applyMigration(migration))
+            if(!applyMigration(migration))
             {
                 return false;
             }
@@ -73,8 +74,8 @@ namespace gamelog::core::database
     {
         // Keep the migration ledger as a tiny, dependency-free table.
 
-        if (QSqlQuery query{database_}; !query.exec(
-            R"(
+        if(QSqlQuery query{database_}; !query.exec(
+                                                   R"(
                 CREATE TABLE IF NOT EXISTS schema_migrations
                 (
                     version INTEGER PRIMARY KEY,
@@ -82,7 +83,7 @@ namespace gamelog::core::database
                     applied_at_utc TEXT NOT NULL
                 )
             )"
-        ))
+                                                  ))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to create schema_migrations table:" << query.lastError().text();
             return false;
@@ -96,16 +97,16 @@ namespace gamelog::core::database
         // A single existence check is enough because version is the primary key.
         QSqlQuery query{database_};
         query.prepare(
-            R"(
+                      R"(
             SELECT 1
             FROM schema_migrations
             WHERE version = :version
             LIMIT 1
         )"
-        );
+                     );
         query.bindValue(":version", version);
 
-        if (!query.exec())
+        if(!query.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to inspect applied migrations:" << query.lastError().text();
 
@@ -120,13 +121,13 @@ namespace gamelog::core::database
         // Read the SQL script first so we can fail before opening the transaction.
         const std::optional<QString> sql = readMigration(migration.resourcePath);
 
-        if (!sql.has_value())
+        if(!sql.has_value())
         {
             qCWarning(gamelogDatabaseLog) << "Unable to read migration:" << migration.resourcePath;
             return false;
         }
 
-        if (!database_.transaction())
+        if(!database_.transaction())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to begin migration transaction:" << database_.lastError().text();
             return false;
@@ -136,18 +137,18 @@ namespace gamelog::core::database
 
         // Execute the script in discrete chunks so future migrations can bundle
         // multiple statements without depending on SQLite semicolon parsing.
-        for (const QString& statement: statements)
+        for(const QString& statement : statements)
         {
             const QString trimmed = statement.trimmed();
 
-            if (trimmed.isEmpty())
+            if(trimmed.isEmpty())
             {
                 continue;
             }
 
             QSqlQuery query{database_};
 
-            if (!query.exec(trimmed))
+            if(!query.exec(trimmed))
             {
                 qCWarning(gamelogDatabaseLog) << "Migration failed:" << migration.version << migration.name << query.lastError().text();
                 database_.rollback();
@@ -157,25 +158,25 @@ namespace gamelog::core::database
 
         QSqlQuery record{database_};
         record.prepare(
-            R"(
+                       R"(
             INSERT INTO schema_migrations
                 (version, name, applied_at_utc)
             VALUES
                 (:version, :name, :applied_at_utc)
         )"
-        );
+                      );
         record.bindValue(":version", migration.version);
         record.bindValue(":name", migration.name);
         record.bindValue(":applied_at_utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
 
-        if (!record.exec())
+        if(!record.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to record migration:" << migration.version << migration.name << record.lastError().text();
             database_.rollback();
             return false;
         }
 
-        if (!database_.commit())
+        if(!database_.commit())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to commit migration:" << migration.version << migration.name << database_.lastError().text();
             database_.rollback();
@@ -192,7 +193,7 @@ namespace gamelog::core::database
         // Resource-backed scripts stay in sync with the compiled binary.
         QFile file{resourcePath};
 
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             return std::nullopt;
         }

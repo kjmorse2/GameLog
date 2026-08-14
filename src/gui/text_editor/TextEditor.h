@@ -11,7 +11,7 @@ namespace Ui
 
 QT_END_NAMESPACE
 
-class TextEditor : public QWidget
+class TextEditor:public QWidget
 {
     Q_OBJECT
 
@@ -25,10 +25,14 @@ public:
 public
     slots:
 
+
+
     void setAbleToEdit(bool disabled);
 
 private
     slots:
+
+
 
     void applyHeading(int index);
 

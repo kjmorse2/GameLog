@@ -2,7 +2,8 @@
 
 #include <QDebugStateSaver>
 
-namespace {
+namespace
+{
     QString optionalBoolString(const std::optional<bool>& value)
     {
         return value.has_value() ? (value.value() ? QStringLiteral("true") : QStringLiteral("false")) : QStringLiteral("nullopt");
@@ -20,11 +21,11 @@ namespace {
 
     QString toStringValue(const gamelog::core::domain::SessionSource source)
     {
-        switch (source)
+        switch(source)
         {
-            case gamelog::core::domain::SessionSource::Automatic:
+            case gamelog::core::domain::SessionSource::Automatic :
                 return QStringLiteral("Automatic");
-            case gamelog::core::domain::SessionSource::Manual:
+            case gamelog::core::domain::SessionSource::Manual :
                 return QStringLiteral("Manual");
         }
 
@@ -33,13 +34,13 @@ namespace {
 
     QString toStringValue(const gamelog::core::domain::SessionStatus status)
     {
-        switch (status)
+        switch(status)
         {
-            case gamelog::core::domain::SessionStatus::Active:
+            case gamelog::core::domain::SessionStatus::Active :
                 return QStringLiteral("Active");
-            case gamelog::core::domain::SessionStatus::Completed:
+            case gamelog::core::domain::SessionStatus::Completed :
                 return QStringLiteral("Completed");
-            case gamelog::core::domain::SessionStatus::Interrupted:
+            case gamelog::core::domain::SessionStatus::Interrupted :
                 return QStringLiteral("Interrupted");
         }
 
@@ -55,9 +56,9 @@ namespace {
     QString vectorString(const std::vector<T>& values)
     {
         QString output = "[";
-        for (std::size_t index = 0; index < values.size(); ++index)
+        for(std::size_t index = 0; index < values.size(); ++index)
         {
-            if (index > 0)
+            if(index > 0)
             {
                 output += ", ";
             }
@@ -72,17 +73,17 @@ namespace gamelog::core::domain::query
 {
     QDebug operator<<(QDebug debug, const SessionSortField sortField)
     {
-        QDebugStateSaver saver {debug};
+        QDebugStateSaver saver{debug};
 
-        switch (sortField)
+        switch(sortField)
         {
-            case SessionSortField::StartTimestamp:
+            case SessionSortField::StartTimestamp :
                 debug.nospace() << "StartTimestamp";
                 break;
-            case SessionSortField::TrackedDuration:
+            case SessionSortField::TrackedDuration :
                 debug.nospace() << "TrackedDuration";
                 break;
-            case SessionSortField::Id:
+            case SessionSortField::Id :
                 debug.nospace() << "Id";
                 break;
         }
@@ -90,25 +91,25 @@ namespace gamelog::core::domain::query
         return debug;
     }
 
-    QDebug operator<<(QDebug debug, const SessionQuery &query)
+    QDebug operator<<(QDebug debug, const SessionQuery& query)
     {
-        QDebugStateSaver saver {debug};
+        QDebugStateSaver saver{debug};
 
         debug.nospace() << "SessionQuery {"
-                        << "ids: " << vectorString(query.ids)
-                        << ", gameIds: " << vectorString(query.gameIds)
-                        << ", sources: " << vectorString(query.sources)
-                        << ", statuses: " << vectorString(query.statuses)
-                        << ", startedAtOrAfter: " << (query.startedAtOrAfter.has_value() ? query.startedAtOrAfter->toString(Qt::ISODateWithMs) : QStringLiteral("nullopt"))
-                        << ", startedBefore: " << (query.startedBefore.has_value() ? query.startedBefore->toString(Qt::ISODateWithMs) : QStringLiteral("nullopt"))
-                        << ", minimumTrackedDuration: " << optionalDurationString(query.minimumTrackedDuration)
-                        << ", maximumTrackedDuration: " << optionalDurationString(query.maximumTrackedDuration)
-                        << ", hasEndTimestamp: " << optionalBoolString(query.hasEndTimestamp)
-                        << ", sortBy: " << query.sortBy
-                        << ", sortDirection: " << query.sortDirection
-                        << ", limit: " << optionalSizeString(query.limit)
-                        << ", offset: " << optionalSizeString(query.offset)
-                        << "}";
+                << "ids: " << vectorString(query.ids)
+                << ", gameIds: " << vectorString(query.gameIds)
+                << ", sources: " << vectorString(query.sources)
+                << ", statuses: " << vectorString(query.statuses)
+                << ", startedAtOrAfter: " << (query.startedAtOrAfter.has_value() ? query.startedAtOrAfter->toString(Qt::ISODateWithMs) : QStringLiteral("nullopt"))
+                << ", startedBefore: " << (query.startedBefore.has_value() ? query.startedBefore->toString(Qt::ISODateWithMs) : QStringLiteral("nullopt"))
+                << ", minimumTrackedDuration: " << optionalDurationString(query.minimumTrackedDuration)
+                << ", maximumTrackedDuration: " << optionalDurationString(query.maximumTrackedDuration)
+                << ", hasEndTimestamp: " << optionalBoolString(query.hasEndTimestamp)
+                << ", sortBy: " << query.sortBy
+                << ", sortDirection: " << query.sortDirection
+                << ", limit: " << optionalSizeString(query.limit)
+                << ", offset: " << optionalSizeString(query.offset)
+                << "}";
         return debug;
     }
 } // namespace gamelog::core::domain::query

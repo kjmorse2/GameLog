@@ -22,6 +22,7 @@ namespace gamelog::core::domain
     };
 
     QDebug operator<<(QDebug debug, const SessionSource source);
+
     QDebug operator<<(QDebug debug, const SessionStatus status);
 
     /**
@@ -62,5 +63,5 @@ namespace gamelog::core::domain
         QString notes{QStringLiteral("")};
     };
 
-    QDebug operator<<(QDebug debug, const Session &session);
+    QDebug operator<<(QDebug debug, const Session& session);
 } // namespace gamelog::core::domain

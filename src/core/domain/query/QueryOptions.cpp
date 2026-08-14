@@ -2,14 +2,15 @@
 
 #include <QDebugStateSaver>
 
-namespace {
+namespace
+{
     QString sortDirectionToString(const gamelog::core::domain::query::SortDirection direction)
     {
-        switch (direction)
+        switch(direction)
         {
-            case gamelog::core::domain::query::SortDirection::Ascending:
+            case gamelog::core::domain::query::SortDirection::Ascending :
                 return QStringLiteral("Ascending");
-            case gamelog::core::domain::query::SortDirection::Descending:
+            case gamelog::core::domain::query::SortDirection::Descending :
                 return QStringLiteral("Descending");
         }
 
@@ -21,7 +22,7 @@ namespace gamelog::core::domain::query
 {
     QDebug operator<<(QDebug debug, const SortDirection direction)
     {
-        QDebugStateSaver saver {debug};
+        QDebugStateSaver saver{debug};
         debug.nospace() << sortDirectionToString(direction);
         return debug;
     }

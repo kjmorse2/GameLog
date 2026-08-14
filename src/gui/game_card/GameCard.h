@@ -18,7 +18,7 @@ namespace Ui
 
 QT_END_NAMESPACE
 
-class GameCard : public QWidget
+class GameCard:public QWidget
 {
     Q_OBJECT
 

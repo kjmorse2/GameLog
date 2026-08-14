@@ -21,7 +21,10 @@ using std::chrono::seconds;
 
 namespace gamelog::application::services
 {
-    SessionService::SessionService(core::database::SessionRepository& repository, const GameService& gameService) : repository_{repository}, gameService_{gameService} {}
+    SessionService::SessionService(core::database::SessionRepository& repository, const GameService& gameService): repository_{repository},
+                                                                                                                   gameService_{gameService}
+    {
+    }
 
     std::vector<Session> SessionService::search(const SessionQuery& query) const
     {
@@ -30,7 +33,7 @@ namespace gamelog::application::services
 
     std::optional<Session> SessionService::findActiveSession() const
     {
-        if (activeSession_)
+        if(activeSession_)
         {
             return *activeSession_;
         }
@@ -61,7 +64,7 @@ namespace gamelog::application::services
         query.limit = 1;
 
         auto sessions = search(query);
-        if (sessions.empty())
+        if(sessions.empty())
         {
             activeSession_.reset();
             activeGame_.reset();
@@ -71,7 +74,7 @@ namespace gamelog::application::services
 
         Session restoredSession = std::move(sessions.front());
         auto restoredGame = gameService_.findById(restoredSession.gameId);
-        if (!restoredGame)
+        if(!restoredGame)
         {
             qCWarning(gamelogRuntimeLog) << "Active session" << restoredSession.id << "references missing game" << restoredSession.gameId;
             return false;
@@ -88,38 +91,38 @@ namespace gamelog::application::services
 
     void SessionService::updateAutomaticTracking(const std::vector<ProcessInfo>& processes, seconds elapsed)
     {
-        if (elapsed <= seconds::zero())
+        if(elapsed <= seconds::zero())
         {
             return;
         }
 
-        if (!activeSession_)
+        if(!activeSession_)
         {
             const Game* detectedGame = nullptr;
-            for (const ProcessInfo& process: processes)
+            for(const ProcessInfo& process : processes)
             {
                 detectedGame = ProcessHelpers::matchTrackedGame(process, gameService_.trackedSteamGames(), gameService_.trackedPathGames());
 
-                if (detectedGame)
+                if(detectedGame)
                 {
                     break;
                 }
             }
 
-            if (!detectedGame)
+            if(!detectedGame)
             {
                 resetPendingStart();
                 return;
             }
 
-            if (!pendingGameId_ || *pendingGameId_ != detectedGame->id)
+            if(!pendingGameId_ || *pendingGameId_ != detectedGame->id)
             {
                 pendingGameId_ = detectedGame->id;
                 gameOpenDuration_ = seconds::zero();
             }
 
             gameOpenDuration_ += elapsed;
-            if (gameOpenDuration_ < kStartGracePeriod)
+            if(gameOpenDuration_ < kStartGracePeriod)
             {
                 return;
             }
@@ -132,10 +135,10 @@ namespace gamelog::application::services
         // restoreActiveSession() and startAutomaticSession() normally maintain
         // this invariant. Rehydrate defensively if an active Session was supplied
         // through another service operation.
-        if (!activeGame_)
+        if(!activeGame_)
         {
             activeGame_ = gameService_.findById(activeSession_->gameId);
-            if (!activeGame_)
+            if(!activeGame_)
             {
                 qCWarning(gamelogRuntimeLog) << "Cannot track active session" << activeSession_->id << "because game" << activeSession_->gameId << "is unavailable.";
                 return;
@@ -143,20 +146,21 @@ namespace gamelog::application::services
         }
 
         const bool activeGameFound = std::ranges::any_of(
-            processes,
-            [this](const ProcessInfo& process) {
-                return ProcessHelpers::processMatchesGame(process, *activeGame_);
-            }
-        );
+                                                         processes,
+                                                         [this](const ProcessInfo& process)
+                                                         {
+                                                             return ProcessHelpers::processMatchesGame(process, *activeGame_);
+                                                         }
+                                                        );
 
-        if (activeGameFound)
+        if(activeGameFound)
         {
             gameClosedDuration_ = seconds::zero();
             return;
         }
 
         gameClosedDuration_ += elapsed;
-        if (gameClosedDuration_ >= kEndGracePeriod)
+        if(gameClosedDuration_ >= kEndGracePeriod)
         {
             static_cast<void>(endActiveSession());
         }
@@ -165,7 +169,7 @@ namespace gamelog::application::services
     std::optional<Session> SessionService::startAutomaticSession(int gameId)
     {
         auto requestedGame = gameService_.findById(gameId);
-        if (!requestedGame)
+        if(!requestedGame)
         {
             qCWarning(gamelogRuntimeLog) << "Cannot start an automatic session for missing game" << gameId;
             return std::nullopt;
@@ -176,7 +180,7 @@ namespace gamelog::application::services
 
     std::optional<Session> SessionService::startAutomaticSession(const Game& game)
     {
-        if (activeSession_)
+        if(activeSession_)
         {
             qCWarning(gamelogRuntimeLog) << "Cannot start an automatic session while another session is active.";
             return std::nullopt;
@@ -189,7 +193,7 @@ namespace gamelog::application::services
         session.source = SessionSource::Automatic;
         session.status = SessionStatus::Active;
 
-        if (!repository_.insert(session))
+        if(!repository_.insert(session))
         {
             return std::nullopt;
         }
@@ -206,7 +210,7 @@ namespace gamelog::application::services
 
     std::optional<Session> SessionService::endActiveSession()
     {
-        if (!activeSession_)
+        if(!activeSession_)
         {
             return std::nullopt;
         }
@@ -219,7 +223,7 @@ namespace gamelog::application::services
         completed.trackedDuration = seconds{static_cast<DurationRep>(std::max<qint64>(0, completed.startTimestamp.secsTo(endedAt)))};
         completed.status = SessionStatus::Completed;
 
-        if (!repository_.update(completed))
+        if(!repository_.update(completed))
         {
             return std::nullopt;
         }
@@ -238,27 +242,27 @@ namespace gamelog::application::services
 
     bool SessionService::addSession(Session& session)
     {
-        if (session.status == SessionStatus::Active && activeSession_)
+        if(session.status == SessionStatus::Active && activeSession_)
         {
             return false;
         }
 
         std::optional<Game> sessionGame;
-        if (session.status == SessionStatus::Active)
+        if(session.status == SessionStatus::Active)
         {
             sessionGame = gameService_.findById(session.gameId);
-            if (!sessionGame)
+            if(!sessionGame)
             {
                 return false;
             }
         }
 
-        if (!repository_.insert(session))
+        if(!repository_.insert(session))
         {
             return false;
         }
 
-        if (session.status == SessionStatus::Active)
+        if(session.status == SessionStatus::Active)
         {
             activeSession_ = session;
             activeGame_ = std::move(sessionGame);
@@ -269,26 +273,26 @@ namespace gamelog::application::services
     bool SessionService::updateSession(const Session& session)
     {
         std::optional<Game> sessionGame;
-        if (session.status == SessionStatus::Active)
+        if(session.status == SessionStatus::Active)
         {
             sessionGame = gameService_.findById(session.gameId);
-            if (!sessionGame)
+            if(!sessionGame)
             {
                 return false;
             }
         }
 
-        if (!repository_.update(session))
+        if(!repository_.update(session))
         {
             return false;
         }
 
-        if (session.status == SessionStatus::Active)
+        if(session.status == SessionStatus::Active)
         {
             activeSession_ = session;
             activeGame_ = std::move(sessionGame);
         }
-        else if (activeSession_&& activeSession_->id == session.id)
+        else if(activeSession_&& activeSession_->id == session.id)
         {
             activeSession_.reset();
             activeGame_.reset();
@@ -299,12 +303,12 @@ namespace gamelog::application::services
 
     bool SessionService::removeSession(int sessionId)
     {
-        if (!repository_.remove(sessionId))
+        if(!repository_.remove(sessionId))
         {
             return false;
         }
 
-        if (activeSession_&& activeSession_->id == sessionId)
+        if(activeSession_&& activeSession_->id == sessionId)
         {
             activeSession_.reset();
             activeGame_.reset();

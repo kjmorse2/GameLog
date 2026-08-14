@@ -20,9 +20,9 @@ namespace gamelog::core::domain::query
         Id
     };
 
-   QDebug operator<<(QDebug debug, const SessionSortField sortField);
+    QDebug operator<<(QDebug debug, const SessionSortField sortField);
 
-   /**
+    /**
  * Persistence-neutral description of a session search.
  *
  * Set fields are combined with AND. Values within gameIds, sources, or
@@ -96,5 +96,5 @@ namespace gamelog::core::domain::query
         std::optional<std::size_t> offset;
     };
 
-    QDebug operator<<(QDebug debug, const SessionQuery &query);
+    QDebug operator<<(QDebug debug, const SessionQuery& query);
 } // namespace gamelog::core::domain::query

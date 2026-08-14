@@ -20,7 +20,7 @@ namespace gamelog::application::services
      * Application-facing session operations and automatic-session lifecycle.
      * Owns all in-memory state associated with the current/pending session.
      */
-    class SessionService : public QObject
+    class SessionService:public QObject
     {
         Q_OBJECT
 
@@ -63,6 +63,8 @@ namespace gamelog::application::services
         void resetAutomaticTracking() noexcept;
 
         signals:
+
+
 
         void sessionStarted(const core::domain::Game& requestedGame);
 

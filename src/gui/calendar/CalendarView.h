@@ -22,7 +22,7 @@ namespace Ui
 
 QT_END_NAMESPACE
 
-class CalendarView : public QWidget
+class CalendarView:public QWidget
 {
     Q_OBJECT
 
@@ -66,6 +66,8 @@ private
      * @param year The year the calendar is on
      * @param month The month the calendar is on.
      */
+
+
 
     void onPageChanged(int year, int month);
 };

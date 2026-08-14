@@ -13,7 +13,9 @@
 
 using gamelog::application::services::GameService;
 
-LibraryView::LibraryView(QWidget* parent, GameService* service) : QWidget(parent), ui(new Ui::LibraryView), service(service)
+LibraryView::LibraryView(QWidget* parent, GameService* service): QWidget(parent),
+                                                                 ui(new Ui::LibraryView),
+                                                                 service(service)
 {
     ui->setupUi(this);
     ui->gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -32,9 +34,9 @@ LibraryView::~LibraryView()
 void LibraryView::displayAllGames()
 {
     auto games = service->listGames();
-    while (QLayoutItem* item = ui->gameGridLayout->takeAt(0))
+    while(QLayoutItem* item = ui->gameGridLayout->takeAt(0))
     {
-        if (QWidget* widget = item->widget())
+        if(QWidget* widget = item->widget())
         {
             widget->setParent(nullptr);
             delete widget;
@@ -42,7 +44,7 @@ void LibraryView::displayAllGames()
         delete item;
     }
 
-    for (int i = 0; i < games.size(); ++i)
+    for(int i = 0; i < games.size(); ++i)
     {
         constexpr int columns = 4;
         const int row = i / columns;

@@ -15,25 +15,27 @@ namespace
     {
         QSqlQuery query{database};
         query.prepare(
-            R"(
+                      R"(
                     SELECT 1
                     FROM sqlite_master
                     WHERE type = 'table' AND name = :table_name
                     LIMIT 1
                 )"
-        );
+                     );
         query.bindValue(":table_name", tableName);
 
         return query.exec() && query.next();
     }
 } // namespace
 
-class DatabaseManagerTest : public QObject
+class DatabaseManagerTest:public QObject
 {
     Q_OBJECT
 
 private
     slots:
+
+
 
     void init();
 
@@ -68,7 +70,7 @@ void DatabaseManagerTest::init()
 {
     hadOriginalEnvironmentValue_ = qEnvironmentVariableIsSet("GAMELOG_DATABASE_PATH");
 
-    if (hadOriginalEnvironmentValue_)
+    if(hadOriginalEnvironmentValue_)
     {
         originalEnvironmentValue_ = qgetenv("GAMELOG_DATABASE_PATH");
     }
@@ -82,7 +84,7 @@ void DatabaseManagerTest::init()
 
 void DatabaseManagerTest::cleanup()
 {
-    if (hadOriginalEnvironmentValue_)
+    if(hadOriginalEnvironmentValue_)
     {
         qputenv("GAMELOG_DATABASE_PATH", originalEnvironmentValue_);
     }

@@ -24,7 +24,7 @@ QT_END_NAMESPACE
 namespace gamelog::gui
 {
     /** Minimal GUI shell that queries the in-process runtime directly. */
-    class MainWindow final : public QMainWindow
+    class MainWindow final:public QMainWindow
     {
         Q_OBJECT
 
@@ -40,6 +40,8 @@ namespace gamelog::gui
 
     private
         slots:
+
+
 
         void onSessionStarted(const core::domain::Game& game);
 

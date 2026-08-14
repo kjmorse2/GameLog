@@ -9,9 +9,7 @@
 
 #include <libproc2/pids.h>
 
-namespace gamelog::core::process
-{
-    namespace
+namespace gamelog::core::process { namespace
     {
         enum ResultIndex
         {
@@ -29,7 +27,7 @@ namespace gamelog::core::process
         pids_info* info = nullptr;
         const int creationResult = procps_pids_new(&info, requestedItems.data(), requestedItems.size());
 
-        if (creationResult < 0)
+        if(creationResult < 0)
         {
             qCritical(gamelogCoreLog) << "Failed to create pids_info structure:" << std::strerror(errno);
             return {};
@@ -37,7 +35,7 @@ namespace gamelog::core::process
 
         pids_fetch* fetched = procps_pids_reap(info, PIDS_FETCH_TASKS_ONLY);
 
-        if (fetched == nullptr)
+        if(fetched == nullptr)
         {
             const int savedErrno = errno;
             procps_pids_unref(&info);
@@ -49,7 +47,7 @@ namespace gamelog::core::process
 
         const int totalProcesses = (fetched->counts != nullptr) ? fetched->counts->total : 0;
 
-        if (totalProcesses > 0)
+        if(totalProcesses > 0)
         {
             // Reserve based on the reported total to avoid repeated growth.
             processes.reserve(static_cast<std::size_t>(totalProcesses));
@@ -57,11 +55,11 @@ namespace gamelog::core::process
 
         // Walk each stack entry, skipping any partial rows that libproc2 could not
         // fill.
-        for (int index = 0; index < totalProcesses; ++index)
+        for(int index = 0; index < totalProcesses; ++index)
         {
             pids_stack* stack = fetched->stacks[index];
 
-            if (stack == nullptr)
+            if(stack == nullptr)
             {
                 continue;
             }
@@ -73,12 +71,12 @@ namespace gamelog::core::process
             ProcessInfo process;
             process.pid = static_cast<qint64>(pid);
 
-            if (command != nullptr)
+            if(command != nullptr)
             {
                 process.executableName = QString::fromLocal8Bit(command);
             }
 
-            if (executable != nullptr)
+            if(executable != nullptr)
             {
                 process.executablePath = QString::fromLocal8Bit(executable);
             }

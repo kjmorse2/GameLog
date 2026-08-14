@@ -13,7 +13,9 @@
 
 namespace gamelog::gui
 {
-    LiveWindow::LiveWindow(application::GameLogRuntime& runtime, QWidget* parent) : QMainWindow(parent), gameLogRuntime(runtime), ui(new Ui::LiveWindow)
+    LiveWindow::LiveWindow(application::GameLogRuntime& runtime, QWidget* parent): QMainWindow(parent),
+                                                                                   gameLogRuntime(runtime),
+                                                                                   ui(new Ui::LiveWindow)
     {
         ui->setupUi(this);
         connect(gameLogRuntime.getSessionService(), &application::services::SessionService::sessionStarted, this, &LiveWindow::onSessionStarted);
@@ -65,7 +67,7 @@ namespace gamelog::gui
         ui->textEditor->setAbleToEdit(false);
 
         completedSession.notes = ui->textEditor->getMarkdown();
-        if (!gameLogRuntime.getSessionService()->updateSession(completedSession))
+        if(!gameLogRuntime.getSessionService()->updateSession(completedSession))
         {
             qWarning() << "Failed to update session notes for session id:" << completedSession.id;
         }

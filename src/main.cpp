@@ -26,7 +26,7 @@ namespace
         Live
     };
 
-    std::map<const char *, RunMode> RunModeMap{{"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}};
+    std::map<const char*, RunMode> RunModeMap{{"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}};
 
     /**
  * @brief Check if ran program has arguments.
@@ -37,9 +37,9 @@ namespace
  */
     bool hasArgument(int argc, char* argv[], const char* argument)
     {
-        for (int index = 1; index < argc; ++index)
+        for(int index = 1; index < argc; ++index)
         {
-            if (std::strcmp(argv[index], argument) == 0)
+            if(std::strcmp(argv[index], argument) == 0)
             {
                 return true;
             }
@@ -55,9 +55,9 @@ namespace
  */
     std::optional<RunMode> determineRunMode(int argc, char* argv[])
     {
-        std::vector<const char *> runModesArguments;
+        std::vector<const char*> runModesArguments;
         // Extract keys using a loop
-        for (auto& it: RunModeMap)
+        for(auto& it : RunModeMap)
         {
             runModesArguments.push_back(it.first);
         }
@@ -65,18 +65,18 @@ namespace
         std::optional<RunMode> foundRunMode = std::nullopt;
         int numOfModes = 0;
 
-        for (auto runMode: runModesArguments)
+        for(auto runMode : runModesArguments)
         {
-            for (int index = 1; index < argc; ++index)
+            for(int index = 1; index < argc; ++index)
             {
-                if (std::strcmp(argv[index], runMode) == 0)
+                if(std::strcmp(argv[index], runMode) == 0)
                 {
                     numOfModes++;
                     foundRunMode = RunModeMap.at(runMode);
                 }
             }
         }
-        if (numOfModes == 1)
+        if(numOfModes == 1)
         {
             return foundRunMode;
         }
@@ -91,14 +91,14 @@ namespace
     {
         QString runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
 
-        if (runtimeDirectory.isEmpty())
+        if(runtimeDirectory.isEmpty())
         {
             runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
         }
 
         QDir directory{runtimeDirectory};
 
-        if (!directory.mkpath(QStringLiteral("gamelog")))
+        if(!directory.mkpath(QStringLiteral("gamelog")))
         {
             return {};
         }
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 {
     const std::optional<RunMode> mode = determineRunMode(argc, argv);
 
-    if (!mode)
+    if(!mode)
     {
         qCritical("Use either --headless or --gui, not both.");
         return EXIT_FAILURE;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 
     std::unique_ptr<QCoreApplication> application;
 
-    if (*mode == RunMode::Gui || *mode == RunMode::Live)
+    if(*mode == RunMode::Gui || *mode == RunMode::Live)
     {
         application = std::make_unique<QApplication>(argc, argv);
     }
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
 
     const QString lockPath = runtimeLockPath();
 
-    if (lockPath.isEmpty())
+    if(lockPath.isEmpty())
     {
         qCCritical(gamelogCoreLog) << "Failed to determine the GameLog runtime lock path.";
         return EXIT_FAILURE;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
     QLockFile runtimeLock{lockPath};
     runtimeLock.setStaleLockTime(0);
 
-    if (!runtimeLock.tryLock(0))
+    if(!runtimeLock.tryLock(0))
     {
         qCCritical(gamelogCoreLog) << "Another GameLog runtime already owns tracking and the database.";
         return EXIT_FAILURE;
@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 
     const QString databasePath = gamelog::core::database::DatabaseManager::resolveDatabasePath();
 
-    if (databasePath.isEmpty())
+    if(databasePath.isEmpty())
     {
         qCCritical(gamelogDatabaseLog) << "Failed to determine database path.";
         return EXIT_FAILURE;
@@ -159,12 +159,13 @@ int main(int argc, char* argv[])
     gamelog::application::GameLogRuntime runtime{databasePath};
 
     QObject::connect(
-        application.get(),
-        &QCoreApplication::aboutToQuit,
-        [&runtime] {
-            runtime.stop();
-        }
-    );
+                     application.get(),
+                     &QCoreApplication::aboutToQuit,
+                     [&runtime]
+                     {
+                         runtime.stop();
+                     }
+                    );
 
     constexpr std::chrono::seconds updateInterval{5};
 
@@ -172,14 +173,15 @@ int main(int argc, char* argv[])
     updateTimer.setInterval(std::chrono::duration_cast<std::chrono::milliseconds>(updateInterval).count());
 
     QObject::connect(
-        &updateTimer,
-        &QTimer::timeout,
-        [&runtime, updateInterval] {
-            runtime.update(updateInterval);
-        }
-    );
+                     &updateTimer,
+                     &QTimer::timeout,
+                     [&runtime, updateInterval]
+                     {
+                         runtime.update(updateInterval);
+                     }
+                    );
 
-    if (!runtime.start())
+    if(!runtime.start())
     {
         qCCritical(gamelogRuntimeLog) << "Failed to start the GameLog runtime.";
         return EXIT_FAILURE;
@@ -187,12 +189,12 @@ int main(int argc, char* argv[])
 
     std::unique_ptr<QMainWindow> mainWindow;
 
-    if (*mode == RunMode::Gui)
+    if(*mode == RunMode::Gui)
     {
         mainWindow = std::make_unique<gamelog::gui::MainWindow>(runtime);
         mainWindow->show();
     }
-    if (*mode == RunMode::Live)
+    if(*mode == RunMode::Live)
     {
         mainWindow = std::make_unique<gamelog::gui::LiveWindow>(runtime);
         mainWindow->show();

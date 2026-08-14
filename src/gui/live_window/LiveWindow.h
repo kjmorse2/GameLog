@@ -23,7 +23,7 @@ QT_END_NAMESPACE
 
 namespace gamelog::gui
 {
-    class LiveWindow final : public QMainWindow
+    class LiveWindow final:public QMainWindow
     {
         Q_OBJECT
 
@@ -34,6 +34,8 @@ namespace gamelog::gui
 
     private
         slots:
+
+
 
         void onSessionStarted(const Game& game);
 

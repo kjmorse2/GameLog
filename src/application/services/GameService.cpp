@@ -16,13 +16,13 @@ namespace gamelog::application::services
         }
     } // namespace
 
-    GameService::GameService(core::database::GameRepository& repository)
-        : repository_{repository}
+    GameService::GameService(core::database::GameRepository &repository) :
+        repository_{repository}
     {
         qCInfo(gamelogRuntimeLog) << "Starting game service";
     }
 
-    std::vector<Game> GameService::search(const GameQuery& query) const
+    std::vector<Game> GameService::search(const GameQuery &query) const
     {
         qCDebug(gamelogRuntimeLog) << "Searching for games with provided query:" << query;
         return repository_.query(query);
@@ -51,7 +51,7 @@ namespace gamelog::application::services
         return firstOrNull(search(query));
     }
 
-    std::optional<Game> GameService::findByExecutableName(const QString& name) const
+    std::optional<Game> GameService::findByExecutableName(const QString &name) const
     {
         qCDebug(gamelogRuntimeLog) << "Returning game with name: " << name;
         GameQuery query;
@@ -60,7 +60,7 @@ namespace gamelog::application::services
         return firstOrNull(search(query));
     }
 
-    std::optional<Game> GameService::findByExecutablePath(const QString& path) const
+    std::optional<Game> GameService::findByExecutablePath(const QString &path) const
     {
         qCDebug(gamelogRuntimeLog) << "Returning game with executable path: " << path;
         GameQuery query;
@@ -69,7 +69,7 @@ namespace gamelog::application::services
         return firstOrNull(search(query));
     }
 
-    bool GameService::addGame(Game& game)
+    bool GameService::addGame(Game &game)
     {
         qCDebug(gamelogRuntimeLog) << "Adding game: " << game;
         if (!repository_.insert(game))
@@ -81,7 +81,7 @@ namespace gamelog::application::services
         return true;
     }
 
-    bool GameService::updateGame(const Game& game)
+    bool GameService::updateGame(const Game &game)
     {
         qCDebug(gamelogRuntimeLog) << "Updating game " << game;
         if (!repository_.update(game))
@@ -111,7 +111,7 @@ namespace gamelog::application::services
         trackedPathGames_.clear();
         trackedSteamGames_.clear();
 
-        for (const Game& game: listTrackedGames())
+        for (const Game &game: listTrackedGames())
         {
             if (game.steamAppId && *game.steamAppId > 0)
             {
@@ -126,13 +126,13 @@ namespace gamelog::application::services
         qCInfo(gamelogRuntimeLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.size() << "path-based games.";
     }
 
-    const QHash<std::uint32_t, Game>& GameService::trackedSteamGames() const noexcept
+    const QHash<std::uint32_t, Game> &GameService::trackedSteamGames() const noexcept
     {
         qCDebug(gamelogRuntimeLog) << "Returning Steam tracked games";
         return trackedSteamGames_;
     }
 
-    const QHash<QString, Game>& GameService::trackedPathGames() const noexcept
+    const QHash<QString, Game> &GameService::trackedPathGames() const noexcept
     {
         qCDebug(gamelogRuntimeLog) << "Returning path tracked games";
         return trackedPathGames_;

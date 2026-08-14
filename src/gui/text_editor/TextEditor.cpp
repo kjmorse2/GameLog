@@ -14,7 +14,8 @@
 #include <QTextList>
 #include <QToolButton>
 
-TextEditor::TextEditor(QWidget* parent) : QWidget{parent}, ui{new Ui::TextEditor}
+TextEditor::TextEditor(QWidget* parent): QWidget{parent},
+                                         ui{new Ui::TextEditor}
 {
     ui->setupUi(this);
 
@@ -31,33 +32,36 @@ TextEditor::TextEditor(QWidget* parent) : QWidget{parent}, ui{new Ui::TextEditor
     connect(ui->bulletListButton, &QToolButton::clicked, this, &TextEditor::toggleBulletList);
 
     connect(
-        ui->zoomOutButton,
-        &QToolButton::clicked,
-        this,
-        [this] {
-            ui->textEdit->zoomOut(1);
-        }
-    );
+            ui->zoomOutButton,
+            &QToolButton::clicked,
+            this,
+            [this]
+            {
+                ui->textEdit->zoomOut(1);
+            }
+           );
 
     connect(
-        ui->zoomInButton,
-        &QToolButton::clicked,
-        this,
-        [this] {
-            ui->textEdit->zoomIn(1);
-        }
-    );
+            ui->zoomInButton,
+            &QToolButton::clicked,
+            this,
+            [this]
+            {
+                ui->textEdit->zoomIn(1);
+            }
+           );
 
     connect(ui->textEdit, &QTextEdit::cursorPositionChanged, this, &TextEditor::updateToolbarState);
 
     connect(
-        ui->textEdit,
-        &QTextEdit::currentCharFormatChanged,
-        this,
-        [this](const QTextCharFormat&) {
-            updateToolbarState();
-        }
-    );
+            ui->textEdit,
+            &QTextEdit::currentCharFormatChanged,
+            this,
+            [this](const QTextCharFormat&)
+            {
+                updateToolbarState();
+            }
+           );
 
     updateToolbarState();
 
@@ -120,7 +124,7 @@ void TextEditor::updateToolbarState()
 
     const QSignalBlocker blocker{ui->headingComboBox};
 
-    if (headingLevel >= 0 && headingLevel <= 3)
+    if(headingLevel >= 0 && headingLevel <= 3)
     {
         // Conveniently, our combo indices correspond directly
         // to heading levels:
@@ -173,24 +177,24 @@ void TextEditor::addLink()
 
     // If the user selected what looks like a URL, use it as
     // the initial value in the URL dialog.
-    if (cursor.hasSelection())
+    if(cursor.hasSelection())
     {
         const QString selectedText = cursor.selectedText();
 
-        if (selectedText.startsWith(QStringLiteral("http://")) || selectedText.startsWith(QStringLiteral("https://")))
+        if(selectedText.startsWith(QStringLiteral("http://")) || selectedText.startsWith(QStringLiteral("https://")))
         {
             initialValue = selectedText;
         }
     }
 
-    if (initialValue.isEmpty())
+    if(initialValue.isEmpty())
     {
         initialValue = QStringLiteral("https://");
     }
 
     const QString url = QInputDialog::getText(this, tr("Insert Link"), tr("URL:"), QLineEdit::Normal, initialValue, &accepted);
 
-    if (!accepted || url.trimmed().isEmpty())
+    if(!accepted || url.trimmed().isEmpty())
     {
         return;
     }
@@ -202,7 +206,7 @@ void TextEditor::addLink()
 
     format.setForeground(ui->textEdit->palette().color(QPalette::Link));
 
-    if (cursor.hasSelection())
+    if(cursor.hasSelection())
     {
         // Turn the existing selected text into a hyperlink.
         cursor.mergeCharFormat(format);
@@ -223,7 +227,7 @@ void TextEditor::toggleBulletList()
 
     QTextList* list = cursor.currentList();
 
-    if (list)
+    if(list)
     {
         QTextBlockFormat blockFormat = cursor.blockFormat();
         blockFormat.setObjectIndex(-1);
@@ -252,23 +256,23 @@ qreal TextEditor::headingFontSize(int level) const
 
     // Some fonts may not have a valid point size, e.g. if they
     // are specified in pixels. Give ourselves a sane fallback.
-    if (baseSize <= 0.0)
+    if(baseSize <= 0.0)
     {
         baseSize = 11.0;
     }
 
-    switch (level)
+    switch(level)
     {
-        case 1:
+        case 1 :
             return baseSize * 1.8;
 
-        case 2:
+        case 2 :
             return baseSize * 1.5;
 
-        case 3:
+        case 3 :
             return baseSize * 1.25;
 
-        default:
+        default :
             return baseSize;
     }
 }

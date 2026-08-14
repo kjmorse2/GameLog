@@ -17,13 +17,12 @@ using gamelog::application::services::GameService;
 using gamelog::core::domain::Game;
 using gamelog::core::database::GameRepository;
 
-class GameServiceTest : public QObject
+class GameServiceTest :public QObject
 {
     Q_OBJECT
 
 private
-    slots:
-
+slots:
     void init();
 
     void cleanup();
@@ -57,7 +56,7 @@ private
     void removeGame_returnsTrueForMissingRow();
 
 private:
-    static Game makeGame(const QString& title);
+    static Game makeGame(const QString &title);
 
     QString databasePath_;
     std::unique_ptr<DatabaseManager> manager_;
@@ -86,7 +85,7 @@ void GameServiceTest::cleanup()
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath_);
 }
 
-Game GameServiceTest::makeGame(const QString& title)
+Game GameServiceTest::makeGame(const QString &title)
 {
     Game game;
     game.title = title;
@@ -151,6 +150,7 @@ void GameServiceTest::listGames_returnsAllGames()
     const auto games = service_->listGames();
     QCOMPARE(games.size(), 2);
 }
+
 void GameServiceTest::listTrackedGames_returnsOnlyTrackedGames()
 {
     Game trackedGame = makeGame("Tracked");

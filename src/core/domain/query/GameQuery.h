@@ -18,9 +18,9 @@ namespace gamelog::core::domain::query
         Id
     };
 
-   QDebug operator<<(QDebug debug, const GameSortField sortField);
+    QDebug operator<<(QDebug debug, const GameSortField sortField);
 
-   /**
+    /**
  * Persistence-neutral description of a game search.
  *
  * Set fields are combined with AND. Multiple IDs are combined with IN.
@@ -79,5 +79,5 @@ namespace gamelog::core::domain::query
         std::optional<std::size_t> offset;
     };
 
-    QDebug operator<<(QDebug debug, const GameQuery &query);
+    QDebug operator<<(QDebug debug, const GameQuery& query);
 } // namespace gamelog::core::domain::query

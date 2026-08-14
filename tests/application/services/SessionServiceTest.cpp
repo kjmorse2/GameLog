@@ -19,12 +19,14 @@ using gamelog::application::services::SessionService;
 using gamelog::application::services::GameService;
 using gamelog::core::domain::SessionStatus;
 
-class SessionServiceTest : public QObject
+class SessionServiceTest:public QObject
 {
     Q_OBJECT
 
 private
     slots:
+
+
 
     void init();
 
@@ -94,7 +96,7 @@ int SessionServiceTest::addSessionGame(const QString& title) const
 {
     QSqlQuery query{manager_->database()};
     query.prepare(
-        R"(
+                  R"(
                 INSERT INTO games
                 (
                     title,
@@ -110,12 +112,12 @@ int SessionServiceTest::addSessionGame(const QString& title) const
                     1
                 )
             )"
-    );
+                 );
     query.bindValue(":title", title);
     query.bindValue(":executable_path", "/games/" + title.toLower());
     query.bindValue(":executable_name", title.toLower() + ".bin");
 
-    if (!query.exec())
+    if(!query.exec())
     {
         return 0;
     }

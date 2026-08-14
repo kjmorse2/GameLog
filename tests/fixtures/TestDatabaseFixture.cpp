@@ -13,7 +13,7 @@ namespace gamelog::tests::fixtures
         const QString baseDirectory = QDir::temp().filePath("gamelog-test-databases");
         QDir directory;
 
-        if (!directory.mkpath(baseDirectory))
+        if(!directory.mkpath(baseDirectory))
         {
             return {};
         }
@@ -38,7 +38,7 @@ namespace gamelog::tests::fixtures
 
         const QFileInfo fileInfo{databasePath};
 
-        if (fileInfo.exists())
+        if(fileInfo.exists())
         {
             QFile::setPermissions(databasePath, QFile::permissions(databasePath) | QFileDevice::WriteUser);
             QFile::remove(databasePath);

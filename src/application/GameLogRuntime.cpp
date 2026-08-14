@@ -18,7 +18,7 @@ namespace gamelog::application
         : databaseManager_{std::move(databasePath), QStringLiteral("GameLogRuntimeConnection")}
     {
         databaseReady_ = databaseManager_.initialize();
-        if (!databaseReady_)
+        if(!databaseReady_)
         {
             qCWarning(gamelogRuntimeLog) << "Failed to initialize the database manager.";
             return;
@@ -35,13 +35,13 @@ namespace gamelog::application
 
     bool GameLogRuntime::start()
     {
-        if (running_)
+        if(running_)
         {
             qCWarning(gamelogRuntimeLog) << "Attempted to start an already-running GameLog runtime.";
             return false;
         }
 
-        if (!databaseReady_ || !gameService_ || !sessionService_)
+        if(!databaseReady_ || !gameService_ || !sessionService_)
         {
             qCWarning(gamelogRuntimeLog) << "Cannot start because application services are unavailable.";
             return false;
@@ -51,7 +51,7 @@ namespace gamelog::application
 
         // The services own their state; the runtime only asks them to refresh/restore it.
         gameService_->syncGamesWithDatabase();
-        if (!sessionService_->restoreActiveSession())
+        if(!sessionService_->restoreActiveSession())
         {
             processSource_.reset();
             return false;
@@ -66,7 +66,7 @@ namespace gamelog::application
 
     void GameLogRuntime::stop()
     {
-        if (!running_)
+        if(!running_)
         {
             return;
         }
@@ -74,7 +74,7 @@ namespace gamelog::application
         running_ = false;
         processSource_.reset();
 
-        if (sessionService_)
+        if(sessionService_)
         {
             // Preserve the active database row for launcher handoff, but discard
             // process-polling timers and the cached active-game association.
@@ -86,17 +86,17 @@ namespace gamelog::application
 
     void GameLogRuntime::update(seconds elapsed)
     {
-        if (!running_)
+        if(!running_)
         {
             qCWarning(gamelogRuntimeLog) << "Attempted to update a runtime that is not running.";
             return;
         }
-        if (!processSource_ || !gameService_ || !sessionService_)
+        if(!processSource_ || !gameService_ || !sessionService_)
         {
             qCWarning(gamelogRuntimeLog) << "Runtime process tracking dependencies are unavailable.";
             return;
         }
-        if (elapsed <= seconds::zero())
+        if(elapsed <= seconds::zero())
         {
             qCWarning(gamelogRuntimeLog) << "Runtime update received a non-positive elapsed duration.";
             return;
@@ -104,7 +104,7 @@ namespace gamelog::application
 
         std::vector<ProcessInfo> processes = processSource_->listProcesses();
 
-        if (gameService_->hasTrackedSteamGames())
+        if(gameService_->hasTrackedSteamGames())
         {
             steamProcessInspector_.annotate(processes);
         }

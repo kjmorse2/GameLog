@@ -33,10 +33,10 @@ namespace gamelog::core::process
          * and remains valid only while those hashes are not modified.
          */
         [[nodiscard]] static const domain::Game* matchTrackedGame(
-            const ProcessInfo& process,
-            const QHash<std::uint32_t, domain::Game>& trackedSteamGames,
-            const QHash<QString, domain::Game>& trackedPathGames
-        ) noexcept;
+                const ProcessInfo& process,
+                const QHash<std::uint32_t, domain::Game>& trackedSteamGames,
+                const QHash<QString, domain::Game>& trackedPathGames
+                ) noexcept;
 
         /**
          * Checks whether one process corresponds to one game.

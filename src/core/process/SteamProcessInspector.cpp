@@ -13,13 +13,13 @@ namespace gamelog::core::process
         QSet<qint64> livePids;
         livePids.reserve(static_cast<qsizetype>(processes.size()));
 
-        for (ProcessInfo& process: processes)
+        for(ProcessInfo& process : processes)
         {
             livePids.insert(process.pid);
 
             auto cached = cache_.find(process.pid);
 
-            if (cached == cache_.end() || cached->executablePath != process.executablePath)
+            if(cached == cache_.end() || cached->executablePath != process.executablePath)
             {
                 CacheEntry entry;
                 entry.executablePath = process.executablePath;
@@ -32,9 +32,9 @@ namespace gamelog::core::process
             process.steamAppId = cached->steamAppId;
         }
 
-        for (auto cached = cache_.begin(); cached != cache_.end();)
+        for(auto cached = cache_.begin(); cached != cache_.end();)
         {
-            if (!livePids.contains(cached.key()))
+            if(!livePids.contains(cached.key()))
             {
                 cached = cache_.erase(cached);
             }

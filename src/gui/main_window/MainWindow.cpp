@@ -13,7 +13,8 @@
 
 static void initializeGUIResources()
 {
-    static const bool initialized = [] {
+    static const bool initialized = []
+    {
         Q_INIT_RESOURCE(images);
         return true;
     }();
@@ -23,7 +24,9 @@ static void initializeGUIResources()
 
 namespace gamelog::gui
 {
-    MainWindow::MainWindow(application::GameLogRuntime& runtime, QWidget* parent) : QMainWindow{parent}, ui(new Ui::MainWindow), runtime_{runtime}
+    MainWindow::MainWindow(application::GameLogRuntime& runtime, QWidget* parent): QMainWindow{parent},
+                                                                                   ui(new Ui::MainWindow),
+                                                                                   runtime_{runtime}
     {
         initializeGUIResources();
         ui->setupUi(this);
