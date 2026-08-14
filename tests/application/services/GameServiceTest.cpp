@@ -28,9 +28,17 @@ private
 
     void cleanup();
 
+    void search_returnsAllForEmptyQuery();
+
+    void search_returnsNoneForEmptyQueryOnEmptyDatabase();
+
     void findById_returnsNulloptForMissingId();
 
     void findById_returnsInsertedGame();
+
+    void listGames_returnsAllGames();
+
+    void listTrackedGames_returnsOnlyTrackedGames();
 
     void listTrackedGames_returnsGamesOrderedByTitleCaseInsensitive();
 
@@ -90,6 +98,23 @@ Game GameServiceTest::makeGame(const QString& title)
     return game;
 }
 
+void GameServiceTest::search_returnsAllForEmptyQuery()
+{
+    Game game1 = makeGame("Game1");
+    Game game2 = makeGame("Game2");
+    QVERIFY(service_->addGame(game1));
+    QVERIFY(service_->addGame(game2));
+
+    const auto games = service_->search({});
+    QCOMPARE(games.size(), 2);
+}
+
+void GameServiceTest::search_returnsNoneForEmptyQueryOnEmptyDatabase()
+{
+    const auto games = service_->search({});
+    QCOMPARE(games.size(), 0);
+}
+
 void GameServiceTest::findById_returnsNulloptForMissingId()
 {
     const auto game = service_->findById(999999);
@@ -112,6 +137,32 @@ void GameServiceTest::findById_returnsInsertedGame()
     QVERIFY(loaded->artworkPath.has_value());
     QCOMPARE(*loaded->artworkPath, *game.artworkPath);
     QCOMPARE(loaded->trackingEnabled, game.trackingEnabled);
+}
+
+void GameServiceTest::listGames_returnsAllGames()
+{
+    Game game1 = makeGame("Tracked");
+    Game game2 = makeGame("Untracked");
+    game1.trackingEnabled = false;
+
+    QVERIFY(service_->addGame(game1));
+    QVERIFY(service_->addGame(game2));
+
+    const auto games = service_->listGames();
+    QCOMPARE(games.size(), 2);
+}
+void GameServiceTest::listTrackedGames_returnsOnlyTrackedGames()
+{
+    Game trackedGame = makeGame("Tracked");
+    Game untrackedGame = makeGame("Untracked");
+    untrackedGame.trackingEnabled = false;
+
+    QVERIFY(service_->addGame(trackedGame));
+    QVERIFY(service_->addGame(untrackedGame));
+
+    const auto games = service_->listTrackedGames();
+    QCOMPARE(games.size(), 1);
+    QCOMPARE(games[0].title, QString("Tracked"));
 }
 
 void GameServiceTest::listTrackedGames_returnsGamesOrderedByTitleCaseInsensitive()

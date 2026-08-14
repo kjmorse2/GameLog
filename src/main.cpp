@@ -13,7 +13,7 @@
 
 #include "application/GameLogRuntime.h"
 #include "database/DatabaseManager.h"
-#include "gui/MainWindow.h"
+#include "gui/main_window/MainWindow.h"
 #include "gui/live_window/LiveWindow.h"
 #include "logging/LoggingCategories.h"
 
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 
     if (!runtime.start())
     {
-        qCCritical(gamelogAgentLog) << "Failed to start the GameLog runtime.";
+        qCCritical(gamelogRuntimeLog) << "Failed to start the GameLog runtime.";
         return EXIT_FAILURE;
     }
 
@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        qCInfo(gamelogAgentLog) << "Running in headless mode.";
+        qCInfo(gamelogRuntimeLog) << "Running in headless mode.";
     }
 
     updateTimer.start();

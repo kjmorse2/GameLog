@@ -1,4 +1,4 @@
-#include "gui/MainWindow.h"
+#include "MainWindow.h"
 
 #include <QLabel>
 #include <QObject>
@@ -6,8 +6,8 @@
 
 #include "application/GameLogRuntime.h"
 #include "application/services/SessionService.h"
-#include "calendar/CalendarView.h"
-#include "library/LibraryView.h"
+#include "../calendar/CalendarView.h"
+#include "../library/LibraryView.h"
 
 #include "ui_mainwindow.h"
 

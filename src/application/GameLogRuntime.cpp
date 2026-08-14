@@ -20,7 +20,7 @@ namespace gamelog::application
         databaseReady_ = databaseManager_.initialize();
         if (!databaseReady_)
         {
-            qCWarning(gamelogAgentLog) << "Failed to initialize the database manager.";
+            qCWarning(gamelogRuntimeLog) << "Failed to initialize the database manager.";
             return;
         }
 
@@ -37,13 +37,13 @@ namespace gamelog::application
     {
         if (running_)
         {
-            qCWarning(gamelogAgentLog) << "Attempted to start an already-running GameLog runtime.";
+            qCWarning(gamelogRuntimeLog) << "Attempted to start an already-running GameLog runtime.";
             return false;
         }
 
         if (!databaseReady_ || !gameService_ || !sessionService_)
         {
-            qCWarning(gamelogAgentLog) << "Cannot start because application services are unavailable.";
+            qCWarning(gamelogRuntimeLog) << "Cannot start because application services are unavailable.";
             return false;
         }
 
@@ -58,9 +58,9 @@ namespace gamelog::application
         }
 
         running_ = true;
-        qCInfo(gamelogAgentLog) << "GameLog runtime started";
-        qCInfo(gamelogAgentLog) << "Database is:" << (databaseManager_.isOpen() ? "open" : "closed");
-        qCInfo(gamelogAgentLog) << "Database path:" << databaseManager_.database().databaseName();
+        qCInfo(gamelogRuntimeLog) << "GameLog runtime started";
+        qCInfo(gamelogRuntimeLog) << "Database is:" << (databaseManager_.isOpen() ? "open" : "closed");
+        qCInfo(gamelogRuntimeLog) << "Database path:" << databaseManager_.database().databaseName();
         return true;
     }
 
@@ -81,24 +81,24 @@ namespace gamelog::application
             sessionService_->resetAutomaticTracking();
         }
 
-        qCInfo(gamelogAgentLog) << "GameLog runtime stopped";
+        qCInfo(gamelogRuntimeLog) << "GameLog runtime stopped";
     }
 
     void GameLogRuntime::update(seconds elapsed)
     {
         if (!running_)
         {
-            qCWarning(gamelogAgentLog) << "Attempted to update a runtime that is not running.";
+            qCWarning(gamelogRuntimeLog) << "Attempted to update a runtime that is not running.";
             return;
         }
         if (!processSource_ || !gameService_ || !sessionService_)
         {
-            qCWarning(gamelogAgentLog) << "Runtime process tracking dependencies are unavailable.";
+            qCWarning(gamelogRuntimeLog) << "Runtime process tracking dependencies are unavailable.";
             return;
         }
         if (elapsed <= seconds::zero())
         {
-            qCWarning(gamelogAgentLog) << "Runtime update received a non-positive elapsed duration.";
+            qCWarning(gamelogRuntimeLog) << "Runtime update received a non-positive elapsed duration.";
             return;
         }
 

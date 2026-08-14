@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDateTime>
+#include <QDebug>
 #include <QString>
 
 namespace gamelog::core::domain
@@ -25,4 +26,6 @@ namespace gamelog::core::domain
          */
         QDateTime lastSavedTimestamp;
     };
+
+    QDebug operator<<(QDebug debug, const SessionDocument &document);
 } // namespace gamelog::core::domain

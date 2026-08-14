@@ -7,15 +7,20 @@ add_library(gamelog-core STATIC
         #        sessions/SessionManager.cpp
         logging/LoggingCategories.cpp
         domain/Session.cpp
+        domain/SessionDocument.cpp
         domain/query/GameQuery.h
+        domain/query/GameQuery.cpp
         domain/query/SessionQuery.h
+        domain/query/SessionQuery.cpp
         domain/query/QueryOptions.h
+        domain/query/QueryOptions.cpp
         process/ProcfsProcessSource.cpp
         process/ProcessHelpers.cpp
         process/SteamProcessInspector.cpp
         process/SteamProcessInspector.h
 
         ${PROJECT_SOURCE_DIR}/resources/migrations/migrations.qrc
+        domain/Game.cpp
 )
 
 target_include_directories(gamelog-core

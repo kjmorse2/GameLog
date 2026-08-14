@@ -20,9 +20,8 @@ LibraryView::LibraryView(QWidget* parent, GameService* service) : QWidget(parent
     ui->gridLayout->setSpacing(12);
     ui->gridLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-    connect(ui->refreshButton, &QPushButton::clicked, service, &GameService::listGames);
-    connect(service, &GameService::gamesFound, this, &LibraryView::displayAllGames);
-    service->listGames();
+    connect(ui->refreshButton, &QPushButton::clicked, this, &LibraryView::displayAllGames);
+    displayAllGames();
 }
 
 LibraryView::~LibraryView()
@@ -30,8 +29,9 @@ LibraryView::~LibraryView()
     delete ui;
 }
 
-void LibraryView::displayAllGames(const std::vector<gamelog::core::domain::Game>& games)
+void LibraryView::displayAllGames()
 {
+    auto games = service->listGames();
     while (QLayoutItem* item = ui->gameGridLayout->takeAt(0))
     {
         if (QWidget* widget = item->widget())

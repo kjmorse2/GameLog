@@ -4,6 +4,7 @@
 #include <optional>
 
 #include <QDateTime>
+#include <QDebug>
 
 namespace gamelog::core::domain
 {
@@ -19,6 +20,9 @@ namespace gamelog::core::domain
         Completed,
         Interrupted
     };
+
+    QDebug operator<<(QDebug debug, const SessionSource source);
+    QDebug operator<<(QDebug debug, const SessionStatus status);
 
     /**
      * @brief Converts a string to a SessionSource enum.
@@ -57,4 +61,6 @@ namespace gamelog::core::domain
         SessionStatus status{SessionStatus::Active};
         QString notes{QStringLiteral("")};
     };
+
+    QDebug operator<<(QDebug debug, const Session &session);
 } // namespace gamelog::core::domain

@@ -97,17 +97,17 @@ endfunction()
 
 add_gamelog_database_test(
         gamelog-database-manager-test
-        integration/database/DatabaseManagerTest.cpp
+        core/database/DatabaseManagerTest.cpp
 )
 
 add_gamelog_database_test(
         gamelog-game-service-test
-        integration/services/GameServiceTest.cpp
+        application/services/GameServiceTest.cpp
 )
 
 add_gamelog_database_test(
         gamelog-session-service-test
-        integration/services/SessionServiceTest.cpp
+        application/services/SessionServiceTest.cpp
 )
 
 
@@ -117,12 +117,12 @@ add_gamelog_database_test(
 
 add_gamelog_test(
         gamelog-session-test
-        unit/core/domain/SessionTest.cpp
+        core/domain/SessionTest.cpp
         "unit;core;domain"
 )
 
 add_gamelog_test(
         gamelog-process-test
-        unit/core/process/ProcessTest.cpp
+        core/process/ProcessTest.cpp
         "unit;core;domain"
 )

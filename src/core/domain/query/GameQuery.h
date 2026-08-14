@@ -7,6 +7,7 @@
 #include <optional>
 #include <vector>
 
+#include <QDebug>
 #include <QString>
 
 namespace gamelog::core::domain::query
@@ -17,7 +18,9 @@ namespace gamelog::core::domain::query
         Id
     };
 
-    /**
+   QDebug operator<<(QDebug debug, const GameSortField sortField);
+
+   /**
  * Persistence-neutral description of a game search.
  *
  * Set fields are combined with AND. Multiple IDs are combined with IN.
@@ -61,13 +64,13 @@ namespace gamelog::core::domain::query
         GameSortField sortBy{GameSortField::Title};
 
         /**
-     * @brief The direction to sort by
-     */
+        * @brief The direction to sort by
+        */
         SortDirection sortDirection{SortDirection::Ascending};
 
         /**
-     * @brief limit of Games to select.
-     */
+        * @brief limit of Games to select.
+        */
         std::optional<std::size_t> limit;
 
         /**
@@ -75,4 +78,6 @@ namespace gamelog::core::domain::query
      */
         std::optional<std::size_t> offset;
     };
+
+    QDebug operator<<(QDebug debug, const GameQuery &query);
 } // namespace gamelog::core::domain::query

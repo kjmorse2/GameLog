@@ -2,20 +2,24 @@
 Language: Cpp
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: true
 AlignTrailingComments: false
-AllowShortBlocksOnASingleLine: true
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
-AlwaysBreakTemplateDeclarations: Yes
-BraceWrapping:
+AlwaysBreakAfterDefinitionReturnType: false
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping: 
   AfterCaseLabel: true
   AfterClass: true
   AfterControlStatement: true
   AfterEnum: true
   AfterFunction: true
-  AfterNamespace: false
+  AfterNamespace: true
   AfterStruct: true
   AfterUnion: true
   AfterExternBlock: true
@@ -28,12 +32,13 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
+BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
-ColumnLimit: 0
+ColumnLimit: 180
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ContinuationIndentWidth: 8
-IncludeCategories:
+IncludeCategories: 
   - Regex: '^<.*'
     Priority: 1
   - Regex: '^".*'
@@ -47,6 +52,7 @@ InsertNewlineAtEOF: true
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
+ReflowComments: Never
 NamespaceIndentation: All
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false

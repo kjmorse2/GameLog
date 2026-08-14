@@ -35,11 +35,11 @@ public:
 
     ~LibraryView() override;
 
+    public slots:
     /**
      * Displays all games in the library.
-     * @param games The list of games to display.
      */
-    void displayAllGames(const std::vector<Game>& games);
+    void displayAllGames();
 
 private:
     /**

@@ -3,7 +3,7 @@
 GameLog is a Linux-first desktop application scaffold for locally tracking PC gaming sessions.
 
 ## Current status
-
+dd
 This repository currently contains the initial project scaffold only. Most planned features are represented by stubs
 with TODOs and are intentionally unimplemented.
 
@@ -22,11 +22,10 @@ See `docs/architecture.md` for a short overview.
 - Qt 6 development packages (Core, Widgets, Sql, Network, Test)
 - libprocs
   2 https://gitlab.alpinelinux.org/alpine/aports/-/tree/master/main/procps-ng?__goaway_challenge=cookie&__goaway_id=574b5f7ee2299d04a0b9fa1214bc2c1f&__goaway_referer=https%3A%2F%2Fpkgs.alpinelinux.org%2F
--
 
 Example Arch Linux package names:
 
-- `cmake`
+- `cmake`gamegamegamegamegameecific gam
 - `qt6-base`
 - `qt6-tools` (if your environment separates Qt tooling)
 - `libprocs`
@@ -42,7 +41,7 @@ Example Arch Linux package names:
 
 ## TODO:
 
-- Add note-taking functionality.
+- Add note-taking functionality. DONE
 - Add automatic session pickup/dropoff, label cut off sessions as interrupted.
 - Add Summary screen for specific game.
 - Scan installed steam library for games.

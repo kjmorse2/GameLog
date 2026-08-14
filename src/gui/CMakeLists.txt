@@ -1,9 +1,9 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
 add_library(gamelog-gui STATIC
-        MainWindow.cpp
-        MainWindow.h
-        mainwindow.ui
+        main_window/MainWindow.cpp
+        main_window/MainWindow.h
+        main_window/mainwindow.ui
         library/LibraryView.h
         library/LibraryView.cpp
         library/libraryview.ui
