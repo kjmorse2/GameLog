@@ -18,7 +18,7 @@ namespace gamelog::core::domain::query
         Id
     };
 
-    QDebug operator<<(QDebug debug, const GameSortField sortField);
+    QDebug operator<<(QDebug debug, GameSortField sortField);
 
     /**
  * Persistence-neutral description of a game search.

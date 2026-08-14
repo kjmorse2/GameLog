@@ -13,8 +13,8 @@
 
 #include "application/GameLogRuntime.h"
 #include "database/DatabaseManager.h"
-#include "gui/main_window/MainWindow.h"
 #include "gui/live_window/LiveWindow.h"
+#include "gui/main_window/MainWindow.h"
 #include "logging/LoggingCategories.h"
 
 namespace
@@ -29,25 +29,6 @@ namespace
     std::map<const char*, RunMode> RunModeMap{{"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}};
 
     /**
- * @brief Check if ran program has arguments.
- * @param argc of main.
- * @param argv of main.
- * @param argument char sequence to check for.
- * @return boolean if it has that argument.
- */
-    bool hasArgument(int argc, char* argv[], const char* argument)
-    {
-        for(int index = 1; index < argc; ++index)
-        {
-            if(std::strcmp(argv[index], argument) == 0)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
  * @brief Determine the run mode based on the command-line arguments.
  * @param argc of main.
  * @param argv of main.
@@ -57,9 +38,9 @@ namespace
     {
         std::vector<const char*> runModesArguments;
         // Extract keys using a loop
-        for(auto& it : RunModeMap)
+        for(const auto &key: RunModeMap | std::views::keys)
         {
-            runModesArguments.push_back(it.first);
+            runModesArguments.push_back(key);
         }
 
         std::optional<RunMode> foundRunMode = std::nullopt;
@@ -96,7 +77,7 @@ namespace
             runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
         }
 
-        QDir directory{runtimeDirectory};
+        const QDir directory{runtimeDirectory};
 
         if(!directory.mkpath(QStringLiteral("gamelog")))
         {

@@ -380,7 +380,7 @@ namespace gamelog::core::database { namespace
         return true;
     }
 
-    bool SessionRepository::update(const Session& session)
+    bool SessionRepository::update(const Session& session) const
     {
         if(session.id <= 0)
         {
@@ -408,7 +408,7 @@ namespace gamelog::core::database { namespace
             qCWarning(gamelogDatabaseLog) << "Failed to update session:" << query.lastError().text();
             return false;
         }
-        bool numRowsAffected = query.numRowsAffected() == 1;
+        const bool numRowsAffected = query.numRowsAffected() == 1;
 
         if(!upsertSessionDocument(database_, session.id, session.notes))
         {
@@ -417,7 +417,7 @@ namespace gamelog::core::database { namespace
         return numRowsAffected;
     }
 
-    bool SessionRepository::remove(int sessionId)
+    bool SessionRepository::remove(int sessionId) const
     {
         if(sessionId <= 0)
         {

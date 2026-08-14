@@ -4,10 +4,10 @@
 #include <QObject>
 #include <QWidget>
 
+#include "gui/calendar/CalendarView.h"
+#include "gui/library/LibraryView.h"
 #include "application/GameLogRuntime.h"
 #include "application/services/SessionService.h"
-#include "../calendar/CalendarView.h"
-#include "../library/LibraryView.h"
 
 #include "ui_mainwindow.h"
 
@@ -43,7 +43,7 @@ namespace gamelog::gui
         ui->statusBar->addPermanentWidget(statusTitleLabel_);
         ui->statusBar->addPermanentWidget(statusTimeLabel_);
 
-        auto sessionService = runtime_.getSessionService();
+        const auto sessionService = runtime_.getSessionService();
 
         connect(sessionService, &application::services::SessionService::sessionStarted, this, &MainWindow::onSessionStarted);
         connect(runtime_.getSessionService(), &application::services::SessionService::sessionStopped, this, &MainWindow::onSessionEnded);

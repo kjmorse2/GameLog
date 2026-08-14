@@ -20,7 +20,7 @@ namespace gamelog::core::domain::query
         Id
     };
 
-    QDebug operator<<(QDebug debug, const SessionSortField sortField);
+    QDebug operator<<(QDebug debug, SessionSortField sortField);
 
     /**
  * Persistence-neutral description of a session search.

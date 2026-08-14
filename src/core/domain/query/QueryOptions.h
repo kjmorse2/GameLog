@@ -13,5 +13,5 @@ namespace gamelog::core::domain::query
         Descending
     };
 
-    QDebug operator<<(QDebug debug, const SortDirection direction);
+    QDebug operator<<(QDebug debug, SortDirection direction);
 } // namespace gamelog::core::domain::query

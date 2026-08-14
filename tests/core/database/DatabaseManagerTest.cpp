@@ -1,7 +1,7 @@
 #include <QtTest/QtTest>
 
-#include "fixtures/TestDatabaseFixture.h"
 #include "database/DatabaseManager.h"
+#include "fixtures/TestDatabaseFixture.h"
 
 #include <QFileInfo>
 #include <QSqlDatabase>
@@ -28,43 +28,46 @@ namespace
     }
 } // namespace
 
-class DatabaseManagerTest:public QObject
+namespace
 {
-    Q_OBJECT
+    class DatabaseManagerTest:public QObject
+    {
+        Q_OBJECT
 
-private
+    private
     slots:
 
 
 
-    void init();
+        void init();
 
-    void cleanup();
+        void cleanup();
 
-    void initialize_opensDatabaseAndRunsMigrations();
+        static void initialize_opensDatabaseAndRunsMigrations();
 
-    void initialize_failsForEmptyConnectionName();
+        static void initialize_failsForEmptyConnectionName();
 
-    void initialize_failsWhenConnectionAlreadyExists();
+        static void initialize_failsWhenConnectionAlreadyExists();
 
-    void isOpen_isFalseBeforeInitialize();
+        static void isOpen_isFalseBeforeInitialize();
 
-    void database_isInvalidBeforeInitialize();
+        static void database_isInvalidBeforeInitialize();
 
-    void database_isValidAndOpenAfterInitialize();
+        static void database_isValidAndOpenAfterInitialize();
 
-    void defaultDatabasePath_returnsSQLitePath();
+        static void defaultDatabasePath_returnsSQLitePath();
 
-    void resolveDatabasePath_prefersCommandLinePath();
+        static void resolveDatabasePath_prefersCommandLinePath();
 
-    void resolveDatabasePath_usesEnvironmentPathWithoutCommandLinePath();
+        static void resolveDatabasePath_usesEnvironmentPathWithoutCommandLinePath();
 
-    void resolveDatabasePath_fallsBackToDefaultPath();
+        static void resolveDatabasePath_fallsBackToDefaultPath();
 
-private:
-    QByteArray originalEnvironmentValue_;
-    bool hadOriginalEnvironmentValue_ = false;
-};
+    private:
+        QByteArray originalEnvironmentValue_;
+        bool hadOriginalEnvironmentValue_ = false;
+    };
+}
 
 void DatabaseManagerTest::init()
 {
@@ -97,9 +100,9 @@ void DatabaseManagerTest::cleanup()
 void DatabaseManagerTest::initialize_opensDatabaseAndRunsMigrations()
 {
     const QString databasePath = gamelog::tests::fixtures::createFreshTestDatabasePath("initialize-success");
-    const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("initialize-success");
 
     {
+        const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("initialize-success");
         DatabaseManager manager{databasePath, connectionName};
 
         QVERIFY(manager.initialize());
@@ -156,7 +159,7 @@ void DatabaseManagerTest::isOpen_isFalseBeforeInitialize()
     const QString databasePath = gamelog::tests::fixtures::createFreshTestDatabasePath("is-open-before-initialize");
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("is-open-before-initialize");
 
-    DatabaseManager manager{databasePath, connectionName};
+    const DatabaseManager manager{databasePath, connectionName};
     QVERIFY(!manager.isOpen());
 
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath);
@@ -167,7 +170,7 @@ void DatabaseManagerTest::database_isInvalidBeforeInitialize()
     const QString databasePath = gamelog::tests::fixtures::createFreshTestDatabasePath("database-before-initialize");
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("database-before-initialize");
 
-    DatabaseManager manager{databasePath, connectionName};
+    const DatabaseManager manager{databasePath, connectionName};
     QVERIFY(!manager.database().isValid());
 
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath);
@@ -176,9 +179,9 @@ void DatabaseManagerTest::database_isInvalidBeforeInitialize()
 void DatabaseManagerTest::database_isValidAndOpenAfterInitialize()
 {
     const QString databasePath = gamelog::tests::fixtures::createFreshTestDatabasePath("database-after-initialize");
-    const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("database-after-initialize");
 
     {
+        const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("database-after-initialize");
         DatabaseManager manager{databasePath, connectionName};
         QVERIFY(manager.initialize());
 

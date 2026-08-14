@@ -1,24 +1,27 @@
 #include <QtTest/QtTest>
+#include "process/ProcessInfo.h"
 #include "process/ProcessSource.h"
 #include "process/ProcfsProcessSource.h"
-#include "process/ProcessInfo.h"
 
-class ProcessTest:public QObject
+namespace
 {
-    Q_OBJECT
+    class ProcessTest:public QObject
+    {
+        Q_OBJECT
 
-private
+    private
     slots:
 
 
 
-    void detectsSomeProcesses();
-};
+        void detectsSomeProcesses();
+    };
+}
 
 void ProcessTest::detectsSomeProcesses()
 {
     // Test the detection of some processes
-    gamelog::core::process::ProcfsProcessSource source = gamelog::core::process::ProcfsProcessSource();
+    auto source = gamelog::core::process::ProcfsProcessSource();
     std::vector<gamelog::core::process::ProcessInfo> processes = source.listProcesses();
     QVERIFY(!processes.empty());
 }

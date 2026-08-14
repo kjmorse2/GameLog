@@ -1,6 +1,6 @@
 #include "application/services/GameService.h"
-#include "logging/LoggingCategories.h"
 #include <utility>
+#include "logging/LoggingCategories.h"
 
 namespace gamelog::application::services
 {

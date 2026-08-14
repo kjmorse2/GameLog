@@ -59,7 +59,7 @@ public:
 
 private:
     Ui::GameCard* ui;
-    inline static const gamelog::core::domain::Game emptyGameCard = {-1, QStringLiteral(""), QStringLiteral(""), QStringLiteral(""), -1, QStringLiteral(""), false};
+    inline static const gamelog::core::domain::Game emptyGameCard = {.id = -1, .title = QStringLiteral(""), .executablePath = QStringLiteral(""), .executableName = QStringLiteral(""), .steamAppId = -1, .artworkPath = QStringLiteral(""), .trackingEnabled = false};
 };
 
 

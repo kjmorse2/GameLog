@@ -4,8 +4,8 @@
 
 // You may need to build the project (run Qt uic code generator) to get "ui_CalendarView.h" resolved
 
-#include <QTextCharFormat>
 #include "CalendarView.h"
+#include <QTextCharFormat>
 #include "ui_calendarview.h"
 
 
@@ -26,14 +26,13 @@ CalendarView::~CalendarView()
     delete ui;
 }
 
-void CalendarView::onPageChanged(int year, int month)
+void CalendarView::onPageChanged(int year, int month) const
 {
-    QDateTime startDate = QDateTime{QDate(year, month, 1), QTime{0, 0}};
-    QDateTime endDate = QDateTime{QDate(year, (month + 1) % 12, 1), QTime{0, 0}};
-    vector<Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate, endDate);
-    for(const auto& session : foundSessions)
+    const auto startDate = QDateTime{QDate(year, month, 1), QTime{0, 0}};
+    const auto endDate = QDateTime{QDate(year, (month + 1) % 12, 1), QTime{0, 0}};
+    for(const vector<Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate, endDate); const auto& session : foundSessions)
     {
-        QDate date = session.startTimestamp.date();
+        const QDate date = session.startTimestamp.date();
 
         QTextCharFormat format;
         format.setBackground(QBrush{Qt::red});

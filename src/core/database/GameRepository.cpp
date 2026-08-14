@@ -17,9 +17,9 @@ namespace gamelog::core::database { namespace
         using domain::query::GameSortField;
         using domain::query::SortDirection;
 
-        domain::Game gameFromQuery(const QSqlQuery& query)
+        Game gameFromQuery(const QSqlQuery& query)
         {
-            domain::Game game;
+            Game game;
             game.id = query.value(QStringLiteral("id")).toInt();
             game.title = query.value(QStringLiteral("title")).toString();
             game.executablePath = query.value(QStringLiteral("executable_path")).toString();
@@ -78,7 +78,7 @@ namespace gamelog::core::database { namespace
             {
                 const QString placeholder = QStringLiteral(":game_id_%1").arg(static_cast<qulonglong>(index));
                 placeholders.push_back(placeholder);
-                bindings.push_back({placeholder, QVariant::fromValue<qlonglong>(static_cast<qlonglong>(ids[index]))});
+                bindings.push_back({placeholder, QVariant::fromValue<qlonglong>(ids[index])});
             }
 
             predicates.push_back(QStringLiteral("id IN (%1)").arg(placeholders.join(QStringLiteral(", "))));
@@ -246,7 +246,7 @@ namespace gamelog::core::database { namespace
     {
         QSqlQuery query{database_};
         query.prepare(QStringLiteral("DELETE FROM games WHERE id = :id"));
-        query.bindValue(QStringLiteral(":id"), QVariant::fromValue<qlonglong>(static_cast<qlonglong>(id)));
+        query.bindValue(QStringLiteral(":id"), QVariant::fromValue<qlonglong>(id));
 
         if(!query.exec())
         {

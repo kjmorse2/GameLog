@@ -33,8 +33,8 @@ LibraryView::~LibraryView()
 
 void LibraryView::displayAllGames()
 {
-    auto games = service->listGames();
-    while(QLayoutItem* item = ui->gameGridLayout->takeAt(0))
+    const auto games = service->listGames();
+    while(const QLayoutItem* item = ui->gameGridLayout->takeAt(0))
     {
         if(QWidget* widget = item->widget())
         {
@@ -44,9 +44,9 @@ void LibraryView::displayAllGames()
         delete item;
     }
 
-    for(int i = 0; i < games.size(); ++i)
+    for(auto i = 0; i < games.size(); ++i)
     {
-        constexpr int columns = 4;
+        constexpr auto columns = 4;
         const int row = i / columns;
         const int col = i % columns;
 

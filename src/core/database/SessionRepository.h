@@ -44,14 +44,14 @@ namespace gamelog::core::database
      * @param session The session to update.
      * @return true if the session was updated.
      */
-        [[nodiscard]] bool update(const Session& session);
+        [[nodiscard]] bool update(const Session& session) const;
 
         /**
      * Remove a session from the repository.
      * @param sessionId The id of the session to remove.
      * @return True if the session was removed, false otherwise.
      */
-        [[nodiscard]] bool remove(int sessionId);
+        [[nodiscard]] bool remove(int sessionId) const;
 
     private:
         /**

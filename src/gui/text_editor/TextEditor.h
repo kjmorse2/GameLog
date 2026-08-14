@@ -27,7 +27,7 @@ public
 
 
 
-    void setAbleToEdit(bool disabled);
+    void setAbleToEdit(bool enabled);
 
 private
     slots:

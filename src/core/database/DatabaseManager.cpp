@@ -61,6 +61,46 @@ namespace gamelog::core::database
         return database_;
     }
 
+    QString DatabaseManager::defaultDatabasePath()
+    {
+        // AppLocalDataLocation is the portable default for a per-user SQLite file.
+        const QString dataDirectory = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+
+        if(dataDirectory.isEmpty())
+        {
+            return {};
+        }
+
+        // Ensure the directory exists before returning the final database file path.
+        QDir directory;
+
+        if(!directory.mkpath(dataDirectory))
+        {
+            return {};
+        }
+
+        return QDir{dataDirectory}.filePath("gamelog.sqlite");
+    }
+
+    QString DatabaseManager::resolveDatabasePath(const QString& commandLinePath)
+    {
+        // Command-line overrides win when they are present.
+        if(!commandLinePath.isEmpty())
+        {
+            return QFileInfo{commandLinePath}.absoluteFilePath();
+        }
+
+        // Allow local development and test runs to redirect storage.
+
+        if(const QString environmentPath = qEnvironmentVariable("GAMELOG_DATABASE_PATH"); !environmentPath.isEmpty())
+        {
+            return QFileInfo{environmentPath}.absoluteFilePath();
+        }
+
+        // Fall back to the default per-user location.
+        return defaultDatabasePath();
+    }
+
     bool DatabaseManager::openDatabase()
     {
         if(connectionName_.isEmpty())
@@ -111,46 +151,5 @@ namespace gamelog::core::database
     {
         DatabaseMigrator migrator{database_};
         return migrator.applyPendingMigrations();
-    }
-
-    QString DatabaseManager::defaultDatabasePath()
-    {
-        // AppLocalDataLocation is the portable default for a per-user SQLite file.
-        const QString dataDirectory = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-
-        if(dataDirectory.isEmpty())
-        {
-            return {};
-        }
-
-        // Ensure the directory exists before returning the final database file path.
-        QDir directory;
-
-        if(!directory.mkpath(dataDirectory))
-        {
-            return {};
-        }
-
-        return QDir{dataDirectory}.filePath("gamelog.sqlite");
-    }
-
-    QString DatabaseManager::resolveDatabasePath(const QString& commandLinePath)
-    {
-        // Command-line overrides win when they are present.
-        if(!commandLinePath.isEmpty())
-        {
-            return QFileInfo{commandLinePath}.absoluteFilePath();
-        }
-
-        // Allow local development and test runs to redirect storage.
-        const QString environmentPath = qEnvironmentVariable("GAMELOG_DATABASE_PATH");
-
-        if(!environmentPath.isEmpty())
-        {
-            return QFileInfo{environmentPath}.absoluteFilePath();
-        }
-
-        // Fall back to the default per-user location.
-        return defaultDatabasePath();
     }
 } // namespace gamelog::core::database

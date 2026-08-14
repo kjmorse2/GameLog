@@ -5,8 +5,8 @@
 #ifndef GAMELOG_CALENDARVIEW_H
 #define GAMELOG_CALENDARVIEW_H
 
-#include <QWidget>
 #include <QCalendarWidget>
+#include <QWidget>
 
 #include "application/services/GameService.h"
 #include "application/services/SessionService.h"
@@ -69,7 +69,7 @@ private
 
 
 
-    void onPageChanged(int year, int month);
+    void onPageChanged(int year, int month) const;
 };
 
 

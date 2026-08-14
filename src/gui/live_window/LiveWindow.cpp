@@ -13,9 +13,9 @@
 
 namespace gamelog::gui
 {
-    LiveWindow::LiveWindow(application::GameLogRuntime& runtime, QWidget* parent): QMainWindow(parent),
-                                                                                   gameLogRuntime(runtime),
-                                                                                   ui(new Ui::LiveWindow)
+    LiveWindow::LiveWindow(application::GameLogRuntime& gameLogRuntime, QWidget* parent): QMainWindow(parent),
+                                                                                          ui(new Ui::LiveWindow),
+                                                                                          gameLogRuntime(gameLogRuntime)
     {
         ui->setupUi(this);
         connect(gameLogRuntime.getSessionService(), &application::services::SessionService::sessionStarted, this, &LiveWindow::onSessionStarted);
@@ -23,6 +23,11 @@ namespace gamelog::gui
         clockTimer = new QTimer(this);
         clockTimer->setInterval(1000);
         currentTime = QTime(0, 0);
+    }
+
+    LiveWindow::~LiveWindow()
+    {
+        delete ui;
     }
 
     void LiveWindow::onSessionStarted(const Game& game)
@@ -38,9 +43,9 @@ namespace gamelog::gui
         layout->addWidget(ui->cardWidget, 0, 0); // Insert at position 0 (first)
 
         // Set up Timer
-        std::optional<Session> session = gameLogRuntime.getSessionService()->findActiveSession();
-        QDateTime startTime = session->startTimestamp;
-        qint64 miliSecondsDiff = startTime.msecsTo(QDateTime::currentDateTimeUtc());
+        const std::optional<Session> session = gameLogRuntime.getSessionService()->findActiveSession();
+        const QDateTime startTime = session->startTimestamp;
+        const qint64 miliSecondsDiff = startTime.msecsTo(QDateTime::currentDateTimeUtc());
         currentTime = QTime(0, 0).addMSecs(miliSecondsDiff);
         connect(clockTimer, &QTimer::timeout, this, &LiveWindow::updateTimerText);
         clockTimer->start();
@@ -73,15 +78,10 @@ namespace gamelog::gui
         }
     }
 
+
     void LiveWindow::updateTimerText()
     {
         ui->timeLabel->setText(currentTime.toString());
         currentTime = currentTime.addSecs(1);
-    }
-
-
-    LiveWindow::~LiveWindow()
-    {
-        delete ui;
     }
 } // namespace gamelog::gui

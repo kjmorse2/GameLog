@@ -1,9 +1,9 @@
 #include <QtTest/QtTest>
 
-#include "fixtures/TestDatabaseFixture.h"
-#include "database/DatabaseManager.h"
 #include "application/services/GameService.h"
+#include "database/DatabaseManager.h"
 #include "domain/Game.h"
+#include "fixtures/TestDatabaseFixture.h"
 
 #include <memory>
 
@@ -17,52 +17,61 @@ using gamelog::application::services::GameService;
 using gamelog::core::domain::Game;
 using gamelog::core::database::GameRepository;
 
-class GameServiceTest :public QObject
+namespace
 {
-    Q_OBJECT
+    class GameServiceTest :public QObject
+    {
+        Q_OBJECT
 
-private
-slots:
-    void init();
+    private
+    slots:
+        void init();
 
-    void cleanup();
+        void cleanup();
 
-    void search_returnsAllForEmptyQuery();
+        void search_returnsAllForEmptyQuery();
 
-    void search_returnsNoneForEmptyQueryOnEmptyDatabase();
+        void search_returnsNoneForEmptyQueryOnEmptyDatabase();
 
-    void findById_returnsNulloptForMissingId();
+        void findById_returnsNulloptForMissingId();
 
-    void findById_returnsInsertedGame();
+        void findById_returnsInsertedGame();
 
-    void listGames_returnsAllGames();
+        void findByExecutableName_returnsNulloptForMissingName();
 
-    void listTrackedGames_returnsOnlyTrackedGames();
+        void findByExecutableName_returnsInsertedGame();
 
-    void listTrackedGames_returnsGamesOrderedByTitleCaseInsensitive();
+        void listGames_returnsAllGames();
 
-    void listTrackedGames_returnsEmptyWhenNoRowsExist();
+        void listTrackedGames_returnsOnlyTrackedGames();
 
-    void addGame_persistsAllFieldsAndAssignsId();
+        void listTrackedGames_returnsGamesOrderedByTitleCaseInsensitive();
 
-    void addGame_handlesUnsetOptionalFields();
+        void listTrackedGames_returnsEmptyWhenNoRowsExist();
 
-    void updateGame_persistsModifiedFields();
+        void addGame_persistsAllFieldsAndAssignsId();
 
-    void updateGame_returnsTrueForMissingRow();
+        void addGame_handlesUnsetOptionalFields();
 
-    void removeGame_deletesExistingRow();
+        void updateGame_persistsModifiedFields();
 
-    void removeGame_returnsTrueForMissingRow();
+        void updateGame_returnsTrueForMissingRow();
 
-private:
-    static Game makeGame(const QString &title);
+        void removeGame_deletesExistingRow();
 
-    QString databasePath_;
-    std::unique_ptr<DatabaseManager> manager_;
-    std::unique_ptr<GameRepository> repository_;
-    std::unique_ptr<GameService> service_;
-};
+        void removeGame_returnsTrueForMissingRow();
+
+        void syncGamesWithDatabase_rebuildsInMemoryIndexes();
+
+    private:
+        static Game makeGame(const QString &title);
+
+        QString databasePath_;
+        std::unique_ptr<DatabaseManager> manager_;
+        std::unique_ptr<GameRepository> repository_;
+        std::unique_ptr<GameService> service_;
+    };
+}
 
 void GameServiceTest::init()
 {
@@ -83,18 +92,6 @@ void GameServiceTest::cleanup()
     repository_.reset();
     manager_.reset();
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath_);
-}
-
-Game GameServiceTest::makeGame(const QString &title)
-{
-    Game game;
-    game.title = title;
-    game.executablePath = "/games/" + title.toLower();
-    game.executableName = title.toLower() + ".bin";
-    game.steamAppId = static_cast<int>(qHash(title) & 0x7FFFFFFF);
-    game.artworkPath = "/art/" + title + ".png";
-    game.trackingEnabled = true;
-    return game;
 }
 
 void GameServiceTest::search_returnsAllForEmptyQuery()
@@ -136,6 +133,28 @@ void GameServiceTest::findById_returnsInsertedGame()
     QVERIFY(loaded->artworkPath.has_value());
     QCOMPARE(*loaded->artworkPath, *game.artworkPath);
     QCOMPARE(loaded->trackingEnabled, game.trackingEnabled);
+}
+
+void GameServiceTest::findByExecutableName_returnsNulloptForMissingName()
+{
+    const auto game = service_->findByExecutableName("nonexistent.exe");
+    QVERIFY(!game.has_value());
+}
+
+void GameServiceTest::findByExecutableName_returnsInsertedGame()
+{
+    const QString executableName = "hollow_knight.exe";
+    Game game = makeGame("Hollow Knight");
+    game.executableName = executableName;
+    QVERIFY(service_->addGame(game));
+
+    const auto loaded = service_->findByExecutableName(executableName);
+    QVERIFY(loaded.has_value());
+    QCOMPARE(loaded->id, game.id);
+    QCOMPARE(loaded->title, game.title);
+    QCOMPARE(loaded->executablePath, game.executablePath);
+    QCOMPARE(loaded->executableName, game.executableName);
+
 }
 
 void GameServiceTest::listGames_returnsAllGames()
@@ -260,6 +279,42 @@ void GameServiceTest::removeGame_deletesExistingRow()
 void GameServiceTest::removeGame_returnsTrueForMissingRow()
 {
     QVERIFY(service_->removeGame(999999));
+}
+
+void GameServiceTest::syncGamesWithDatabase_rebuildsInMemoryIndexes()
+{
+    Game game1 = makeGame("Game1");
+    Game game2 = makeGame("Game2");
+    QVERIFY(service_->addGame(game1));
+    QVERIFY(service_->addGame(game2));
+
+    Game game3 = makeGame("Game3");
+    QVERIFY(repository_->insert(game3));
+
+    QHash<std::uint32_t, Game> steamGamesInMemoryIndexBeforeSync = service_->trackedSteamGames();
+    QHash<QString, Game> pathGamesInMemoryIndexBeforeSync = service_->trackedPathGames();
+    QCOMPARE(steamGamesInMemoryIndexBeforeSync.size(), 2);
+    QCOMPARE(pathGamesInMemoryIndexBeforeSync.size(), 2);
+
+    // Sync with the database to rebuild the in-memory indexes
+    service_->syncGamesWithDatabase();
+
+    steamGamesInMemoryIndexBeforeSync = service_->trackedSteamGames();
+    pathGamesInMemoryIndexBeforeSync = service_->trackedPathGames();
+    QCOMPARE(steamGamesInMemoryIndexBeforeSync.size(), 3);
+    QCOMPARE(pathGamesInMemoryIndexBeforeSync.size(), 3);
+}
+
+Game GameServiceTest::makeGame(const QString &title)
+{
+    Game game;
+    game.title = title;
+    game.executablePath = "/games/" + title.toLower();
+    game.executableName = title.toLower() + ".bin";
+    game.steamAppId = static_cast<int>(qHash(title) & 0x7FFFFFFF);
+    game.artworkPath = "/art/" + title + ".png";
+    game.trackingEnabled = true;
+    return game;
 }
 
 QTEST_GUILESS_MAIN(GameServiceTest)

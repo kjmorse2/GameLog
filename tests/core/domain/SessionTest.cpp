@@ -13,19 +13,20 @@ namespace
 
     const std::vector<QString> status_StringsReturnInterrupted{"interrupted", "Interrupted"};
 } // namespace
-class SessionTest:public QObject
+namespace
 {
-    Q_OBJECT
+    class SessionTest:public QObject
+    {
+        Q_OBJECT
 
-private
+    private
     slots:
 
+        static void parsesSourceFromString();
 
-
-    void parsesSourceFromString();
-
-    void parsesStatusFromString();
-};
+        void parsesStatusFromString();
+    };
+}
 
 void SessionTest::parsesSourceFromString()
 {

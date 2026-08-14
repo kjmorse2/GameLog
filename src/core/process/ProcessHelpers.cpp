@@ -47,7 +47,7 @@ namespace gamelog::core::process
             return std::nullopt;
         }
 
-        bool parsed = false;
+        auto parsed = false;
         const qulonglong numericValue = value->toULongLong(&parsed);
 
         if(!parsed || numericValue == 0 || numericValue > std::numeric_limits<std::uint32_t>::max())

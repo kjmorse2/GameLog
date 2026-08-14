@@ -33,7 +33,7 @@ namespace gamelog::core::process { namespace
             return {};
         }
 
-        pids_fetch* fetched = procps_pids_reap(info, PIDS_FETCH_TASKS_ONLY);
+        const pids_fetch* fetched = procps_pids_reap(info, PIDS_FETCH_TASKS_ONLY);
 
         if(fetched == nullptr)
         {
@@ -45,7 +45,7 @@ namespace gamelog::core::process { namespace
 
         std::vector<ProcessInfo> processes;
 
-        const int totalProcesses = (fetched->counts != nullptr) ? fetched->counts->total : 0;
+        const int totalProcesses = fetched->counts != nullptr ? fetched->counts->total : 0;
 
         if(totalProcesses > 0)
         {
@@ -55,9 +55,9 @@ namespace gamelog::core::process { namespace
 
         // Walk each stack entry, skipping any partial rows that libproc2 could not
         // fill.
-        for(int index = 0; index < totalProcesses; ++index)
+        for(auto index = 0; index < totalProcesses; ++index)
         {
-            pids_stack* stack = fetched->stacks[index];
+            const pids_stack* stack = fetched->stacks[index];
 
             if(stack == nullptr)
             {

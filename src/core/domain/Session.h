@@ -21,9 +21,9 @@ namespace gamelog::core::domain
         Interrupted
     };
 
-    QDebug operator<<(QDebug debug, const SessionSource source);
+    QDebug operator<<(QDebug debug, SessionSource source);
 
-    QDebug operator<<(QDebug debug, const SessionStatus status);
+    QDebug operator<<(QDebug debug, SessionStatus status);
 
     /**
      * @brief Converts a string to a SessionSource enum.

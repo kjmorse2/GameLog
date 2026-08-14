@@ -39,7 +39,7 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
             {
                 ui->textEdit->zoomOut(1);
             }
-           );
+            );
 
     connect(
             ui->zoomInButton,
@@ -49,7 +49,7 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
             {
                 ui->textEdit->zoomIn(1);
             }
-           );
+            );
 
     connect(ui->textEdit, &QTextEdit::cursorPositionChanged, this, &TextEditor::updateToolbarState);
 
@@ -61,11 +61,16 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
             {
                 updateToolbarState();
             }
-           );
+            );
 
     updateToolbarState();
 
     setAbleToEdit(false);
+}
+
+QString TextEditor::getMarkdown()
+{
+    return ui->textEdit->toMarkdown();
 }
 
 TextEditor::~TextEditor()
@@ -76,6 +81,32 @@ TextEditor::~TextEditor()
 void TextEditor::setAbleToEdit(bool enabled)
 {
     ui->textEdit->setDisabled(!enabled);
+}
+
+void TextEditor::applyHeading(int index)
+{
+    const int level = index;
+
+    QTextCursor cursor = ui->textEdit->textCursor();
+
+    cursor.beginEditBlock();
+
+    QTextBlockFormat blockFormat;
+    blockFormat.setHeadingLevel(level);
+
+    cursor.mergeBlockFormat(blockFormat);
+
+    QTextCharFormat charFormat;
+    charFormat.setFontPointSize(headingFontSize(level));
+
+    charFormat.setFontWeight(level > 0 ? QFont::Bold : QFont::Normal);
+
+    cursor.mergeBlockCharFormat(charFormat);
+
+    cursor.endEditBlock();
+
+    ui->textEdit->setTextCursor(cursor);
+    ui->textEdit->setFocus();
 }
 
 void TextEditor::toggleBold()
@@ -108,70 +139,11 @@ void TextEditor::toggleStrikethrough()
     ui->textEdit->setFocus();
 }
 
-void TextEditor::updateToolbarState()
-{
-    const QTextCharFormat format = ui->textEdit->currentCharFormat();
-
-    ui->boldButton->setChecked(format.fontWeight() >= QFont::Bold);
-
-    ui->italicButton->setChecked(format.fontItalic());
-
-    ui->strikethroughButton->setChecked(format.fontStrikeOut());
-
-    ui->bulletListButton->setChecked(ui->textEdit->textCursor().currentList() != nullptr);
-
-    const int headingLevel = currentHeadingLevel();
-
-    const QSignalBlocker blocker{ui->headingComboBox};
-
-    if(headingLevel >= 0 && headingLevel <= 3)
-    {
-        // Conveniently, our combo indices correspond directly
-        // to heading levels:
-        //
-        // 0 = Normal
-        // 1 = H1
-        // 2 = H2
-        // 3 = H3
-        ui->headingComboBox->setCurrentIndex(headingLevel);
-    }
-    else
-    {
-        ui->headingComboBox->setCurrentIndex(0);
-    }
-}
-
-void TextEditor::applyHeading(int index)
-{
-    const int level = index;
-
-    QTextCursor cursor = ui->textEdit->textCursor();
-
-    cursor.beginEditBlock();
-
-    QTextBlockFormat blockFormat;
-    blockFormat.setHeadingLevel(level);
-
-    cursor.mergeBlockFormat(blockFormat);
-
-    QTextCharFormat charFormat;
-    charFormat.setFontPointSize(headingFontSize(level));
-
-    charFormat.setFontWeight(level > 0 ? QFont::Bold : QFont::Normal);
-
-    cursor.mergeBlockCharFormat(charFormat);
-
-    cursor.endEditBlock();
-
-    ui->textEdit->setTextCursor(cursor);
-    ui->textEdit->setFocus();
-}
-
 void TextEditor::addLink()
 {
     QTextCursor cursor = ui->textEdit->textCursor();
 
-    bool accepted = false;
+    auto accepted = false;
 
     QString initialValue;
 
@@ -243,12 +215,45 @@ void TextEditor::toggleBulletList()
     ui->textEdit->setTextCursor(cursor);
 }
 
+void TextEditor::updateToolbarState()
+{
+    const QTextCharFormat format = ui->textEdit->currentCharFormat();
+
+    ui->boldButton->setChecked(format.fontWeight() >= QFont::Bold);
+
+    ui->italicButton->setChecked(format.fontItalic());
+
+    ui->strikethroughButton->setChecked(format.fontStrikeOut());
+
+    ui->bulletListButton->setChecked(ui->textEdit->textCursor().currentList() != nullptr);
+
+    const int headingLevel = currentHeadingLevel();
+
+    const QSignalBlocker blocker{ui->headingComboBox};
+
+    if(headingLevel >= 0 && headingLevel <= 3)
+    {
+        // Conveniently, our combo indices correspond directly
+        // to heading levels:
+        //
+        // 0 = Normal
+        // 1 = H1
+        // 2 = H2
+        // 3 = H3
+        ui->headingComboBox->setCurrentIndex(headingLevel);
+    }
+    else
+    {
+        ui->headingComboBox->setCurrentIndex(0);
+    }
+}
+
+
 int TextEditor::currentHeadingLevel() const
 {
     const QTextCursor cursor = ui->textEdit->textCursor();
     return cursor.blockFormat().headingLevel();
 }
-
 
 qreal TextEditor::headingFontSize(int level) const
 {
@@ -275,9 +280,4 @@ qreal TextEditor::headingFontSize(int level) const
         default :
             return baseSize;
     }
-}
-
-QString TextEditor::getMarkdown()
-{
-    return ui->textEdit->toMarkdown();
 }
