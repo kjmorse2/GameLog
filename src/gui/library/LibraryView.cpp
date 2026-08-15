@@ -7,15 +7,19 @@
 #include "LibraryView.h"
 
 #include <QObject>
+#include <application/GameLogRuntime.h>
+#include <application/services/GameService.h>
+#include <application/services/GameArtworkService.h>
+
 #include "gui/game_card/GameCard.h"
 
 #include "ui_libraryview.h"
 
 using gamelog::application::services::GameService;
 
-LibraryView::LibraryView(QWidget* parent, GameService* service): QWidget(parent),
-                                                                 ui(new Ui::LibraryView),
-                                                                 service(service)
+LibraryView::LibraryView(QWidget* parent, gamelog::application::GameLogRuntime* runtime): QWidget(parent),
+                                                                                          ui(new Ui::LibraryView),
+                                                                                          runtime_(runtime)
 {
     ui->setupUi(this);
     ui->gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -33,7 +37,7 @@ LibraryView::~LibraryView()
 
 void LibraryView::displayAllGames()
 {
-    const auto games = service->listGames();
+    const auto games = runtime_->getGameService()->listGames();
     while(const QLayoutItem* item = ui->gameGridLayout->takeAt(0))
     {
         if(QWidget* widget = item->widget())
@@ -50,7 +54,7 @@ void LibraryView::displayAllGames()
         const int row = i / columns;
         const int col = i % columns;
 
-        auto* gameCard = new GameCard(ui->gameGridContainer, games[i]);
+        auto* gameCard = new GameCard(ui->gameGridContainer, games[i], runtime_->getArtworkService());
         ui->gameGridLayout->addWidget(gameCard, row, col);
     }
 }

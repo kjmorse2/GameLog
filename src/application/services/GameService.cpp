@@ -1,5 +1,7 @@
 #include "application/services/GameService.h"
 #include <utility>
+
+#include "GameArtworkService.h"
 #include "logging/LoggingCategories.h"
 
 namespace gamelog::application::services
@@ -120,6 +122,10 @@ namespace gamelog::application::services
             if (!game.executablePath.isEmpty())
             {
                 trackedPathGames_.insert(game.executablePath, game);
+            }
+            if (game.artworkPath == QStringLiteral(""))
+            {
+                GameArtworkService::makeGameArtworkDirectory(game.id);
             }
         }
 

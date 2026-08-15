@@ -12,6 +12,11 @@
 #include "application/services/GameService.h"
 #include "domain/Game.h"
 
+namespace gamelog::application
+{
+    class GameLogRuntime;
+}
+
 QT_BEGIN_NAMESPACE
 
 namespace Ui
@@ -29,9 +34,9 @@ public:
     /**
      * Constructs a LibraryView.
      * @param parent The parent widget.
-     * @param service The Game service to querey Games for.
+     * @param service The Gamelog service to querey Games for.
      */
-    explicit LibraryView(QWidget* parent = nullptr, gamelog::application::services::GameService* service = nullptr);
+    explicit LibraryView(QWidget* parent = nullptr, gamelog::application::GameLogRuntime* service = nullptr);
 
     ~LibraryView() override;
 
@@ -58,7 +63,7 @@ private:
     /**
      * @brief The Game service to query Games for.
      */
-    gamelog::application::services::GameService* service;
+    gamelog::application::GameLogRuntime* runtime_;
 };
 
 

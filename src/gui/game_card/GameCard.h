@@ -6,6 +6,8 @@
 #define GAMELOG_GAMECARD_H
 
 #include <QWidget>
+#include <application/services/GameArtworkService.h>
+
 #include "core/domain/Game.h"
 
 
@@ -27,8 +29,9 @@ public:
      * A visual Game Card widget.
      * @param parent The QWidget parent.
      * @param game The Game object to construct from.
+     * @param artworkService
      */
-    explicit GameCard(QWidget* parent = nullptr, const gamelog::core::domain::Game& game = emptyGameCard);
+    explicit GameCard(QWidget* parent = nullptr, const gamelog::core::domain::Game& game = emptyGameCard, gamelog::application::services::GameArtworkService* artworkService = nullptr);
 
     ~GameCard() override;
 
@@ -59,6 +62,7 @@ public:
 
 private:
     Ui::GameCard* ui;
+    gamelog::application::services::GameArtworkService* artworkService_;
     inline static const gamelog::core::domain::Game emptyGameCard = {.id = -1, .title = QStringLiteral(""), .executablePath = QStringLiteral(""), .executableName = QStringLiteral(""), .steamAppId = -1, .artworkPath = QStringLiteral(""), .trackingEnabled = false};
 };
 

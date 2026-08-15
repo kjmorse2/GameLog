@@ -30,7 +30,7 @@ namespace gamelog::gui
     {
         initializeGUIResources();
         ui->setupUi(this);
-        auto* libraryViewWidget = new LibraryView{ui->libraryTab, runtime.getGameService()};
+        auto* libraryViewWidget = new LibraryView{ui->libraryTab, &runtime};
         ui->libraryTabLayout->addWidget(libraryViewWidget);
 
         ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getGameService(), runtime.getSessionService()});

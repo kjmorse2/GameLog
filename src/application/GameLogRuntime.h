@@ -9,6 +9,7 @@
 #include "database/SessionRepository.h"
 #include "process/SteamProcessInspector.h"
 #include "services/GameService.h"
+#include "services/GameArtworkService.h"
 #include "services/SessionService.h"
 
 namespace gamelog::core::process
@@ -63,6 +64,7 @@ namespace gamelog::application
          * Returns the owned session service, or nullptr if database initialization failed.
          */
         [[nodiscard]] services::SessionService* getSessionService() noexcept;
+        [[nodiscard]] services::GameArtworkService* getArtworkService() noexcept;
 
     private:
         // DatabaseManager must outlive every repository and service that uses its
@@ -72,6 +74,7 @@ namespace gamelog::application
         std::optional<core::database::SessionRepository> sessionRepository_;
         std::optional<services::GameService> gameService_;
         std::optional<services::SessionService> sessionService_;
+        std::optional<services::GameArtworkService> gameArtworkService_;
 
         std::unique_ptr<core::process::ProcessSource> processSource_;
         core::process::SteamProcessInspector steamProcessInspector_;

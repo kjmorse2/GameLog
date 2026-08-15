@@ -13,7 +13,7 @@ set(CMAKE_AUTORCC ON)
 
 include(CTest)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network Sql Test)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)

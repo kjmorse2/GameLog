@@ -29,6 +29,7 @@ namespace gamelog::application
         sessionRepository_.emplace(database);
         gameService_.emplace(*gameRepository_);
         sessionService_.emplace(*sessionRepository_, *gameService_);
+        gameArtworkService_.emplace();
     }
 
     GameLogRuntime::~GameLogRuntime() = default;
@@ -120,5 +121,10 @@ namespace gamelog::application
     services::SessionService* GameLogRuntime::getSessionService() noexcept
     {
         return sessionService_ ? &*sessionService_ : nullptr;
+    }
+
+    services::GameArtworkService* GameLogRuntime::getArtworkService() noexcept
+    {
+        return gameArtworkService_ ? &*gameArtworkService_: nullptr;
     }
 } // namespace gamelog::application

@@ -21,6 +21,8 @@ add_library(gamelog-core STATIC
 
         ${PROJECT_SOURCE_DIR}/resources/migrations/migrations.qrc
         domain/Game.cpp
+        resources/AppPaths.cpp
+        resources/AppPaths.h
 )
 
 target_include_directories(gamelog-core

@@ -10,6 +10,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
+#include <resources/AppPaths.h>
 
 namespace gamelog::core::database
 {
@@ -64,7 +65,7 @@ namespace gamelog::core::database
     QString DatabaseManager::defaultDatabasePath()
     {
         // AppLocalDataLocation is the portable default for a per-user SQLite file.
-        const QString dataDirectory = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+        const QString dataDirectory = AppPaths::dataDirectory();
 
         if(dataDirectory.isEmpty())
         {
@@ -72,14 +73,13 @@ namespace gamelog::core::database
         }
 
         // Ensure the directory exists before returning the final database file path.
-        QDir directory;
 
-        if(!directory.mkpath(dataDirectory))
+        if(const QDir directory; !directory.mkpath(dataDirectory))
         {
             return {};
         }
 
-        return QDir{dataDirectory}.filePath("gamelog.sqlite");
+        return AppPaths::databasePath();
     }
 
     QString DatabaseManager::resolveDatabasePath(const QString& commandLinePath)
