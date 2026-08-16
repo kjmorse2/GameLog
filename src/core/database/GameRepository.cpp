@@ -31,11 +31,7 @@ namespace gamelog::core::database { namespace
                 game.steamAppId = steamAppId.toInt();
             }
 
-            const QVariant artworkPath = query.value(QStringLiteral("artwork_path"));
-            if(!artworkPath.isNull())
-            {
-                game.artworkPath = artworkPath.toString();
-            }
+            const QVariant hasArtwork = query.value(QStringLiteral("has_artwork"));
 
             game.trackingEnabled = query.value(QStringLiteral("tracking_enabled")).toBool();
             return game;
@@ -92,7 +88,7 @@ namespace gamelog::core::database { namespace
 
     std::vector<domain::Game> GameRepository::query(const GameQuery& specification) const
     {
-        QString sql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, " "artwork_path, tracking_enabled FROM games");
+        QString sql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, " "has_artwork, tracking_enabled FROM games");
 
         QStringList predicates;
         QList<QPair<QString, QVariant>> bindings;
@@ -185,8 +181,8 @@ namespace gamelog::core::database { namespace
         QSqlQuery query{database_};
         query.prepare(
                       QStringLiteral(
-                                     "INSERT INTO games " "(title, executable_path, executable_name, steam_app_id, artwork_path, "
-                                     "tracking_enabled) VALUES (:title, :executable_path, :executable_name, " ":steam_app_id, :artwork_path, :tracking_enabled)"
+                                     "INSERT INTO games " "(title, executable_path, executable_name, steam_app_id, has_artwork, "
+                                     "tracking_enabled) VALUES (:title, :executable_path, :executable_name, " ":steam_app_id, :has_artwork, :tracking_enabled)"
                                     )
                      );
 
@@ -194,7 +190,7 @@ namespace gamelog::core::database { namespace
         query.bindValue(QStringLiteral(":executable_path"), game.executablePath);
         query.bindValue(QStringLiteral(":executable_name"), game.executableName);
         bindNullableInt(query, QStringLiteral(":steam_app_id"), game.steamAppId);
-        bindNullableString(query, QStringLiteral(":artwork_path"), game.artworkPath);
+        query.bindValue(QStringLiteral(":has_artwork"), game.hasArtwork);
         query.bindValue(QStringLiteral(":tracking_enabled"), game.trackingEnabled);
 
         if(!query.exec())
@@ -214,7 +210,7 @@ namespace gamelog::core::database { namespace
                           QStringLiteral(
                                          "UPDATE games " "SET title = :title, " "executable_path = :executable_path, " "executable_name = :executable_name, "
                                          "steam_app_id = :steam_app_id, "
-                                         "artwork_path = :artwork_path, " "tracking_enabled = :tracking_enabled " "WHERE id = :game_id"
+                                         "has_artwork= :has_artwork, " "tracking_enabled = :tracking_enabled " "WHERE id = :game_id"
                                         )
                          ))
         {
@@ -225,7 +221,7 @@ namespace gamelog::core::database { namespace
         query.bindValue(QStringLiteral(":executable_path"), game.executablePath);
         query.bindValue(QStringLiteral(":executable_name"), game.executableName);
         bindNullableInt(query, QStringLiteral(":steam_app_id"), game.steamAppId);
-        bindNullableString(query, QStringLiteral(":artwork_path"), game.artworkPath);
+        query.bindValue(QStringLiteral(":has_artwork"), game.hasArtwork);
         query.bindValue(QStringLiteral(":tracking_enabled"), game.trackingEnabled);
         query.bindValue(QStringLiteral(":game_id"), game.id);
 
