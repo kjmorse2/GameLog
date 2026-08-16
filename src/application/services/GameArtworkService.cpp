@@ -16,33 +16,57 @@ namespace gamelog::application::services
         networkAccessManager_(new QNetworkAccessManager(this))
     {
         connect( networkAccessManager_, &QNetworkAccessManager::finished, this,
-                [](QNetworkReply *reply) {
-                    bool typeOk = false;
-                    const int artworkTypeInt = reply->property("artworkType").toInt(&typeOk);
+                 [](QNetworkReply *reply) {
+                     bool typeOk = false;
+                     const int artworkTypeInt = reply->property("artworkType").toInt(&typeOk);
 
-                    bool gameIdOk = false;
-                    const int gameId = reply->property("gameId").toInt(&gameIdOk);
+                     bool gameIdOk = false;
+                     const int gameId = reply->property("gameId").toInt(&gameIdOk);
 
-                    if (!typeOk || !gameIdOk)
-                    {
-                        qWarning() << "Missing artwork metadata for reply:" << reply->url();
-                        reply->deleteLater();
-                        return;
-                    }
+                     if (!typeOk || !gameIdOk)
+                     {
+                         qWarning() << "Missing artwork metadata for reply:" << reply->url();
+                         reply->deleteLater();
+                         return;
+                     }
 
-                    const auto artworkType = static_cast<ArtworkType>(artworkTypeInt);
+                     const auto artworkType = static_cast<ArtworkType>(artworkTypeInt);
 
-                    if (reply->error() == QNetworkReply::NoError)
-                    {
-                        parseSteamArtworkReply(reply, artworkType, gameId);
-                    }
-                    else
-                    {
-                        qWarning() << "Network error for" << artworkTypeToString(artworkType) << ":" << reply->errorString();
-                    }
-                    reply->deleteLater();
-                }
+                     if (reply->error() == QNetworkReply::NoError)
+                     {
+                         parseSteamArtworkReply(reply, artworkType, gameId);
+                     }
+                     else
+                     {
+                         qWarning() << "Network error for" << artworkTypeToString(artworkType) << ":" << reply->errorString();
+                     }
+                     reply->deleteLater();
+                 }
                 );
+    }
+
+    bool GameArtworkService::getGameArtwork(const core::domain::Game &game)
+    {
+        if (game.hasArtwork)
+        {
+            qDebug() << "Game already has artwork, skipping download for game:" << game.id;
+            return true;
+        }
+        QDir artworkRoot{core::AppPaths::artworkDirectory()};
+
+        const QString gameDirectoryName = QString::number(game.id);
+        if (artworkRoot.cd(gameDirectoryName))
+        {
+            qWarning() << "Artwork found, but not logged in database" << artworkRoot.absolutePath();
+            return true;
+        }
+        if(game.steamAppId.has_value() && getSteamArtwork(game))
+        {
+            qInfo() << "Artwork download initiated for game:" << game.id;
+            return true;
+        }
+
+        return false;
     }
 
     bool GameArtworkService::makeGameArtworkDirectory(int gameId)
@@ -60,16 +84,6 @@ namespace gamelog::application::services
 
     }
 
-    bool GameArtworkService::getGameArtwork(core::domain::Game &game)
-    {
-        if (game.steamAppId.has_value() && getSteamArtwork(game))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     QString GameArtworkService::artworkTypeToString(ArtworkType artworkType)
     {
         switch (artworkType)
@@ -85,7 +99,7 @@ namespace gamelog::application::services
         }
     }
 
-    bool GameArtworkService::getSteamArtwork(core::domain::Game &game)
+    bool GameArtworkService::getSteamArtwork(const core::domain::Game &game) const
     {
         for (const auto &type: ArtWorkTypeToSteamUrl | std::views::keys)
         {

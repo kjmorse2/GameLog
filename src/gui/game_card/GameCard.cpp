@@ -12,16 +12,12 @@
 
 using gamelog::core::domain::Game;
 
-GameCard::GameCard(QWidget* parent, const Game& game, gamelog::application::services::GameArtworkService* artworkService): QWidget(parent), ui(new Ui::GameCard)
+GameCard::GameCard(QWidget* parent, const Game& game): QWidget(parent), ui(new Ui::GameCard)
 {
     ui->setupUi(this);
 
-    artworkService_ = artworkService;
-
     ui->gameArtLabel->setAlignment(Qt::AlignCenter);
     ui->gameArtLabel->setScaledContents(false);
-    artworkService_->getGameArtwork(const_cast<Game&>(game));
-
     QPixmap imageMap = QPixmap(gamelog::core::AppPaths::artworkDirectory() + "/" + QString::number(game.id) + "/cover.jpg");
     imageMap = imageMap.scaled(ui->gameArtLabel->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     ui->gameArtLabel->setPixmap(imageMap);

@@ -44,6 +44,6 @@ Example Arch Linux package names:
 - Add note-taking functionality. DONE
 - Add automatic session pickup/dropoff, label cut off sessions as interrupted.
 - Add Summary screen for specific game.
-- Scan installed steam library for games.
+- Scan installed steam library for games. DONE, but needs editing. 
 - Figure out artwork situation.
 - Stylesheets 

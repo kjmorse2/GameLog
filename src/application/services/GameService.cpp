@@ -80,6 +80,7 @@ namespace gamelog::application::services
         }
 
         syncGamesWithDatabase();
+        emit gameAdded(game);
         return true;
     }
 
@@ -123,10 +124,6 @@ namespace gamelog::application::services
             {
                 trackedPathGames_.insert(game.executablePath, game);
             }
-            if (game.artworkPath == QStringLiteral(""))
-            {
-                GameArtworkService::makeGameArtworkDirectory(game.id);
-            }
         }
 
         qCInfo(gamelogRuntimeLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.size() << "path-based games.";
@@ -148,5 +145,19 @@ namespace gamelog::application::services
     {
         qCDebug(gamelogRuntimeLog) << "Checking if there are any tracked Steam games";
         return !trackedSteamGames_.isEmpty();
+    }
+
+    bool GameService::setHasArtwork(int gameId, bool hasArtwork)
+    {
+        auto game = findById(gameId);
+
+        if(!game)
+        {
+            return false;
+        }
+
+        game->hasArtwork = hasArtwork;
+
+        return updateGame(*game);
     }
 } // namespace gamelog::application::services

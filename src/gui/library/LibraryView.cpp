@@ -54,7 +54,7 @@ void LibraryView::displayAllGames()
         const int row = i / columns;
         const int col = i % columns;
 
-        auto* gameCard = new GameCard(ui->gameGridContainer, games[i], runtime_->getArtworkService());
+        auto* gameCard = new GameCard(ui->gameGridContainer, games[i]);
         ui->gameGridLayout->addWidget(gameCard, row, col);
     }
 }

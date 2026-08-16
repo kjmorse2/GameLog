@@ -207,7 +207,8 @@ namespace gamelog::core::database
         static const std::vector<Migration> migrations{
             {.version = 1, .name = "initial_schema", .resourcePath = ":/migrations/001_initial_schema.sql"},
             {.version = 2, .name = "reconfig_session_documents_table", .resourcePath = ":/migrations/002_reconfig_session_documents.sql"},
-            {.version = 3, .name = "remove_format_from_session_documents", .resourcePath = ":/migrations/003_remove_format_session_documents.sql"}
+            {.version = 3, .name = "remove_format_from_session_documents", .resourcePath = ":/migrations/003_remove_format_session_documents.sql"},
+            {.version = 4, .name = "artwork_path_to_has_artwork", .resourcePath = ":/migrations/004_artwork_path_to_has_artwork.sql"}
         };
 
         return migrations;

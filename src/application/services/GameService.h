@@ -115,6 +115,11 @@ namespace gamelog::application::services
          */
         [[nodiscard]] bool hasTrackedSteamGames() const noexcept;
 
+        bool setHasArtwork(int gameId, bool available);
+
+        signals:
+            void gameAdded(const Game&);
+            void gameUpdated(const Game&);
     private:
         /**
          * @breif the repository where the games are stored.

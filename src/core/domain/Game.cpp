@@ -16,7 +16,7 @@ namespace gamelog::core::domain
                 << ", executablePath: " << game.executablePath
                 << ", executableName: " << game.executableName
                 << ", steamAppId: " << (game.steamAppId.has_value() ? QString::number(*game.steamAppId) : "nullopt")
-                << ", artworkPath: " << (game.artworkPath.has_value() ? *game.artworkPath : "nullopt")
+                << ", hasArtwor: " << (game.hasArtwork)
                 << ", trackingEnabled: " << game.trackingEnabled
                 << "}";
         return debug;

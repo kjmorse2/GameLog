@@ -42,7 +42,7 @@ namespace gamelog::core::domain
         /**
          * @brief Optional local artwork file path.
          */
-        std::optional<QString> artworkPath;
+        bool hasArtwork{false};
 
         /**
          * @brief True when the game should be considered by detection logic.

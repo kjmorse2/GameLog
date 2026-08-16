@@ -23,12 +23,13 @@ namespace gamelog::application
      * Owns the long-lived resources used by both headless and GUI launch modes.
      * Application operations flow through GameService and SessionService.
      */
-    class GameLogRuntime
+    class GameLogRuntime : public QObject
     {
+    Q_OBJECT
     public:
         explicit GameLogRuntime(QString databasePath);
 
-        ~GameLogRuntime();
+        ~GameLogRuntime() override;
 
         GameLogRuntime(const GameLogRuntime&) = delete;
 

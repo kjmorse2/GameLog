@@ -23,19 +23,24 @@ namespace gamelog::application::services
         Logo,
     };
 
-    class GameArtworkService : QObject
+    class GameArtworkService : public QObject
     {
     Q_OBJECT
     public:
         explicit GameArtworkService();
         ~GameArtworkService() override = default;
-        bool getGameArtwork(core::domain::Game& game);
+        bool getGameArtwork(const core::domain::Game& game);
         static bool makeGameArtworkDirectory(int gameId) ;
         static QString artworkTypeToString(ArtworkType artworkType);
+        // GameArtworkService
+        bool installCustomArtwork();
 
+        signals:
+            void artworkAvailable(int gameId);
+            void artworkUnavailable(int gameId);
     private:
         QNetworkAccessManager* networkAccessManager_;
-        bool getSteamArtwork(core::domain::Game& game);
+        bool getSteamArtwork(const core::domain::Game& game) const;
         static void parseSteamArtworkReply(QNetworkReply* reply, ArtworkType artworkType, int gameId);
         static QUrl makeSteamArtworkUrl(int steamAppId, ArtworkType artworkType);
         const static std::pmr::map<ArtworkType, QString> ArtWorkTypeToSteamUrl;

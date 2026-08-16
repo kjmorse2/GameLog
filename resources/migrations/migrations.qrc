@@ -3,5 +3,6 @@
         <file>001_initial_schema.sql</file>
         <file>002_reconfig_session_documents.sql</file>
         <file>003_remove_format_session_documents.sql</file>
+        <file>004_artwork_path_to_has_artwork.sql</file>
     </qresource>
 </RCC>

@@ -30,6 +30,14 @@ namespace gamelog::application
         gameService_.emplace(*gameRepository_);
         sessionService_.emplace(*sessionRepository_, *gameService_);
         gameArtworkService_.emplace();
+
+        connect( &*gameArtworkService_, &services::GameArtworkService::artworkAvailable,
+            &*gameService_,
+            [this](const int gameId)
+            {
+                gameService_->setHasArtwork(gameId, true);
+            });
+        connect( &*gameService_, &services::GameService::gameAdded, &*gameArtworkService_, &services::GameArtworkService::getGameArtwork);
     }
 
     GameLogRuntime::~GameLogRuntime() = default;
