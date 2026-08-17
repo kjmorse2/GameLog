@@ -38,14 +38,24 @@ namespace gamelog::gui
 
         ~MainWindow() override;
 
+        signals:
+
+
+        void steamAPIKeyEntered(QString key);
+
+        void steamPlayerIdEntered(QString playerId);
+
     private
         slots:
-
 
 
         void onSessionStarted(const core::domain::Game& game);
 
         void onSessionEnded();
+
+        void onAddSteamApiKey();
+
+        void onAddSteamPlayerId();
 
     private:
         Ui::MainWindow* ui;

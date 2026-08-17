@@ -64,6 +64,8 @@
                 <property name="title">
                     <string>File</string>
                 </property>
+                <addaction name="actionAdd_SteamAPI_Key"/>
+                <addaction name="actionAdd_Steam_Player_ID"/>
             </widget>
             <widget class="QMenu" name="menuEdit">
                 <property name="title">
@@ -80,6 +82,16 @@
             <addaction name="menuHelp"/>
         </widget>
         <widget class="QStatusBar" name="statusBar"/>
+        <action name="actionAdd_SteamAPI_Key">
+            <property name="text">
+                <string>Add SteamAPI Key</string>
+            </property>
+        </action>
+        <action name="actionAdd_Steam_Player_ID">
+            <property name="text">
+                <string>Add Steam Player ID</string>
+            </property>
+        </action>
     </widget>
     <resources/>
     <connections/>

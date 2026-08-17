@@ -66,6 +66,7 @@ namespace gamelog::application::services
 
 
 
+
         void sessionStarted(const core::domain::Game& requestedGame);
 
         void sessionStopped(Session& endedSession);

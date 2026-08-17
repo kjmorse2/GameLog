@@ -8,8 +8,8 @@
 
 #include <QObject>
 #include <application/GameLogRuntime.h>
-#include <application/services/GameService.h>
-#include <application/services/GameArtworkService.h>
+#include <application/services/local/GameService.h>
+#include <application/services/web/GameArtworkService.h>
 
 #include "gui/game_card/GameCard.h"
 
@@ -27,6 +27,7 @@ LibraryView::LibraryView(QWidget* parent, gamelog::application::GameLogRuntime* 
     ui->gridLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
     connect(ui->refreshButton, &QPushButton::clicked, this, &LibraryView::displayAllGames);
+    connect(ui->syncSteamGamesButton, &QPushButton::clicked, runtime_->getGameService(), &GameService::syncSteamGames);
     displayAllGames();
 }
 

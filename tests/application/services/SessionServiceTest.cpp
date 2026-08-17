@@ -3,8 +3,8 @@
 #include <memory>
 #include <QtTest/QtTest>
 
-#include "application/services/GameService.h"
-#include "application/services/SessionService.h"
+#include "../../../src/application/services/local/GameService.h"
+#include "../../../src/application/services/local/SessionService.h"
 #include "database/DatabaseManager.h"
 #include "database/GameRepository.h"
 #include "database/SessionRepository.h"

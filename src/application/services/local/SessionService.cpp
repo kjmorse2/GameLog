@@ -1,6 +1,6 @@
-#include "application/services/SessionService.h"
+#include "SessionService.h"
 
-#include "application/services/GameService.h"
+#include "GameService.h"
 #include "logging/LoggingCategories.h"
 #include "process/ProcessHelpers.h"
 
@@ -267,12 +267,12 @@ namespace gamelog::application::services
         }
 
         const bool activeGameFound = std::ranges::any_of(
-                processes,
-                [this](const ProcessInfo& process)
-                {
-                    return ProcessHelpers::processMatchesGame(process, *activeGame_);
-                }
-                );
+                                                         processes,
+                                                         [this](const ProcessInfo& process)
+                                                         {
+                                                             return ProcessHelpers::processMatchesGame(process, *activeGame_);
+                                                         }
+                                                        );
 
         if(activeGameFound)
         {

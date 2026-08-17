@@ -7,8 +7,8 @@
 #include <QDir>
 #include <QStandardPaths>
 
-namespace gamelog::core {
-
+namespace gamelog::core
+{
     QString AppPaths::dataDirectory()
     {
         return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
@@ -22,12 +22,12 @@ namespace gamelog::core {
     QString AppPaths::artworkDirectory()
     {
         return QDir{dataDirectory()}.filePath(
-            QStringLiteral("artwork"));
+                                              QStringLiteral("artwork")
+                                             );
     }
 
     QString AppPaths::gameArtworkDirectory(int gameId)
     {
         return QDir{artworkDirectory()}.filePath(QString::number(gameId));
     }
-
 }

@@ -38,7 +38,7 @@ namespace
     {
         std::vector<const char*> runModesArguments;
         // Extract keys using a loop
-        for(const auto &key: RunModeMap | std::views::keys)
+        for(const auto& key : RunModeMap | std::views::keys)
         {
             runModesArguments.push_back(key);
         }

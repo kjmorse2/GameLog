@@ -37,6 +37,7 @@ namespace gamelog::gui
 
 
 
+
         void onSessionStarted(const Game& game);
 
         void onSessionFinished(Session& completedSession);

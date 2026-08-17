@@ -7,16 +7,18 @@
 
 #include <QString>
 
-namespace gamelog::core {
-
+namespace gamelog::core
+{
     class AppPaths
     {
     public:
         [[nodiscard]] static QString dataDirectory();
+
         [[nodiscard]] static QString databasePath();
+
         [[nodiscard]] static QString artworkDirectory();
+
         [[nodiscard]] static QString gameArtworkDirectory(int gameId);
     };
-
 }
 #endif //GAMELOG_APPPATHS_H

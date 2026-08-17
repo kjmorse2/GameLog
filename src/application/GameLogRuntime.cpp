@@ -27,17 +27,15 @@ namespace gamelog::application
         const QSqlDatabase database = databaseManager_.database();
         gameRepository_.emplace(database);
         sessionRepository_.emplace(database);
-        gameService_.emplace(*gameRepository_);
+        credentialService_.emplace();
+        steamApiService_.emplace(*credentialService_);
+        gameService_.emplace(*gameRepository_, *steamApiService_);
         sessionService_.emplace(*sessionRepository_, *gameService_);
         gameArtworkService_.emplace();
 
-        connect( &*gameArtworkService_, &services::GameArtworkService::artworkAvailable,
-            &*gameService_,
-            [this](const int gameId)
-            {
-                gameService_->setHasArtwork(gameId, true);
-            });
-        connect( &*gameService_, &services::GameService::gameAdded, &*gameArtworkService_, &services::GameArtworkService::getGameArtwork);
+        connect(&*gameArtworkService_,&services::GameArtworkService::artworkAvailable, &*gameService_,
+            [this](const int gameId){gameService_->setHasArtwork(gameId, true);});
+        connect(&*gameService_, &services::GameService::gameAdded, &*gameArtworkService_, &services::GameArtworkService::getGameArtwork);
     }
 
     GameLogRuntime::~GameLogRuntime() = default;
@@ -133,6 +131,11 @@ namespace gamelog::application
 
     services::GameArtworkService* GameLogRuntime::getArtworkService() noexcept
     {
-        return gameArtworkService_ ? &*gameArtworkService_: nullptr;
+        return gameArtworkService_ ? &*gameArtworkService_ : nullptr;
+    }
+
+    services::CredentialService* GameLogRuntime::getCredentialService() noexcept
+    {
+        return credentialService_ ? &*credentialService_ : nullptr;
     }
 } // namespace gamelog::application

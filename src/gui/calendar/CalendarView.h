@@ -8,8 +8,8 @@
 #include <QCalendarWidget>
 #include <QWidget>
 
-#include "application/services/GameService.h"
-#include "application/services/SessionService.h"
+#include "../../application/services/local/GameService.h"
+#include "../../application/services/local/SessionService.h"
 using gamelog::application::services::GameService;
 using gamelog::application::services::SessionService;
 
@@ -66,6 +66,7 @@ private
      * @param year The year the calendar is on
      * @param month The month the calendar is on.
      */
+
 
 
 

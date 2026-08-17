@@ -39,7 +39,7 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
             {
                 ui->textEdit->zoomOut(1);
             }
-            );
+           );
 
     connect(
             ui->zoomInButton,
@@ -49,7 +49,7 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
             {
                 ui->textEdit->zoomIn(1);
             }
-            );
+           );
 
     connect(ui->textEdit, &QTextEdit::cursorPositionChanged, this, &TextEditor::updateToolbarState);
 
@@ -61,7 +61,7 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
             {
                 updateToolbarState();
             }
-            );
+           );
 
     updateToolbarState();
 

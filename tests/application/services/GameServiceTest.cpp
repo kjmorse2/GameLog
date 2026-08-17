@@ -1,6 +1,6 @@
 #include <QtTest/QtTest>
 
-#include "application/services/GameService.h"
+#include "../../../src/application/services/local/GameService.h"
 #include "database/DatabaseManager.h"
 #include "domain/Game.h"
 #include "fixtures/TestDatabaseFixture.h"

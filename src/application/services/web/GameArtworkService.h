@@ -23,26 +23,51 @@ namespace gamelog::application::services
         Logo,
     };
 
-    class GameArtworkService : public QObject
+    class GameArtworkService:public QObject
     {
-    Q_OBJECT
+        Q_OBJECT
+
     public:
         explicit GameArtworkService();
+
         ~GameArtworkService() override = default;
+
+        /**
+         * @brief Gets the artwork for a specific game using the available methods coded, starting with:  .
+         * - Local files
+         * - Steam Web API
+         * @param game the game to get artwork for.
+         * @return A boolean describing if the artwork was fetched.
+         */
         bool getGameArtwork(const core::domain::Game& game);
-        static bool makeGameArtworkDirectory(int gameId) ;
+
+        /**
+         * Makes the artwork directory for the game inside the local file system.
+         * @param gameId The ID of the game to make the directory for, which will be the name of the directory.
+         * @return A boolean describing if the directory was constructed.
+         */
+        static bool makeGameArtworkDirectory(int gameId);
+
         static QString artworkTypeToString(ArtworkType artworkType);
-        // GameArtworkService
-        bool installCustomArtwork();
+
+        // bool installCustomArtwork();
 
         signals:
-            void artworkAvailable(int gameId);
-            void artworkUnavailable(int gameId);
+
+
+        void artworkAvailable(int gameId);
+
+        void artworkUnavailable(int gameId);
+
     private:
         QNetworkAccessManager* networkAccessManager_;
+
         bool getSteamArtwork(const core::domain::Game& game) const;
+
         static void parseSteamArtworkReply(QNetworkReply* reply, ArtworkType artworkType, int gameId);
+
         static QUrl makeSteamArtworkUrl(int steamAppId, ArtworkType artworkType);
+
         const static std::pmr::map<ArtworkType, QString> ArtWorkTypeToSteamUrl;
     };
 }

@@ -1,12 +1,16 @@
 add_library(gamelog-application STATIC
         GameLogRuntime.cpp
         GameLogRuntime.h
-        services/GameService.h
-        services/GameService.cpp
-        services/SessionService.h
-        services/SessionService.cpp
-        services/GameArtworkService.h
-        services/GameArtworkService.cpp
+        services/local/GameService.h
+        services/local/GameService.cpp
+        services/local/SessionService.h
+        services/local/SessionService.cpp
+        services/web/GameArtworkService.h
+        services/web/GameArtworkService.cpp
+        services/web/SteamApiService.cpp
+        services/web/SteamApiService.h
+        services/local/CredentialService.cpp
+        services/local/CredentialService.h
 )
 
 target_include_directories(gamelog-application
@@ -21,4 +25,5 @@ target_link_libraries(gamelog-application
         Qt6::Core
         Qt6::Network
         Qt6::Sql
+        Qt6Keychain::Qt6Keychain
 )

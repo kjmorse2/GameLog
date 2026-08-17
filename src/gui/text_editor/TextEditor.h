@@ -27,10 +27,12 @@ public
 
 
 
+
     void setAbleToEdit(bool enabled);
 
 private
     slots:
+
 
 
 

@@ -6,7 +6,7 @@
 #define GAMELOG_GAMECARD_H
 
 #include <QWidget>
-#include <application/services/GameArtworkService.h>
+#include <application/services/web/GameArtworkService.h>
 
 #include "core/domain/Game.h"
 
@@ -61,7 +61,15 @@ public:
 
 private:
     Ui::GameCard* ui;
-    inline static const gamelog::core::domain::Game emptyGameCard = {.id = -1, .title = QStringLiteral(""), .executablePath = QStringLiteral(""), .executableName = QStringLiteral(""), .steamAppId = -1, .hasArtwork = false, .trackingEnabled = false};
+    inline static const gamelog::core::domain::Game emptyGameCard = {
+        .id = -1,
+        .title = QStringLiteral(""),
+        .executablePath = QStringLiteral(""),
+        .executableName = QStringLiteral(""),
+        .steamAppId = -1,
+        .hasArtwork = false,
+        .trackingEnabled = false
+    };
 };
 
 

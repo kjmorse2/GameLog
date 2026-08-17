@@ -50,5 +50,5 @@ namespace gamelog::core::domain
         bool trackingEnabled{true};
     };
 
-    QDebug operator<<(QDebug debug, const Game& game);
+    QDebug operator<<(QDebug debug, const Game &game);
 } // namespace gamelog::core::domain

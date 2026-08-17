@@ -12,42 +12,46 @@
 
 namespace gamelog::application::services
 {
-    GameArtworkService::GameArtworkService() :
+    GameArtworkService::GameArtworkService():
         networkAccessManager_(new QNetworkAccessManager(this))
     {
-        connect( networkAccessManager_, &QNetworkAccessManager::finished, this,
-                 [](QNetworkReply *reply) {
-                     bool typeOk = false;
-                     const int artworkTypeInt = reply->property("artworkType").toInt(&typeOk);
+        connect(
+                networkAccessManager_,
+                &QNetworkAccessManager::finished,
+                this,
+                [](QNetworkReply* reply)
+                {
+                    bool typeOk = false;
+                    const int artworkTypeInt = reply->property("artworkType").toInt(&typeOk);
 
-                     bool gameIdOk = false;
-                     const int gameId = reply->property("gameId").toInt(&gameIdOk);
+                    bool gameIdOk = false;
+                    const int gameId = reply->property("gameId").toInt(&gameIdOk);
 
-                     if (!typeOk || !gameIdOk)
-                     {
-                         qWarning() << "Missing artwork metadata for reply:" << reply->url();
-                         reply->deleteLater();
-                         return;
-                     }
+                    if(!typeOk || !gameIdOk)
+                    {
+                        qWarning() << "Missing artwork metadata for reply:" << reply->url();
+                        reply->deleteLater();
+                        return;
+                    }
 
-                     const auto artworkType = static_cast<ArtworkType>(artworkTypeInt);
+                    const auto artworkType = static_cast<ArtworkType>(artworkTypeInt);
 
-                     if (reply->error() == QNetworkReply::NoError)
-                     {
-                         parseSteamArtworkReply(reply, artworkType, gameId);
-                     }
-                     else
-                     {
-                         qWarning() << "Network error for" << artworkTypeToString(artworkType) << ":" << reply->errorString();
-                     }
-                     reply->deleteLater();
-                 }
-                );
+                    if(reply->error() == QNetworkReply::NoError)
+                    {
+                        parseSteamArtworkReply(reply, artworkType, gameId);
+                    }
+                    else
+                    {
+                        qWarning() << "Network error for" << artworkTypeToString(artworkType) << ":" << reply->errorString();
+                    }
+                    reply->deleteLater();
+                }
+               );
     }
 
-    bool GameArtworkService::getGameArtwork(const core::domain::Game &game)
+    bool GameArtworkService::getGameArtwork(const core::domain::Game& game)
     {
-        if (game.hasArtwork)
+        if(game.hasArtwork)
         {
             qDebug() << "Game already has artwork, skipping download for game:" << game.id;
             return true;
@@ -55,7 +59,7 @@ namespace gamelog::application::services
         QDir artworkRoot{core::AppPaths::artworkDirectory()};
 
         const QString gameDirectoryName = QString::number(game.id);
-        if (artworkRoot.cd(gameDirectoryName))
+        if(artworkRoot.cd(gameDirectoryName))
         {
             qWarning() << "Artwork found, but not logged in database" << artworkRoot.absolutePath();
             return true;
@@ -75,18 +79,17 @@ namespace gamelog::application::services
 
         const QString gameDirectoryName = QString::number(gameId);
 
-        if (!artworkRoot.mkpath(gameDirectoryName))
+        if(!artworkRoot.mkpath(gameDirectoryName))
         {
             qWarning() << "Failed to create artwork directory for game:" << gameId;
             return false;
         }
         return true;
-
     }
 
     QString GameArtworkService::artworkTypeToString(ArtworkType artworkType)
     {
-        switch (artworkType)
+        switch(artworkType)
         {
             case ArtworkType::Cover :
                 return QStringLiteral("cover");
@@ -99,23 +102,23 @@ namespace gamelog::application::services
         }
     }
 
-    bool GameArtworkService::getSteamArtwork(const core::domain::Game &game) const
+    bool GameArtworkService::getSteamArtwork(const core::domain::Game& game) const
     {
-        for (const auto &type: ArtWorkTypeToSteamUrl | std::views::keys)
+        for(const auto& type : ArtWorkTypeToSteamUrl | std::views::keys)
         {
             QUrl next = makeSteamArtworkUrl(game.steamAppId.value(), type);
-            QNetworkReply *reply = networkAccessManager_->get(QNetworkRequest(next));
+            QNetworkReply* reply = networkAccessManager_->get(QNetworkRequest(next));
             reply->setProperty("artworkType", static_cast<int>(type));
             reply->setProperty("gameId", game.id);
         }
         return true;
     }
 
-    void GameArtworkService::parseSteamArtworkReply(QNetworkReply *reply, ArtworkType artworkType, int gameId)
+    void GameArtworkService::parseSteamArtworkReply(QNetworkReply* reply, ArtworkType artworkType, int gameId)
     {
         const QByteArray data = reply->readAll();
 
-        if (data.isEmpty())
+        if(data.isEmpty())
         {
             qWarning() << "Received empty artwork response for" << artworkTypeToString(artworkType);
             return;
@@ -125,7 +128,7 @@ namespace gamelog::application::services
 
         const QString gameDirectoryName = QString::number(gameId);
 
-        if (!artworkRoot.mkpath(gameDirectoryName))
+        if(!artworkRoot.mkpath(gameDirectoryName))
         {
             qWarning() << "Failed to create artwork directory for game:" << gameId;
             return;
@@ -135,7 +138,7 @@ namespace gamelog::application::services
 
         QString extension;
 
-        switch (artworkType)
+        switch(artworkType)
         {
             case ArtworkType::Cover :
             case ArtworkType::Header :
@@ -151,19 +154,19 @@ namespace gamelog::application::services
                 return;
         }
 
-        const QString fileName = QStringLiteral("%1.%2") .arg(artworkTypeToString(artworkType),extension);
+        const QString fileName = QStringLiteral("%1.%2").arg(artworkTypeToString(artworkType), extension);
 
         const QString filePath = gameArtworkDirectory.filePath(fileName);
 
         QFile file{filePath};
 
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
             qWarning() << "Failed to open artwork file:" << filePath << file.errorString();
             return;
         }
 
-        if (file.write(data) != data.size())
+        if(file.write(data) != data.size())
         {
             qWarning() << "Failed to write artwork file:" << filePath << file.errorString();
         }
@@ -172,17 +175,17 @@ namespace gamelog::application::services
     QUrl GameArtworkService::makeSteamArtworkUrl(int steamAppId, ArtworkType artworkType)
     {
         return QUrl{
-                QStringLiteral(
-                        "https://cdn.cloudflare.steamstatic.com/steam/apps/%1/%2"
-                        )
-               .arg(steamAppId)
-               .arg(ArtWorkTypeToSteamUrl.at(artworkType))
+            QStringLiteral(
+                           "https://cdn.cloudflare.steamstatic.com/steam/apps/%1/%2"
+                          )
+           .arg(steamAppId)
+           .arg(ArtWorkTypeToSteamUrl.at(artworkType))
         };
     }
 
     const std::pmr::map<ArtworkType, QString> GameArtworkService::ArtWorkTypeToSteamUrl{
-            {ArtworkType::Cover, "library_600x900.jpg"},
-            {ArtworkType::Header, "header.jpg"},
-            {ArtworkType::Logo, "logo.png"},
+        {ArtworkType::Cover, "library_600x900.jpg"},
+        {ArtworkType::Header, "header.jpg"},
+        {ArtworkType::Logo, "logo.png"},
     };
 }

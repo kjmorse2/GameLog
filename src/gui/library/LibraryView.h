@@ -9,7 +9,7 @@
 #include <QListWidget>
 #include <QWidget>
 
-#include "application/services/GameService.h"
+#include "../../application/services/local/GameService.h"
 #include "domain/Game.h"
 
 namespace gamelog::application
@@ -45,6 +45,8 @@ public
     /**
      * Displays all games in the library.
      */
+
+
 
 
     void displayAllGames();

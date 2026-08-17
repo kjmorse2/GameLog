@@ -14,6 +14,7 @@
 
 namespace gamelog::application::services
 {
+    class SteamApiService;
     /**
      * Application-facing game operations.
      *
@@ -21,12 +22,12 @@ namespace gamelog::application::services
      * convenience methods. SQL remains entirely behind GameRepository.
      * The service also owns the in-memory index used by process matching.
      */
-    class GameService :public QObject
+    class GameService:public QObject
     {
         Q_OBJECT
 
     public:
-        explicit GameService(core::database::GameRepository &repository);
+        explicit GameService(core::database::GameRepository& repository, SteamApiService& steamApiService);
 
         ~GameService() override = default;
 
@@ -35,7 +36,7 @@ namespace gamelog::application::services
          * @param query The query struct describing the search criteria.
          * @return A vector of Game objects returned from the query.
          */
-        [[nodiscard]] std::vector<Game> search(const GameQuery &query) const;
+        [[nodiscard]] std::vector<Game> search(const GameQuery& query) const;
 
         /**
          * Returns all games in the database.
@@ -61,28 +62,28 @@ namespace gamelog::application::services
          * @param name of the executable.
          * @return The Game struct if found, or std::nullopt if not found.
          */
-        [[nodiscard]] std::optional<Game> findByExecutableName(const QString &name) const;
+        [[nodiscard]] std::optional<Game> findByExecutableName(const QString& name) const;
 
         /**
          * Gets the game with the specified executable path from the database if it exists.
          * @param path to the executable.
          * @return The Game struct if found, or std::nullopt if not found.
          */
-        [[nodiscard]] std::optional<Game> findByExecutablePath(const QString &path) const;
+        [[nodiscard]] std::optional<Game> findByExecutablePath(const QString& path) const;
 
         /**
          * Adds a new game to the database and updates the in-memory indexes.
          * @param game The Game struct to add.
          * @return A boolean describing if the operation succeeded.
          */
-        [[nodiscard]] bool addGame(Game &game);
+        [[nodiscard]] bool addGame(Game& game);
 
         /**
          * Updates the provided game in the database and updates the in-memory indexes.
          * @param game the Game struct to add.
          * @return A boolean describing if the operation succeeded.
          */
-        [[nodiscard]] bool updateGame(const Game &game);
+        [[nodiscard]] bool updateGame(const Game& game);
 
         /**
          * removes the game with the provide id in the database and updates the in-memory indexes.
@@ -101,13 +102,13 @@ namespace gamelog::application::services
          * References remain valid until the next cache refresh.
          * @return The tracked Steam games indexed by Steam App ID.
          */
-        [[nodiscard]] const QHash<std::uint32_t, Game> &trackedSteamGames() const noexcept;
+        [[nodiscard]] const QHash<std::uint32_t, Game>& trackedSteamGames() const noexcept;
 
         /**
          * Read-only access to the service-owned process-matching indexes for path tracked games.
          * @return The tracked path games indexed by executable path.
          */
-        [[nodiscard]] const QHash<QString, Game> &trackedPathGames() const noexcept;
+        [[nodiscard]] const QHash<QString, Game>& trackedPathGames() const noexcept;
 
         /**
          * Returns true if there are any tracked Steam games in the in-memory index.
@@ -117,14 +118,28 @@ namespace gamelog::application::services
 
         bool setHasArtwork(int gameId, bool available);
 
+        public slots:
+        void syncSteamGames();
+
+
         signals:
-            void gameAdded(const Game&);
-            void gameUpdated(const Game&);
+
+
+        void gameAdded(const Game&);
+
+        void gameUpdated(const Game&);
+
     private:
+
+        void onSteamGamesReceived(const QJsonArray& steamGames);
+
         /**
          * @breif the repository where the games are stored.
          */
-        core::database::GameRepository &repository_;
+        core::database::GameRepository& repository_;
+
+        SteamApiService& steamApiService_;
+
 
         /**
          * The in-memory index of tracked Steam games, keyed by Steam App ID.

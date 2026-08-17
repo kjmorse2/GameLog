@@ -6,19 +6,31 @@
 
 #include "GameCard.h"
 
+#include <QDir>
 #include <resources/AppPaths.h>
 
 #include "ui_gamecard.h"
 
 using gamelog::core::domain::Game;
 
-GameCard::GameCard(QWidget* parent, const Game& game): QWidget(parent), ui(new Ui::GameCard)
+GameCard::GameCard(QWidget* parent, const Game& game): QWidget(parent),
+                                                       ui(new Ui::GameCard)
 {
     ui->setupUi(this);
 
     ui->gameArtLabel->setAlignment(Qt::AlignCenter);
     ui->gameArtLabel->setScaledContents(false);
-    QPixmap imageMap = QPixmap(gamelog::core::AppPaths::artworkDirectory() + "/" + QString::number(game.id) + "/cover.jpg");
+
+    QPixmap imageMap;
+    const QString potentialPath = gamelog::core::AppPaths::artworkDirectory() + "/" + QString::number(game.id) + "/cover.jpg";
+    if(const auto art = QFile(potentialPath); art.exists())
+    {
+        imageMap = QPixmap(potentialPath);
+    }
+    else
+    {
+        imageMap = QPixmap(":/images/GameArtPlaceholder.png");
+    }
     imageMap = imageMap.scaled(ui->gameArtLabel->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     ui->gameArtLabel->setPixmap(imageMap);
     ui->gameTitleLabel->setText(game.title);
