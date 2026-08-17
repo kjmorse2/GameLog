@@ -2,6 +2,6 @@
 Type=Application
 Name=GameLog
 Comment=Track and review game sessions
-Exec=/usr/bin/gamelog-gui-launcher
+Exec=gamelog-gui-launcher
 Terminal=false
 Categories=Game;Utility;

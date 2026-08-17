@@ -6,6 +6,8 @@
 #include "fixtures/TestDatabaseFixture.h"
 
 #include <memory>
+#include <application/services/local/CredentialService.h>
+#include <application/services/web/SteamApiService.h>
 
 namespace gamelog::core::database
 {
@@ -83,9 +85,10 @@ void GameServiceTest::init()
 
     manager_ = std::make_unique<DatabaseManager>(databasePath_, connectionName);
     QVERIFY(manager_->initialize());
-
+    gamelog::application::services::CredentialService credService{};
+    gamelog::application::services::SteamApiService steamService{credService};
     repository_ = std::make_unique<GameRepository>(manager_->database());
-    service_ = std::make_unique<GameService>(*repository_);
+    service_ = std::make_unique<GameService>(*repository_, steamService);
 }
 
 void GameServiceTest::cleanup()
@@ -132,8 +135,7 @@ void GameServiceTest::findById_returnsInsertedGame()
     QCOMPARE(loaded->executableName, game.executableName);
     QVERIFY(loaded->steamAppId.has_value());
     QCOMPARE(*loaded->steamAppId, *game.steamAppId);
-    QVERIFY(loaded->artworkPath.has_value());
-    QCOMPARE(*loaded->artworkPath, *game.artworkPath);
+    QVERIFY(!loaded->hasArtwork);
     QCOMPARE(loaded->trackingEnabled, game.trackingEnabled);
 }
 
@@ -218,14 +220,12 @@ void GameServiceTest::addGame_persistsAllFieldsAndAssignsId()
     QVERIFY(loaded.has_value());
     QCOMPARE(loaded->title, QString("Cyberpunk"));
     QVERIFY(loaded->steamAppId.has_value());
-    QVERIFY(loaded->artworkPath.has_value());
 }
 
 void GameServiceTest::addGame_handlesUnsetOptionalFields()
 {
     Game game = makeGame("Portal");
     game.steamAppId.reset();
-    game.artworkPath.reset();
 
     QVERIFY(service_->addGame(game));
     QVERIFY(game.id > 0);
@@ -233,7 +233,6 @@ void GameServiceTest::addGame_handlesUnsetOptionalFields()
     const auto loaded = service_->findById(game.id);
     QVERIFY(loaded.has_value());
     QVERIFY(!loaded->steamAppId.has_value());
-    QVERIFY(!loaded->artworkPath.has_value());
 }
 
 void GameServiceTest::updateGame_persistsModifiedFields()
@@ -245,7 +244,6 @@ void GameServiceTest::updateGame_persistsModifiedFields()
     game.executablePath = "/games/factorio2";
     game.executableName = "factorio2.bin";
     game.steamAppId.reset();
-    game.artworkPath.reset();
     game.trackingEnabled = false;
 
     QVERIFY(service_->updateGame(game));
@@ -256,7 +254,6 @@ void GameServiceTest::updateGame_persistsModifiedFields()
     QCOMPARE(loaded->executablePath, QString("/games/factorio2"));
     QCOMPARE(loaded->executableName, QString("factorio2.bin"));
     QVERIFY(!loaded->steamAppId.has_value());
-    QVERIFY(!loaded->artworkPath.has_value());
     QVERIFY(!loaded->trackingEnabled);
 }
 
@@ -313,7 +310,6 @@ Game GameServiceTest::makeGame(const QString& title)
     game.executablePath = "/games/" + title.toLower();
     game.executableName = title.toLower() + ".bin";
     game.steamAppId = static_cast<int>(qHash(title) & 0x7FFFFFFF);
-    game.artworkPath = "/art/" + title + ".png";
     game.trackingEnabled = true;
     return game;
 }

@@ -2,6 +2,8 @@
 #include <QTimeZone>
 #include <memory>
 #include <QtTest/QtTest>
+#include <application/services/local/CredentialService.h>
+#include <application/services/web/SteamApiService.h>
 
 #include "../../../src/application/services/local/GameService.h"
 #include "../../../src/application/services/local/SessionService.h"
@@ -80,7 +82,9 @@ void SessionServiceTest::init()
     QVERIFY(manager_->initialize());
 
     game_repo_ = std::make_unique<GameRepository>(manager_->database());
-    game_service_ = std::make_unique<GameService>(*game_repo_);
+    gamelog::application::services::CredentialService credService{};
+    gamelog::application::services::SteamApiService steamService{credService};
+    game_service_ = std::make_unique<GameService>(*game_repo_, steamService);
 
     service_repo_ = std::make_unique<SessionRepository>(manager_->database());
     service_ = std::make_unique<SessionService>(*service_repo_, *game_service_);

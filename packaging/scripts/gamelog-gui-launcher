@@ -27,4 +27,4 @@ cleanup()
 
 trap cleanup EXIT HUP INT TERM
 
-/usr/bin/gamelog --gui
+exec "$(dirname "$0")/gamelog" --gui

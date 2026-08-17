@@ -3,7 +3,7 @@ Description=GameLog background tracker
 
 [Service]
 Type=exec
-ExecStart=/usr/bin/gamelog --headless
+ExecStart=%h/.local/bin/gamelog --headless
 Restart=on-failure
 RestartSec=2
 
