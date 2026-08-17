@@ -12,6 +12,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 include(CTest)
+include(GNUInstallDirs)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network Sql Test Keychain)
 
@@ -40,20 +41,35 @@ option(
 )
 
 if (GAMELOG_ENABLE_INSTALL)
-    install(TARGETS gamelog RUNTIME DESTINATION bin)
-
-    install(PROGRAMS
-            packaging/scripts/gamelog-gui-launcher
-            DESTINATION bin
+    configure_file(
+            packaging/applications/gamelog.desktop.in
+            ${CMAKE_CURRENT_BINARY_DIR}/gamelog.desktop
+            @ONLY
     )
 
-    install(FILES
-            packaging/systemd/gamelog-headless.service
-            DESTINATION lib/systemd/user
+    configure_file(
+            packaging/systemd/gamelog-headless.service.in
+            ${CMAKE_CURRENT_BINARY_DIR}/gamelog-headless.service
+            @ONLY
     )
 
-    install(FILES
-            packaging/applications/gamelog.desktop
-            DESTINATION share/applications
+    install(
+            TARGETS gamelog
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
-endif ()
+
+    install(
+            PROGRAMS packaging/scripts/gamelog-gui-launcher
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+
+    install(
+            FILES ${CMAKE_CURRENT_BINARY_DIR}/gamelog-headless.service
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/user
+    )
+
+    install(
+            FILES ${CMAKE_CURRENT_BINARY_DIR}/gamelog.desktop
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+    )
+endif()

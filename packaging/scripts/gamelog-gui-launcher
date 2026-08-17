@@ -27,4 +27,5 @@ cleanup()
 
 trap cleanup EXIT HUP INT TERM
 
-exec "$(dirname "$0")/gamelog" --gui
+"$(dirname "$0")/gamelog" --gui
+exit $?

@@ -3,7 +3,7 @@ Description=GameLog background tracker
 
 [Service]
 Type=exec
-ExecStart=%h/.local/bin/gamelog --headless
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/gamelog --headless
 Restart=on-failure
 RestartSec=2
 

@@ -30,9 +30,6 @@ namespace
     private
         slots:
 
-
-
-
         void init();
 
         void cleanup();
