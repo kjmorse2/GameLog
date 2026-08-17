@@ -26,7 +26,8 @@ namespace
         Q_OBJECT
 
     private
-    slots:
+        slots:
+
 
 
 
@@ -245,7 +246,7 @@ int SessionServiceTest::addSessionGame(const QString& title) const
 {
     QSqlQuery query{manager_->database()};
     query.prepare(
-            R"(
+                  R"(
                 INSERT INTO games
                 (
                     title,
@@ -261,7 +262,7 @@ int SessionServiceTest::addSessionGame(const QString& title) const
                     1
                 )
             )"
-            );
+                 );
     query.bindValue(":title", title);
     query.bindValue(":executable_path", "/games/" + title.toLower());
     query.bindValue(":executable_name", title.toLower() + ".bin");

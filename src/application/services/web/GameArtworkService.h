@@ -55,6 +55,8 @@ namespace gamelog::application::services
         signals:
 
 
+
+
         void artworkAvailable(int gameId);
 
         void artworkUnavailable(int gameId);

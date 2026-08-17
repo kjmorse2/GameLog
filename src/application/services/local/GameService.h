@@ -118,11 +118,16 @@ namespace gamelog::application::services
 
         bool setHasArtwork(int gameId, bool available);
 
-        public slots:
+    public
+        slots:
+
+
         void syncSteamGames();
 
 
         signals:
+
+
 
 
         void gameAdded(const Game&);
@@ -130,7 +135,6 @@ namespace gamelog::application::services
         void gameUpdated(const Game&);
 
     private:
-
         void onSteamGamesReceived(const QJsonArray& steamGames);
 
         /**

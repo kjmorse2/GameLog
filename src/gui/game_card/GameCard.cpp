@@ -13,8 +13,9 @@
 
 using gamelog::core::domain::Game;
 
-GameCard::GameCard(QWidget* parent, const Game& game): QWidget(parent),
-                                                       ui(new Ui::GameCard)
+GameCard::GameCard(QWidget *parent, const Game &game) :
+    QWidget(parent),
+    ui(new Ui::GameCard)
 {
     ui->setupUi(this);
 
@@ -23,7 +24,7 @@ GameCard::GameCard(QWidget* parent, const Game& game): QWidget(parent),
 
     QPixmap imageMap;
     const QString potentialPath = gamelog::core::AppPaths::artworkDirectory() + "/" + QString::number(game.id) + "/cover.jpg";
-    if(const auto art = QFile(potentialPath); art.exists())
+    if (const auto art = QFile(potentialPath); art.exists())
     {
         imageMap = QPixmap(potentialPath);
     }

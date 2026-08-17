@@ -15,11 +15,11 @@
 namespace gamelog::application::services
 {
     SteamApiService::SteamApiService(
-            CredentialService& credentialService,
-            QObject* parent
-            )
-        : QObject{parent},
-          credentialService_{credentialService}
+            CredentialService &credentialService,
+            QObject *parent
+            ) :
+        QObject{parent},
+        credentialService_{credentialService}
     {
         connect(
                 &credentialService_,
@@ -48,7 +48,7 @@ namespace gamelog::application::services
         qCInfo(gamelogSteamApiServiceLog)
             << "SteamApiService::getOwnedGames requested.";
 
-        if(requestInProgress_)
+        if (requestInProgress_)
         {
             qCWarning(gamelogSteamApiServiceLog)
                 << "Ignoring Steam owned-games request because another request is already in progress.";
@@ -80,22 +80,22 @@ namespace gamelog::application::services
     }
 
     void SteamApiService::onSecretRetrieved(
-            const QString& key,
-            const QString& secret
+            const QString &key,
+            const QString &secret
             )
     {
-        if(!requestInProgress_)
+        if (!requestInProgress_)
         {
             return;
         }
 
         const QString steamApiKey =
-            QString::fromLatin1(CredentialService::kSteamApiKey);
+                QString::fromLatin1(CredentialService::kSteamApiKey);
 
         const QString steamPlayerIdKey =
-            QString::fromLatin1(CredentialService::kSteamPlayerIdKey);
+                QString::fromLatin1(CredentialService::kSteamPlayerIdKey);
 
-        if(key == steamApiKey)
+        if (key == steamApiKey)
         {
             steamApiKey_ = secret.trimmed();
 
@@ -105,7 +105,7 @@ namespace gamelog::application::services
                 << "Retrieved Steam API key."
                 << "Length:" << steamApiKey_.size();
         }
-        else if(key == steamPlayerIdKey)
+        else if (key == steamPlayerIdKey)
         {
             steamPlayerId_ = secret.trimmed();
 
@@ -122,20 +122,20 @@ namespace gamelog::application::services
         tryStartOwnedGamesRequest();
     }
 
-    void SteamApiService::onSecretNotFound(const QString& key)
+    void SteamApiService::onSecretNotFound(const QString &key)
     {
-        if(!requestInProgress_)
+        if (!requestInProgress_)
         {
             return;
         }
 
         const QString steamApiKey =
-            QString::fromLatin1(CredentialService::kSteamApiKey);
+                QString::fromLatin1(CredentialService::kSteamApiKey);
 
         const QString steamPlayerIdKey =
-            QString::fromLatin1(CredentialService::kSteamPlayerIdKey);
+                QString::fromLatin1(CredentialService::kSteamPlayerIdKey);
 
-        if(key == steamApiKey)
+        if (key == steamApiKey)
         {
             failRequest(
                     QStringLiteral(
@@ -143,7 +143,7 @@ namespace gamelog::application::services
                             )
                     );
         }
-        else if(key == steamPlayerIdKey)
+        else if (key == steamPlayerIdKey)
         {
             failRequest(
                     QStringLiteral(
@@ -154,22 +154,22 @@ namespace gamelog::application::services
     }
 
     void SteamApiService::onCredentialError(
-            const QString& key,
-            const QString& error
+            const QString &key,
+            const QString &error
             )
     {
-        if(!requestInProgress_)
+        if (!requestInProgress_)
         {
             return;
         }
 
         const QString steamApiKey =
-            QString::fromLatin1(CredentialService::kSteamApiKey);
+                QString::fromLatin1(CredentialService::kSteamApiKey);
 
         const QString steamPlayerIdKey =
-            QString::fromLatin1(CredentialService::kSteamPlayerIdKey);
+                QString::fromLatin1(CredentialService::kSteamPlayerIdKey);
 
-        if(key != steamApiKey && key != steamPlayerIdKey)
+        if (key != steamApiKey && key != steamPlayerIdKey)
         {
             return;
         }
@@ -191,14 +191,14 @@ namespace gamelog::application::services
 
         // CredentialService returns each secret asynchronously, so the first
         // completion normally reaches this method before the other is ready.
-        if(steamApiKey_.isEmpty() || steamPlayerId_.isEmpty())
+        if (steamApiKey_.isEmpty() || steamPlayerId_.isEmpty())
         {
             return;
         }
 
         // A duplicated secretRetrieved signal must not create a second HTTP
         // stream for the same sync operation.
-        if(networkRequestStarted_)
+        if (networkRequestStarted_)
         {
             qCWarning(gamelogSteamApiServiceLog) << "Steam owned-games HTTP request was already started; ignoring duplicate credential completion.";
             return;
@@ -208,19 +208,19 @@ namespace gamelog::application::services
 
         const qulonglong steamId = steamPlayerId_.toULongLong(&steamIdValid);
 
-        if(!steamIdValid || steamId == 0)
+        if (!steamIdValid || steamId == 0)
         {
             failRequest(QStringLiteral("The configured Steam player ID is invalid."));
             return;
         }
 
         QUrl url{
-            QStringLiteral(
-                    "https://api.steampowered.com/"
-                    "IPlayerService/"
-                    "GetOwnedGames/"
-                    "v0001/"
-                    )
+                QStringLiteral(
+                        "https://api.steampowered.com/"
+                        "IPlayerService/"
+                        "GetOwnedGames/"
+                        "v0001/"
+                        )
         };
 
         QUrlQuery query;
@@ -228,7 +228,8 @@ namespace gamelog::application::services
 
         query.addQueryItem(
                 QStringLiteral("key"),
-                steamApiKey_);
+                steamApiKey_
+                );
 
         query.addQueryItem(
                 QStringLiteral("steamid"),
@@ -269,24 +270,23 @@ namespace gamelog::application::services
             << "API key length:" << steamApiKey_.size()
             << "URL:" << url.toString();
 
-        QNetworkReply* reply =
-            networkAccessManager_.get(request);
+        QNetworkReply *reply =
+                networkAccessManager_.get(request);
 
         connect(
                 reply,
                 &QNetworkReply::finished,
                 this,
-                [this, reply]
-                {
+                [this, reply] {
                     handleOwnedGamesReply(reply);
                 }
                 );
     }
 
-    void SteamApiService::handleOwnedGamesReply(QNetworkReply* reply)
+    void SteamApiService::handleOwnedGamesReply(QNetworkReply *reply)
     {
         const int statusCode =
-            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
         const QByteArray responseBody = reply->readAll();
 
@@ -296,13 +296,13 @@ namespace gamelog::application::services
             << "Qt network error:" << static_cast<int>(reply->error())
             << "Body bytes:" << responseBody.size();
 
-        if(reply->error() != QNetworkReply::NoError)
+        if (reply->error() != QNetworkReply::NoError)
         {
             // Limit response logging so an unexpected server response cannot
             // flood the log. The request URL does not contain the API key.
             constexpr qsizetype kMaxLoggedResponseBytes = 1024;
             const QByteArray responsePreview =
-                responseBody.left(kMaxLoggedResponseBytes);
+                    responseBody.left(kMaxLoggedResponseBytes);
 
             qCWarning(gamelogSteamApiServiceLog)
                 << "Steam API HTTP request failed."
@@ -312,11 +312,11 @@ namespace gamelog::application::services
                 << "Response preview:" << responsePreview;
 
             const QString error =
-                QStringLiteral(
-                        "Steam Web API request failed with HTTP %1: %2"
-                        )
-                    .arg(statusCode)
-                    .arg(reply->errorString());
+                    QStringLiteral(
+                            "Steam Web API request failed with HTTP %1: %2"
+                            )
+                   .arg(statusCode)
+                   .arg(reply->errorString());
 
             reply->deleteLater();
             failRequest(error);
@@ -328,12 +328,12 @@ namespace gamelog::application::services
         QJsonParseError parseError;
 
         const QJsonDocument document =
-            QJsonDocument::fromJson(
-                    responseBody,
-                    &parseError
-                    );
+                QJsonDocument::fromJson(
+                        responseBody,
+                        &parseError
+                        );
 
-        if(parseError.error != QJsonParseError::NoError)
+        if (parseError.error != QJsonParseError::NoError)
         {
             failRequest(
                     QStringLiteral(
@@ -343,7 +343,7 @@ namespace gamelog::application::services
             return;
         }
 
-        if(!document.isObject())
+        if (!document.isObject())
         {
             failRequest(
                     QStringLiteral(
@@ -356,11 +356,11 @@ namespace gamelog::application::services
         const QJsonObject root = document.object();
 
         const QJsonObject response =
-            root.value(
-                    QStringLiteral("response")
-                    ).toObject();
+                root.value(
+                        QStringLiteral("response")
+                        ).toObject();
 
-        if(response.isEmpty())
+        if (response.isEmpty())
         {
             failRequest(
                     QStringLiteral(
@@ -372,13 +372,13 @@ namespace gamelog::application::services
         }
 
         const QJsonValue gamesValue =
-            response.value(
-                    QStringLiteral("games")
-                    );
+                response.value(
+                        QStringLiteral("games")
+                        );
 
         QJsonArray games;
 
-        if(gamesValue.isArray())
+        if (gamesValue.isArray())
         {
             games = gamesValue.toArray();
         }
@@ -392,7 +392,7 @@ namespace gamelog::application::services
         emit ownedGamesReceived(std::move(games));
     }
 
-    void SteamApiService::failRequest(const QString& error)
+    void SteamApiService::failRequest(const QString &error)
     {
         qCWarning(gamelogSteamApiServiceLog)
             << "Steam API request failed:" << error;

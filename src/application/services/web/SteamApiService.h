@@ -11,14 +11,14 @@ namespace gamelog::application::services
 {
     class CredentialService;
 
-    class SteamApiService : public QObject
+    class SteamApiService :public QObject
     {
         Q_OBJECT
 
     public:
         explicit SteamApiService(
-                CredentialService& credentialService,
-                QObject* parent = nullptr
+                CredentialService &credentialService,
+                QObject *parent = nullptr
                 );
 
         /**
@@ -48,26 +48,26 @@ namespace gamelog::application::services
 
     private:
         void onSecretRetrieved(
-                const QString& key,
-                const QString& secret
+                const QString &key,
+                const QString &secret
                 );
 
-        void onSecretNotFound(const QString& key);
+        void onSecretNotFound(const QString &key);
 
         void onCredentialError(
-                const QString& key,
-                const QString& error
+                const QString &key,
+                const QString &error
                 );
 
         void tryStartOwnedGamesRequest();
 
-        void handleOwnedGamesReply(QNetworkReply* reply);
+        void handleOwnedGamesReply(QNetworkReply *reply);
 
-        void failRequest(const QString& error);
+        void failRequest(const QString &error);
 
         void resetRequestState();
 
-        CredentialService& credentialService_;
+        CredentialService &credentialService_;
 
         QNetworkAccessManager networkAccessManager_;
 

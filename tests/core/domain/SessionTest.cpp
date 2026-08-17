@@ -20,7 +20,7 @@ namespace
         Q_OBJECT
 
     private
-    slots:
+        slots:
 
         static void parsesSourceFromString();
 

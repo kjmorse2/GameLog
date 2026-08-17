@@ -19,12 +19,14 @@ using gamelog::core::database::GameRepository;
 
 namespace
 {
-    class GameServiceTest :public QObject
+    class GameServiceTest:public QObject
     {
         Q_OBJECT
 
     private
-    slots:
+        slots:
+
+
         void init();
 
         void cleanup();
@@ -64,7 +66,7 @@ namespace
         void syncGamesWithDatabase_rebuildsInMemoryIndexes();
 
     private:
-        static Game makeGame(const QString &title);
+        static Game makeGame(const QString& title);
 
         QString databasePath_;
         std::unique_ptr<DatabaseManager> manager_;
@@ -154,7 +156,6 @@ void GameServiceTest::findByExecutableName_returnsInsertedGame()
     QCOMPARE(loaded->title, game.title);
     QCOMPARE(loaded->executablePath, game.executablePath);
     QCOMPARE(loaded->executableName, game.executableName);
-
 }
 
 void GameServiceTest::listGames_returnsAllGames()
@@ -305,7 +306,7 @@ void GameServiceTest::syncGamesWithDatabase_rebuildsInMemoryIndexes()
     QCOMPARE(pathGamesInMemoryIndexBeforeSync.size(), 3);
 }
 
-Game GameServiceTest::makeGame(const QString &title)
+Game GameServiceTest::makeGame(const QString& title)
 {
     Game game;
     game.title = title;

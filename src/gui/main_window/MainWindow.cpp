@@ -60,7 +60,7 @@ namespace gamelog::gui
                 runtime_.getCredentialService(),
                 [credentialService = runtime_.getCredentialService()](const QString& key)
                 {
-                    credentialService->setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey),key);
+                    credentialService->setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), key);
                 }
                );
         connect(ui->actionAdd_Steam_Player_ID, &QAction::triggered, this, &MainWindow::onAddSteamPlayerId);
@@ -70,7 +70,7 @@ namespace gamelog::gui
                 runtime_.getCredentialService(),
                 [credentialService = runtime_.getCredentialService()](const QString& key)
                 {
-                    credentialService->setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey),key);
+                    credentialService->setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey), key);
                 }
                );
     }

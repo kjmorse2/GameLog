@@ -35,7 +35,8 @@ namespace
         Q_OBJECT
 
     private
-    slots:
+        slots:
+
 
 
 

@@ -41,12 +41,16 @@ namespace gamelog::gui
         signals:
 
 
+
+
         void steamAPIKeyEntered(QString key);
 
         void steamPlayerIdEntered(QString playerId);
 
     private
         slots:
+
+
 
 
         void onSessionStarted(const core::domain::Game& game);

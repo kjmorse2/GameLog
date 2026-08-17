@@ -6,29 +6,28 @@
 
 namespace gamelog::application::services
 {
-    CredentialService::CredentialService(QObject* parent)
-        : QObject{parent}
-    {
-    }
+    CredentialService::CredentialService(QObject *parent) :
+        QObject{parent}
+    {}
 
     void CredentialService::setSecret(
-            const QString& key,
-            const QString& secret
+            const QString &key,
+            const QString &secret
             )
     {
         qCDebug(gamelogSessionServiceLog) << "Setting secret for key";
-        if(key.isEmpty())
+        if (key.isEmpty())
         {
             emit credentialError(
-                                 key,
-                                 QStringLiteral("Credential key cannot be empty.")
-                                );
+                    key,
+                    QStringLiteral("Credential key cannot be empty.")
+                    );
             return;
         }
 
-        auto* job = new QKeychain::WritePasswordJob{
-            QString::fromLatin1(kServiceName),
-            this
+        auto *job = new QKeychain::WritePasswordJob{
+                QString::fromLatin1(kServiceName),
+                this
         };
 
         job->setKey(key);
@@ -38,38 +37,37 @@ namespace gamelog::application::services
                 job,
                 &QKeychain::WritePasswordJob::finished,
                 this,
-                [this, job, key]
-                {
-                    if(job->error() != QKeychain::NoError)
+                [this, job, key] {
+                    if (job->error() != QKeychain::NoError)
                     {
                         emit credentialError(
-                                             key,
-                                             job->errorString()
-                                            );
+                                key,
+                                job->errorString()
+                                );
                         return;
                     }
 
                     emit secretStored(key);
                 }
-               );
+                );
 
         job->start();
     }
 
-    void CredentialService::getSecret(const QString& key)
+    void CredentialService::getSecret(const QString &key)
     {
-        if(key.isEmpty())
+        if (key.isEmpty())
         {
             emit credentialError(
-                                 key,
-                                 QStringLiteral("Credential key cannot be empty.")
-                                );
+                    key,
+                    QStringLiteral("Credential key cannot be empty.")
+                    );
             return;
         }
 
-        auto* job = new QKeychain::ReadPasswordJob{
-            QString::fromLatin1(kServiceName),
-            this
+        auto *job = new QKeychain::ReadPasswordJob{
+                QString::fromLatin1(kServiceName),
+                this
         };
 
         job->setKey(key);
@@ -78,47 +76,46 @@ namespace gamelog::application::services
                 job,
                 &QKeychain::ReadPasswordJob::finished,
                 this,
-                [this, job, key]
-                {
-                    if(job->error() == QKeychain::EntryNotFound)
+                [this, job, key] {
+                    if (job->error() == QKeychain::EntryNotFound)
                     {
                         emit secretNotFound(key);
                         return;
                     }
 
-                    if(job->error() != QKeychain::NoError)
+                    if (job->error() != QKeychain::NoError)
                     {
                         emit credentialError(
-                                             key,
-                                             job->errorString()
-                                            );
+                                key,
+                                job->errorString()
+                                );
                         return;
                     }
 
                     emit secretRetrieved(
-                                         key,
-                                         job->textData()
-                                        );
+                            key,
+                            job->textData()
+                            );
                 }
-               );
+                );
 
         job->start();
     }
 
-    void CredentialService::removeSecret(const QString& key)
+    void CredentialService::removeSecret(const QString &key)
     {
-        if(key.isEmpty())
+        if (key.isEmpty())
         {
             emit credentialError(
-                                 key,
-                                 QStringLiteral("Credential key cannot be empty.")
-                                );
+                    key,
+                    QStringLiteral("Credential key cannot be empty.")
+                    );
             return;
         }
 
-        auto* job = new QKeychain::DeletePasswordJob{
-            QString::fromLatin1(kServiceName),
-            this
+        auto *job = new QKeychain::DeletePasswordJob{
+                QString::fromLatin1(kServiceName),
+                this
         };
 
         job->setKey(key);
@@ -127,26 +124,25 @@ namespace gamelog::application::services
                 job,
                 &QKeychain::DeletePasswordJob::finished,
                 this,
-                [this, job, key]
-                {
-                    if(job->error() == QKeychain::EntryNotFound)
+                [this, job, key] {
+                    if (job->error() == QKeychain::EntryNotFound)
                     {
                         emit secretNotFound(key);
                         return;
                     }
 
-                    if(job->error() != QKeychain::NoError)
+                    if (job->error() != QKeychain::NoError)
                     {
                         emit credentialError(
-                                             key,
-                                             job->errorString()
-                                            );
+                                key,
+                                job->errorString()
+                                );
                         return;
                     }
 
                     emit secretRemoved(key);
                 }
-               );
+                );
         job->start();
     }
 }

@@ -4,8 +4,8 @@ ALTER TABLE games
 -- statement-break
 UPDATE games
 SET has_artwork2 = CASE
-                      WHEN has_artwork NOT NULL AND has_artwork <> '' THEN 1
-                      ELSE 0
+                       WHEN has_artwork NOT NULL AND has_artwork <> '' THEN 1
+                       ELSE 0
     END;
 
 -- statement-break
