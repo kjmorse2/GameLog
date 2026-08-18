@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <QHash>
+#include <QJsonArray>
 #include <QObject>
 #include <QString>
 
@@ -15,6 +16,7 @@
 namespace gamelog::application::services
 {
     class SteamApiService;
+
     /**
      * Application-facing game operations.
      *
@@ -28,7 +30,7 @@ namespace gamelog::application::services
 
     public:
         /**
-         * @breif Constructs a GameService with the provided repository and SteamApiService.
+         * @brief Constructs a GameService with the provided repository and SteamApiService.
          * @param repository The GameRepository used for database operations.
          * @param steamApiService The SteamApiService used for Steam-related operations.
          */
@@ -85,20 +87,22 @@ namespace gamelog::application::services
 
         /**
          * Updates the provided game in the database and updates the in-memory indexes.
-         * @param game the Game struct to add.
+         * @param game the Game struct to update.
          * @return A boolean describing if the operation succeeded.
          */
         [[nodiscard]] bool updateGame(const Game& game);
 
         /**
-         * Removes the game with the provide id in the database and updates the in-memory indexes.
+         * Removes the game with the provided id in the database and updates the in-memory indexes.
          * @param id of the Game struct to remove.
          * @return A boolean describing if the operation succeeded.
          */
         [[nodiscard]] bool removeGame(std::int64_t id);
 
         /**
-         * Rebuilds the process-matching indexes from the repository.
+         * Rebuilds the process-matching indexes from the repository. Steam App
+         * IDs are unique in persistence. Duplicate executable-path behavior is
+         * intentionally not strengthened by this contract revision.
          */
         void syncGamesWithDatabase();
 
@@ -117,21 +121,26 @@ namespace gamelog::application::services
 
         /**
          * Returns true if there are any tracked Steam games in the in-memory index.
-         * @return a boolean describing if there are tracked team games.
+         * @return a boolean describing if there are tracked Steam games.
          */
         [[nodiscard]] bool hasTrackedSteamGames() const noexcept;
 
-        bool setHasArtwork(int gameId, bool available);
+        /**
+         * Persists the current cover-artwork availability for one game.
+         * @param gameId The persisted game ID.
+         * @param available Whether valid cover artwork exists locally.
+         * @return True if the game exists and the state was persisted.
+         */
+        [[nodiscard]] bool setHasArtwork(int gameId, bool available);
 
     public
-        slots  :
+        slots :
         /**
-         * Wrapper for SteamApiService::getOwnedGames() that updates the in-memory index of tracked Steam games.
+         * Wrapper for SteamApiService::getOwnedGames() that updates the database when results arrive.
          */
         void syncSteamGames();
 
-
-        signals  :
+        signals :
         /**
          * Emitted when a new game is added to the database and the in-memory indexes are updated.
          * @param game The Game struct that was added.
@@ -146,7 +155,7 @@ namespace gamelog::application::services
 
     private:
         /**
-         * @breif the repository where the games are stored.
+         * @brief the repository where the games are stored.
          */
         core::database::GameRepository& repository_;
 
@@ -166,9 +175,11 @@ namespace gamelog::application::services
         QHash<QString, Game> trackedPathGames_;
 
     private
-        slots  :
+        slots :
         /**
-         * Connected to the SteamApiService::ownedGamesReceived signal. Updates the in-memory index of tracked Steam games.
+         * Connected to the SteamApiService::ownedGamesReceived signal. Inserts
+         * only Steam App IDs that do not already exist anywhere in the database.
+         * Existing rows are left unchanged, including untracked rows and local titles.
          * @param steamGames The array of Steam games received from the Steam API.
          */
         void onSteamGamesReceived(const QJsonArray& steamGames);

@@ -20,61 +20,61 @@ namespace gamelog::core::domain::query
     QDebug operator<<(QDebug debug, GameSortField sortField);
 
     /**
- * Persistence-neutral description of a game search.
- *
- * Set fields are combined with AND. Multiple IDs are combined with IN.
- * SQL details deliberately do not appear in this type.
- */
+     * Persistence-neutral description of a game search.
+     *
+     * Set fields are combined with AND. Multiple IDs are combined with IN.
+     * SQL details deliberately do not appear in this type.
+     */
     struct GameQuery
     {
         /**
-     * @brief The ID's to select
-     */
+         * @brief The IDs to select.
+         */
         std::vector<std::int64_t> ids;
 
         /**
-     * @brief the title of the Game to select
-     */
+         * @brief The title of the Game to select.
+         */
         std::optional<QString> title;
 
         /**
-     * @brief The name of the executable to select
-     */
+         * @brief The name of the executable to select.
+         */
         std::optional<QString> executableName;
 
         /**
-     * @brief The path of the executable to select
-     */
+         * @brief The path of the executable to select.
+         */
         std::optional<QString> executablePath;
 
         /**
-     * @brief The Steam App ID of the game to select
-     */
+         * @brief The Steam App ID of the game to select.
+         */
         std::optional<int> steamAppId;
 
         /**
-     * @brief Whether the game is being tracked
-     */
+         * @brief Whether the game is being tracked.
+         */
         std::optional<bool> trackingEnabled;
 
         /**
-     * @brief The field to sort by
-     */
+         * @brief The field to sort by.
+         */
         GameSortField sortBy{GameSortField::Title};
 
         /**
-        * @brief The direction to sort by
-        */
+         * @brief The direction to sort by.
+         */
         SortDirection sortDirection{SortDirection::Ascending};
 
         /**
-        * @brief limit of Games to select.
-        */
+         * @brief Maximum number of Games to select.
+         */
         std::optional<std::size_t> limit;
 
         /**
-     * @brief The number of Games to skip.
-     */
+         * @brief The number of Games to skip.
+         */
         std::optional<std::size_t> offset;
     };
 

@@ -56,7 +56,10 @@ namespace gamelog::core::process
         if(!process.executablePath.isEmpty())
         {
             const auto pathGame = trackedPathGames.constFind(process.executablePath);
-            if(pathGame != trackedPathGames.constEnd()) { return &pathGame.value(); }
+            if(pathGame != trackedPathGames.constEnd() && processMatchesGame(process, pathGame.value()))
+            {
+                return &pathGame.value();
+            }
         }
 
         return nullptr;

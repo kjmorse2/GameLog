@@ -2,13 +2,14 @@
 
 #include "logging/LoggingCategories.h"
 
-#include <utility>
+#include <algorithm>
 
 #include <QDateTime>
 #include <QFile>
 #include <QResource>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QStringList>
 
 // The migration files are compiled into gamelog-core through migrations.qrc.
 // Since gamelog-core is a static library, explicitly referencing the generated
@@ -41,13 +42,12 @@ namespace gamelog::core::database
         }
 
         // Make sure the ledger exists before we inspect or record anything.
-        if(!ensureMigrationTable()) { return false; }
+        if(!ensureMigrationTable() || !validateMigrationLedger()) { return false; }
 
         // Apply each compiled-in migration in order.
         for(const Migration& migration : knownMigrations())
         {
-            const std::optional<bool> applied = isApplied(migration.version);
-
+            const std::optional<bool> applied = isApplied(migration);
             if(!applied.has_value()) { return false; }
 
             if(*applied) { continue; }
@@ -61,8 +61,8 @@ namespace gamelog::core::database
     bool DatabaseMigrator::ensureMigrationTable()
     {
         // Keep the migration ledger as a tiny, dependency-free table.
-
-        if(QSqlQuery query{database_}; !query.exec(R"(
+        QSqlQuery query{database_};
+        if(!query.exec(R"(
                 CREATE TABLE IF NOT EXISTS schema_migrations
                 (
                     version INTEGER PRIMARY KEY,
@@ -78,34 +78,80 @@ namespace gamelog::core::database
         return true;
     }
 
-    std::optional<bool> DatabaseMigrator::isApplied(int version) const
+    bool DatabaseMigrator::validateMigrationLedger() const
     {
-        // A single existence check is enough because version is the primary key.
+        QSqlQuery query{database_};
+        if(!query.exec(QStringLiteral("SELECT version, name FROM schema_migrations ORDER BY version")))
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to validate applied migrations:" << query.lastError().text();
+            return false;
+        }
+
+        const auto& migrations = knownMigrations();
+        while(query.next())
+        {
+            const int version = query.value(QStringLiteral("version")).toInt();
+            const QString name = query.value(QStringLiteral("name")).toString();
+
+            const auto known = std::find_if(migrations.begin(),
+                                            migrations.end(),
+                                            [version](const Migration& migration)
+                                            {
+                                                return migration.version == version;
+                                            });
+
+            if(known == migrations.end())
+            {
+                qCWarning(gamelogDatabaseLog) << "Database contains unknown migration version" << version <<
+                    "and may use a newer incompatible schema.";
+                return false;
+            }
+
+            if(known->name != name)
+            {
+                qCWarning(gamelogDatabaseLog) << "Migration ledger name mismatch for version" << version << ": expected"
+                    << known->name << "but found" << name;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    std::optional<bool> DatabaseMigrator::isApplied(const Migration& migration) const
+    {
         QSqlQuery query{database_};
         query.prepare(R"(
-            SELECT 1
+            SELECT name
             FROM schema_migrations
             WHERE version = :version
             LIMIT 1
         )");
-        query.bindValue(":version", version);
+        query.bindValue(QStringLiteral(":version"), migration.version);
 
         if(!query.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to inspect applied migrations:" << query.lastError().text();
-
             return std::nullopt;
         }
 
-        return query.next();
+        if(!query.next()) { return false; }
+
+        const QString recordedName = query.value(QStringLiteral("name")).toString();
+        if(recordedName != migration.name)
+        {
+            qCWarning(gamelogDatabaseLog) << "Migration ledger name mismatch for version" << migration.version;
+            return std::nullopt;
+        }
+
+        return true;
     }
 
     bool DatabaseMigrator::applyMigration(const Migration& migration)
     {
         // Read the SQL script first so we can fail before opening the transaction.
         const std::optional<QString> sql = readMigration(migration.resourcePath);
-
-        if(!sql.has_value())
+        if(!sql)
         {
             qCWarning(gamelogDatabaseLog) << "Unable to read migration:" << migration.resourcePath;
             return false;
@@ -117,18 +163,16 @@ namespace gamelog::core::database
             return false;
         }
 
-        const QStringList statements = sql->split("-- statement-break", Qt::SkipEmptyParts);
+        const QStringList statements = sql->split(QStringLiteral("-- statement-break"), Qt::SkipEmptyParts);
 
         // Execute the script in discrete chunks so future migrations can bundle
         // multiple statements without depending on SQLite semicolon parsing.
         for(const QString& statement : statements)
         {
             const QString trimmed = statement.trimmed();
-
             if(trimmed.isEmpty()) { continue; }
 
             QSqlQuery query{database_};
-
             if(!query.exec(trimmed))
             {
                 qCWarning(gamelogDatabaseLog) << "Migration failed:" << migration.version << migration.name << query.
@@ -145,9 +189,10 @@ namespace gamelog::core::database
             VALUES
                 (:version, :name, :applied_at_utc)
         )");
-        record.bindValue(":version", migration.version);
-        record.bindValue(":name", migration.name);
-        record.bindValue(":applied_at_utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+        record.bindValue(QStringLiteral(":version"), migration.version);
+        record.bindValue(QStringLiteral(":name"), migration.name);
+        record.bindValue(QStringLiteral(":applied_at_utc"),
+                         QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
 
         if(!record.exec())
         {
@@ -166,7 +211,6 @@ namespace gamelog::core::database
         }
 
         qCInfo(gamelogDatabaseLog) << "Applied database migration:" << migration.version << migration.name;
-
         return true;
     }
 
@@ -174,7 +218,6 @@ namespace gamelog::core::database
     {
         // Resource-backed scripts stay in sync with the compiled binary.
         QFile file{resourcePath};
-
         if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) { return std::nullopt; }
 
         return QString::fromUtf8(file.readAll());
@@ -182,20 +225,23 @@ namespace gamelog::core::database
 
     const std::vector<Migration>& DatabaseMigrator::knownMigrations()
     {
-        // Keep this list ordered so migration application stays deterministic.econfig_session_documents
+        // Keep this list ordered so migration application stays deterministic.
         static const std::vector<Migration> migrations{
-            {.version = 1, .name = "initial_schema", .resourcePath = ":/migrations/001_initial_schema.sql"},
             {
-                .version = 2, .name = "reconfig_session_documents_table",
-                .resourcePath = ":/migrations/002_reconfig_session_documents.sql"
+                .version = 1, .name = QStringLiteral("initial_schema"),
+                .resourcePath = QStringLiteral(":/migrations/001_initial_schema.sql")
             },
             {
-                .version = 3, .name = "remove_format_from_session_documents",
-                .resourcePath = ":/migrations/003_remove_format_session_documents.sql"
+                .version = 2, .name = QStringLiteral("reconfig_session_documents_table"),
+                .resourcePath = QStringLiteral(":/migrations/002_reconfig_session_documents.sql")
             },
             {
-                .version = 4, .name = "artwork_path_to_has_artwork",
-                .resourcePath = ":/migrations/004_artwork_path_to_has_artwork.sql"
+                .version = 3, .name = QStringLiteral("remove_format_from_session_documents"),
+                .resourcePath = QStringLiteral(":/migrations/003_remove_format_session_documents.sql")
+            },
+            {
+                .version = 4, .name = QStringLiteral("artwork_path_to_has_artwork"),
+                .resourcePath = QStringLiteral(":/migrations/004_artwork_path_to_has_artwork.sql")
             }
         };
 

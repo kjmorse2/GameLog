@@ -26,7 +26,7 @@ namespace gamelog::core::process
         QString executablePath;
 
         /**
-         * @breif The steam app id of the process if found.
+         * @brief The Steam App ID of the process if found.
          */
         std::optional<std::uint32_t> steamAppId;
     };

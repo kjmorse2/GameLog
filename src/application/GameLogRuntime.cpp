@@ -1,6 +1,7 @@
 #include "application/GameLogRuntime.h"
 
 #include "logging/LoggingCategories.h"
+#include "process/ProcessHelpers.h"
 #include "process/ProcessSource.h"
 #include "process/ProcfsProcessSource.h"
 
@@ -14,9 +15,28 @@ using std::chrono::seconds;
 
 namespace gamelog::application
 {
-    GameLogRuntime::GameLogRuntime(QString databasePath) : databaseManager_{
-        std::move(databasePath), QStringLiteral("GameLogRuntimeConnection")
-    }
+    namespace
+    {
+        GameLogRuntime::ProcessSourceFactory defaultProcessSourceFactory()
+        {
+            return [] { return std::make_unique<core::process::ProcfsProcessSource>(); };
+        }
+
+        core::process::SteamProcessInspector::SteamAppIdReader defaultSteamAppIdReader()
+        {
+            return [](qint64 pid) { return core::process::ProcessHelpers::readSteamAppId(pid); };
+        }
+    } // namespace
+
+    GameLogRuntime::GameLogRuntime(QString databasePath)
+        : GameLogRuntime{std::move(databasePath), defaultProcessSourceFactory(), defaultSteamAppIdReader()} {}
+
+    GameLogRuntime::GameLogRuntime(QString databasePath,
+                                   ProcessSourceFactory processSourceFactory,
+                                   core::process::SteamProcessInspector::SteamAppIdReader steamAppIdReader)
+        : databaseManager_{std::move(databasePath), QStringLiteral("GameLogRuntimeConnection")},
+          processSourceFactory_{std::move(processSourceFactory)},
+          steamProcessInspector_{std::move(steamAppIdReader)}
     {
         databaseReady_ = databaseManager_.initialize();
         if(!databaseReady_)
@@ -37,7 +57,26 @@ namespace gamelog::application
         connect(&*gameArtworkService_,
                 &services::GameArtworkService::artworkAvailable,
                 &*gameService_,
-                [this](const int gameId) { gameService_->setHasArtwork(gameId, true); });
+                [this](int gameId, services::ArtworkType artworkType)
+                {
+                    // hasArtwork currently means a usable cover.jpg exists.
+                    if(artworkType == services::ArtworkType::Cover && !gameService_->setHasArtwork(gameId, true))
+                    {
+                        qCWarning(gamelogRuntimeLog) << "Failed to record available cover artwork for game" << gameId;
+                    }
+                });
+
+        connect(&*gameArtworkService_,
+                &services::GameArtworkService::artworkUnavailable,
+                &*gameService_,
+                [this](int gameId, services::ArtworkType artworkType)
+                {
+                    if(artworkType == services::ArtworkType::Cover && !gameService_->setHasArtwork(gameId, false))
+                    {
+                        qCWarning(gamelogRuntimeLog) << "Failed to clear unavailable cover artwork for game" << gameId;
+                    }
+                });
+
         connect(&*gameService_,
                 &services::GameService::gameAdded,
                 &*gameArtworkService_,
@@ -54,13 +93,18 @@ namespace gamelog::application
             return false;
         }
 
-        if(!databaseReady_ || !gameService_ || !sessionService_)
+        if(!databaseReady_ || !gameService_ || !sessionService_ || !processSourceFactory_)
         {
             qCWarning(gamelogRuntimeLog) << "Cannot start because application services are unavailable.";
             return false;
         }
 
-        processSource_ = std::make_unique<core::process::ProcfsProcessSource>();
+        processSource_ = processSourceFactory_();
+        if(!processSource_)
+        {
+            qCWarning(gamelogRuntimeLog) << "Cannot start because the process source factory returned null.";
+            return false;
+        }
 
         // The services own their state; the runtime only asks them to refresh/restore it.
         gameService_->syncGamesWithDatabase();

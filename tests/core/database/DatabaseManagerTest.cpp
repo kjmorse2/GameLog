@@ -101,7 +101,7 @@ void DatabaseManagerTest::initialize_opensDatabaseAndRunsMigrations()
         QSqlQuery query{manager.database()};
         QVERIFY(query.exec("SELECT COUNT(*) FROM schema_migrations"));
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), 3);
+        QCOMPARE(query.value(0).toInt(), 4);
     }
 
     gamelog::tests::fixtures::cleanupDatabaseArtifacts(databasePath);

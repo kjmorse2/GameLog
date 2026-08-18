@@ -26,4 +26,5 @@ target_link_libraries(gamelog-application
         Qt6::Network
         Qt6::Sql
         Qt6Keychain::Qt6Keychain
+        Qt6::Gui
 )

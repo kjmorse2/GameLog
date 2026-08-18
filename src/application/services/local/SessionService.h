@@ -1,9 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <optional>
 #include <vector>
 
+#include <QDateTime>
 #include <QObject>
 
 #include "database/SessionRepository.h"
@@ -25,12 +27,25 @@ namespace gamelog::application::services
         Q_OBJECT
 
     public:
+        using Clock = std::function<QDateTime()>;
+
         /**
          * Creates a SessionService with the provided repository and GameService.
+         * Production lifecycle timestamps use QDateTime::currentDateTimeUtc().
          * @param repository The SessionRepository used for database operations.
          * @param gameService The GameService used for game-related operations.
          */
         SessionService(core::database::SessionRepository& repository, const GameService& gameService);
+
+        /**
+         * Creates a SessionService with a caller-provided clock.
+         * This narrow seam keeps time-dependent tests deterministic without
+         * changing production behavior.
+         * @param repository The SessionRepository used for database operations.
+         * @param gameService The GameService used for game-related operations.
+         * @param clock A function returning the current date and time.
+         */
+        SessionService(core::database::SessionRepository& repository, const GameService& gameService, Clock clock);
 
         ~SessionService() override = default;
 
@@ -39,71 +54,81 @@ namespace gamelog::application::services
          * @param query The query struct describing the search criteria.
          * @return A vector of Session objects returned from the query.
          */
-        [[nodiscard]] std::vector<Session> search(const SessionQuery& query) const;
+        [[nodiscard]] std::vector<core::domain::Session> search(const core::domain::query::SessionQuery& query) const;
 
         /**
-         * Search the database for the active session, if any.
+         * Search the cached service state for the active session, if any.
          * @return The active session, or std::nullopt if there is no active session.
          */
-        [[nodiscard]] std::optional<Session> findActiveSession() const;
+        [[nodiscard]] std::optional<core::domain::Session> findActiveSession() const;
 
         /**
          * Get all sessions for a specific game.
          * @param gameId The ID of the game to get sessions for.
          * @return A vector of Session objects for the specified game.
          */
-        [[nodiscard]] std::vector<Session> listSessionsForGame(int gameId) const;
+        [[nodiscard]] std::vector<core::domain::Session> listSessionsForGame(int gameId) const;
 
         /**
-         * Get all sessions that started within the specified time range.
+         * Get all sessions that started within the half-open time range.
          * @param startDate The start of the time range (inclusive).
-         * @param endDate The end of the time range (inclusive).
-         * @return A vector of Session objects that started within the specified time range.
+         * @param endDate The end of the time range (exclusive).
+         * @return Sessions whose start timestamps are in [startDate, endDate).
          */
-        [[nodiscard]] std::vector<Session> getSessionsInTimeRange(const QDateTime& startDate,
-                                                                  const QDateTime& endDate) const;
+        [[nodiscard]] std::vector<core::domain::Session> getSessionsInTimeRange(
+            const QDateTime& startDate,
+            const QDateTime& endDate) const;
 
         /**
-         * Starts a new session for the specified game, if there is no active session.
+         * Starts a new automatic session for a tracked game if no session is active.
+         * Games with tracking disabled are rejected.
          * @param gameId The ID of the game to start a session for.
-         * @return The new Session object if a session was started, or std::nullopt if there is already an active session.
+         * @return The new Session, or std::nullopt if the operation is rejected.
          */
-        [[nodiscard]] std::optional<Session> startAutomaticSession(int gameId);
+        [[nodiscard]] std::optional<core::domain::Session> startAutomaticSession(int gameId);
 
         /**
-         * End the active session, if any, and return it.
-         * @return The ended Session object if there was an active session, or std::nullopt if there was no active session.
+         * Ends the active session, replacing its tracked duration with the
+         * wall-clock difference between its start and end timestamps.
+         * A future start timestamp causes the operation to fail.
+         * @return The ended Session, or std::nullopt if no valid session can be ended.
          */
-        [[nodiscard]] std::optional<Session> endActiveSession();
+        [[nodiscard]] std::optional<core::domain::Session> endActiveSession();
 
         /**
          * Adds a new session to the database. This is used for manually created sessions.
-         * @param session The Session object to add. The session ID will be set by the repository.
-         * @return A boolean describing if the operation succeeded.
+         * Adding an active session emits sessionStarted() after persistence succeeds.
+         * @param session The Session to add. Its ID is assigned by the repository.
+         * @return True if the operation succeeded.
          */
-        [[nodiscard]] bool addSession(Session& session);
+        [[nodiscard]] bool addSession(core::domain::Session& session);
 
         /**
-         * Update an existing session in the database. This is used for manually updated sessions.
-         * @param session The Session object to update. The session ID must be set to an existing session.
-         * @return A boolean describing if the operation succeeded.
+         * Updates an existing session in the database. Lifecycle signals are
+         * emitted only when its status crosses the active/inactive boundary.
+         * @param session The Session to update. Its ID must identify an existing row.
+         * @return True if the operation succeeded.
          */
-        [[nodiscard]] bool updateSession(const Session& session);
+        [[nodiscard]] bool updateSession(const core::domain::Session& session);
 
         /**
-         * Remove a session from the database. This is used for manually deleted sessions.
+         * Removes an inactive session from the database. Active sessions must
+         * first be completed or interrupted and therefore cannot be removed.
          * @param sessionId The ID of the session to remove.
-         * @return A boolean describing if the operation succeeded.
+         * @return True if the operation succeeded.
          */
         [[nodiscard]] bool removeSession(int sessionId);
 
         /**
-         * Restores the active session and its corresponding game from persistence.
+         * Restores persisted active state. If multiple active rows exist, the
+         * newest restorable row is retained and every other row is interrupted.
+         * Active rows referencing missing games are also interrupted.
+         * @return True when restoration and any required repair both succeed.
          */
         [[nodiscard]] bool restoreActiveSession();
 
         /**
-         * Advances automatic session detection using one process snapshot.
+         * Advances automatic session detection using one deterministic process snapshot.
          */
         void updateAutomaticTracking(const std::vector<core::process::ProcessInfo>& processes,
                                      std::chrono::seconds elapsed);
@@ -113,76 +138,105 @@ namespace gamelog::application::services
          */
         void resetAutomaticTracking() noexcept;
 
-        signals  :
-
+        signals :
         /**
-         * Emitted when a new session is started, either automatically or manually.
+         * Emitted after a database row changes from inactive/nonexistent to active.
          * @param requestedGame The game for which the session was started.
          */
         void sessionStarted(const core::domain::Game& requestedGame);
 
         /**
-         * Emitted when a session is stopped, either automatically or manually.
-         * @param endedSession The session that was stopped, including its final duration and end time.
+         * Emitted after a database row changes from active to completed or interrupted.
+         * The value parameter is safe for queued connections and is not an in/out hook.
+         * @param endedSession The final persisted session value.
          */
-        void sessionStopped(Session& endedSession);
+        void sessionStopped(core::domain::Session endedSession);
 
     private:
         /**
-         * Starts a new session for the specified game, if there is no active session. This is used internally by updateAutomaticTracking().
+         * Starts a new automatic session for the supplied game.
          * @param game The game for which to start a session.
-         * @return The new Session object if a session was started, or std::nullopt if there is already an active session.
+         * @return The new Session, or std::nullopt if the operation is rejected.
          */
-        [[nodiscard]] std::optional<Session> startAutomaticSession(const core::domain::Game& game);
+        [[nodiscard]] std::optional<core::domain::Session> startAutomaticSession(const core::domain::Game& game);
 
         /**
-         * Reset the pending start state, clearing any pending game ID and resetting the grace period timer. This is used internally by
-         * updateAutomaticTracking() when a session is stopped or when the pending start grace period expires.
+         * Returns the current time from the configured clock in UTC.
+         */
+        [[nodiscard]] QDateTime currentDateTimeUtc() const;
+
+        /**
+         * Returns whether persistence contains an active row other than the
+         * optionally excluded session ID.
+         */
+        [[nodiscard]] bool hasOtherActiveSession(int excludedSessionId = 0) const;
+
+        /**
+         * Interrupts an active row using a valid end timestamp and duration.
+         */
+        [[nodiscard]] bool interruptSession(core::domain::Session session, const QDateTime& interruptedAt);
+
+        /**
+         * Chooses one game from a process snapshot deterministically. A still
+         * detected pending game is retained; otherwise Steam matches precede
+         * path-only matches, with game ID used as a tie-breaker.
+         */
+        [[nodiscard]] std::optional<core::domain::Game> selectDetectedGame(
+            const std::vector<core::process::ProcessInfo>& processes) const;
+
+        /**
+         * Reset the pending start state, clearing any pending game ID and
+         * resetting the grace-period timer.
          */
         void resetPendingStart() noexcept;
 
         /**
-         * @breif The repository where the sessions are stored.
+         * @brief The repository where sessions are stored.
          */
         core::database::SessionRepository& repository_;
 
         /**
-         * @breif The GameService used for game-related operations, such as looking up games by ID. This is a reference to an external service and is not owned by SessionService.
+         * @brief The external GameService used for game lookups and tracking indexes.
          */
         const GameService& gameService_;
 
         /**
-         * @brief The currently active session, if any. This is used to track the session that is currently being recorded, and is updated when a session is started or stopped.
+         * @brief Clock used for lifecycle timestamps.
          */
-        std::optional<Session> activeSession_;
+        Clock clock_;
 
         /**
-         * @brief The active game for the currently active session, if any. This is used to track which game is currently being played, and is updated when a session is started or stopped.
+         * @brief The currently active session, if any.
+         */
+        std::optional<core::domain::Session> activeSession_;
+
+        /**
+         * @brief The game associated with the current active session, if available.
          */
         std::optional<core::domain::Game> activeGame_;
 
         /**
-         * @breif The game ID of the game that is pending to start a session. This is used to track which game is currently being played, and is updated when a session is started or stopped.
+         * @brief The game ID currently accumulating the automatic-start grace period.
          */
         std::optional<int> pendingGameId_;
 
         /**
-         * @breif The duration of time that the pending game has been open. This is used to determine when to start a new session for the pending game, and is updated by updateAutomaticTracking().
+         * @brief The amount of time the pending game has remained detected.
          */
         std::chrono::seconds gameOpenDuration_{0};
 
         /**
-         * @brief The duration of time that the active game has been closed. This is used to determine when to stop the current session for the active game, and is updated by updateAutomaticTracking().
+         * @brief The amount of time the active game has remained undetected.
          */
         std::chrono::seconds gameClosedDuration_{0};
 
         /**
-         * @brief The grace period for starting a new session
+         * @brief The grace period for starting a new automatic session.
          */
         static constexpr std::chrono::seconds kStartGracePeriod{30};
 
         /**
-         * @brief The grace period for ending a session
+         * @brief The grace period for ending an automatic session.
          */
         static constexpr std::chrono::seconds kEndGracePeriod{30};
     };

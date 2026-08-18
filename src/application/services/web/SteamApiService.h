@@ -19,6 +19,17 @@ namespace gamelog::application::services
         explicit SteamApiService(CredentialService& credentialService, QObject* parent = nullptr);
 
         /**
+         * Creates a SteamApiService that uses a caller-provided network access
+         * manager. The manager remains owned by the caller.
+         * @param credentialService The service used to retrieve Steam credentials.
+         * @param networkAccessManager The network manager used for HTTP requests.
+         * @param parent The parent QObject for this service.
+         */
+        SteamApiService(CredentialService& credentialService,
+                        QNetworkAccessManager& networkAccessManager,
+                        QObject* parent = nullptr);
+
+        /**
          * Requests the current user's owned Steam games.
          *
          * Credentials are retrieved asynchronously from CredentialService.
@@ -27,27 +38,27 @@ namespace gamelog::application::services
          */
         void getOwnedGames();
 
-        signals  :
+        signals :
         /**
          * Emitted when Steam successfully returns the user's game library.
          *
-         * The array contains the raw game objects returned by Steam.
-         * GameService is responsible for converting these objects into
-         * Game domain objects.
+         * The array contains the raw game objects returned by Steam. An empty
+         * array is a successful empty library. GameService is responsible for
+         * converting these objects into Game domain objects.
          */
         void ownedGamesReceived(QJsonArray games);
 
         /**
-         * Emitted if credentials are unavailable, the HTTP request fails,
-         * or Steam returns an invalid response.
+         * Emitted if credentials are unavailable or invalid, the HTTP request
+         * fails, or Steam returns a malformed response.
          */
         void requestFailed(QString error);
 
     private
-        slots  :
-
+        slots :
         /**
          * Connected to CredentialService::secretRetrieved. Starts the HTTP request
+         * when both required, nonblank credentials are available.
          * @param key The key of the retrieved secret. Should be either kSteamApiKey or kSteamPlayerIdKey.
          * @param secret The value of the retrieved secret.
          */
@@ -67,7 +78,7 @@ namespace gamelog::application::services
         void onCredentialError(const QString& key, const QString& error);
 
         /**
-         * @breif Starts the HTTP request to Steam's GetOwnedGames API if both the API key and player ID are available.
+         * @brief Starts the HTTP request to Steam's GetOwnedGames API if both the API key and player ID are available.
          */
         void tryStartOwnedGamesRequest();
 
@@ -95,9 +106,9 @@ namespace gamelog::application::services
         CredentialService& credentialService_;
 
         /**
-         * The QNetworkAccessManager used to perform HTTP requests to the Steam Web API. This manager handles the network communication and provides asynchronous replies.
+         * The QNetworkAccessManager used to perform HTTP requests to the Steam Web API. The service owns the default manager, while an injected manager remains caller-owned.
          */
-        QNetworkAccessManager networkAccessManager_;
+        QNetworkAccessManager* networkAccessManager_{};
 
         /**
          * The Steam API key retrieved from the CredentialService. This key is required to authenticate requests to the Steam Web API.

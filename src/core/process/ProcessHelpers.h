@@ -31,6 +31,8 @@ namespace gamelog::core::process
 
         /**
          * Finds the tracked game matching a process without copying either index.
+         * When both a process and a path candidate have Steam App IDs, those IDs
+         * are authoritative: a mismatch does not fall back to the matching path.
          * The returned pointer refers to an element in one of the supplied hashes
          * and remains valid only while those hashes are not modified.
          */
@@ -41,7 +43,9 @@ namespace gamelog::core::process
             noexcept;
 
         /**
-         * Checks whether one process corresponds to one game.
+         * Checks whether one process corresponds to one game. Matching Steam IDs
+         * take precedence when both sides provide them; otherwise the executable
+         * path is used.
          */
         [[nodiscard]] static bool processMatchesGame(const ProcessInfo& process, const domain::Game& game) noexcept;
     };

@@ -23,10 +23,7 @@ namespace
 {
     class GameServiceTest : public QObject
     {
-        Q_OBJECT
-
-    private
-        slots  :
+        Q_OBJECT private slots :
         void init();
 
         void cleanup();
@@ -57,11 +54,11 @@ namespace
 
         void updateGame_persistsModifiedFields();
 
-        void updateGame_returnsTrueForMissingRow();
+        void updateGame_returnsFalseForMissingRow();
 
         void removeGame_deletesExistingRow();
 
-        void removeGame_returnsTrueForMissingRow();
+        void removeGame_returnsFalseForMissingRow();
 
         void syncGamesWithDatabase_rebuildsInMemoryIndexes();
 
@@ -257,11 +254,13 @@ void GameServiceTest::updateGame_persistsModifiedFields()
     QVERIFY(!loaded->trackingEnabled);
 }
 
-void GameServiceTest::updateGame_returnsTrueForMissingRow()
+void GameServiceTest::updateGame_returnsFalseForMissingRow()
 {
     Game game = makeGame("Missing");
-    game.id = 999999;
-    QVERIFY(service_->updateGame(game));
+    // game.id = 999999;
+    QTest::ignoreMessage(QtWarningMsg,QRegularExpression(".*Refusing to update a game without a valid ID:.*"));
+
+    QVERIFY(!service_->updateGame(game));
 }
 
 void GameServiceTest::removeGame_deletesExistingRow()
@@ -274,7 +273,7 @@ void GameServiceTest::removeGame_deletesExistingRow()
     QVERIFY(!loaded.has_value());
 }
 
-void GameServiceTest::removeGame_returnsTrueForMissingRow() { QVERIFY(service_->removeGame(999999)); }
+void GameServiceTest::removeGame_returnsFalseForMissingRow() { QVERIFY(!service_->removeGame(999999)); }
 
 void GameServiceTest::syncGamesWithDatabase_rebuildsInMemoryIndexes()
 {

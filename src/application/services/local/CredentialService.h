@@ -3,6 +3,13 @@
 #include <QObject>
 #include <QString>
 
+namespace QKeychain
+{
+    class DeletePasswordJob;
+    class ReadPasswordJob;
+    class WritePasswordJob;
+}
+
 namespace gamelog::application::services
 {
     class CredentialService : public QObject
@@ -26,26 +33,33 @@ namespace gamelog::application::services
          */
         explicit CredentialService(QObject* parent = nullptr);
 
+        ~CredentialService() override = default;
+
         /**
          * Stores a secret under the given key.
          *
-         * This is also used to replace an existing secret.
+         * This is also used to replace an existing secret. Empty or
+         * whitespace-only keys and secrets are rejected; removal must be
+         * requested explicitly through removeSecret().
          */
         void setSecret(const QString& key, const QString& secret);
 
         /**
          * Asynchronously retrieves a secret.
          *
-         * The result is returned through secretRetrieved().
+         * Empty or whitespace-only keys are rejected. The result is returned
+         * through secretRetrieved().
          */
         void getSecret(const QString& key);
 
         /**
          * Removes a secret from the keychain.
+         *
+         * Empty or whitespace-only keys are rejected.
          */
         void removeSecret(const QString& key);
 
-        signals  :
+        signals :
         /**
          * Emitted when a secret has been successfully stored.
          * @param key the key under which the secret was stored
@@ -78,10 +92,29 @@ namespace gamelog::application::services
          */
         void credentialError(const QString& key, const QString& error);
 
+    protected:
+        /**
+         * Creates the concrete keychain write job. Tests may override this
+         * narrow seam without changing production keychain behavior.
+         */
+        virtual QKeychain::WritePasswordJob* createWritePasswordJob();
+
+        /**
+         * Creates the concrete keychain read job. Tests may override this
+         * narrow seam without changing production keychain behavior.
+         */
+        virtual QKeychain::ReadPasswordJob* createReadPasswordJob();
+
+        /**
+         * Creates the concrete keychain delete job. Tests may override this
+         * narrow seam without changing production keychain behavior.
+         */
+        virtual QKeychain::DeletePasswordJob* createDeletePasswordJob();
+
     private:
         /**
-         * @breif The name of the service used for storing credentials in the keychain.
+         * @brief The name of the service used for storing credentials in the keychain.
          */
         static constexpr auto kServiceName = "GameLog";
     };
-}
+} // namespace gamelog::application::services

@@ -33,7 +33,7 @@ namespace gamelog::core::database
     };
 
     /**
-     * @brief Applies any schema migrations that have not yet been recorded.
+     * @brief Validates the migration ledger and applies pending schema changes.
      */
     class DatabaseMigrator
     {
@@ -44,36 +44,39 @@ namespace gamelog::core::database
         explicit DatabaseMigrator(const QSqlDatabase& database);
 
         /**
-         * @brief Ensures the migration ledger exists and applies pending steps.
-         * @return boolean describing success.
+         * @brief Ensures the ledger exists, validates it, and applies pending steps.
+         *
+         * A recorded version is accepted only when its name matches the compiled
+         * migration. Unknown versions, including schemas newer than this binary,
+         * are rejected as incompatible.
+         * @return True if the database is compatible and fully migrated.
          */
         [[nodiscard]] bool applyPendingMigrations();
 
     private:
         /**
          * @brief Creates the migration history table if it is missing.
-         * @return boolean describing if table exists.
          */
         [[nodiscard]] bool ensureMigrationTable();
 
         /**
-         * @brief Reports whether a migration version is already recorded.
-         * @param version to check if it is applied.
-         * @return Optional boolean. False if not applied, true if applied, and null if version does not exist.
+         * @brief Validates every ledger row against the compiled migration list.
          */
-        [[nodiscard]] std::optional<bool> isApplied(int version) const;
+        [[nodiscard]] bool validateMigrationLedger() const;
+
+        /**
+         * @brief Reports whether the exact version/name pair is already recorded.
+         * @return False if absent, true if present and matching, or std::nullopt on error/mismatch.
+         */
+        [[nodiscard]] std::optional<bool> isApplied(const Migration& migration) const;
 
         /**
          * @brief Executes one migration inside a transaction and records it.
-         * @param migration the Migration to apply
-         * @return boolean describing success.
          */
         [[nodiscard]] bool applyMigration(const Migration& migration);
 
         /**
          * @brief Reads a SQL script from a Qt resource path.
-         * @param resourcePath The path to the Qt resource containing the SQL.
-         * @return The SQL script as a string, or std::nullopt if reading fails.
          */
         [[nodiscard]] static std::optional<QString> readMigration(const QString& resourcePath);
 

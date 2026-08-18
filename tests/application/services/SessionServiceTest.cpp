@@ -25,10 +25,7 @@ namespace
 {
     class SessionServiceTest : public QObject
     {
-        Q_OBJECT
-
-    private
-        slots  :
+        Q_OBJECT private slots :
         void init();
 
         void cleanup();
@@ -56,7 +53,7 @@ namespace
     private:
         int addSessionGame(const QString& title) const;
 
-        static Session makeSession(int gameId, const QDateTime& startUtc);
+        static Session makeSession(int gameId, const QDateTime& startUtc, SessionStatus status);
 
         static QDateTime utcDateTime(int year, int month, int day, int hour, int minute, int second);
 
@@ -109,7 +106,7 @@ void SessionServiceTest::findActiveSession_returnsInsertedActiveSession()
     const int gameId = addSessionGame("Elden Ring");
     QVERIFY(gameId > 0);
 
-    Session session = makeSession(gameId, utcDateTime(2026, 7, 1, 12, 34, 56));
+    Session session = makeSession(gameId, utcDateTime(2026, 7, 1, 12, 34, 56), SessionStatus::Active);
     QVERIFY(service_->addSession(session));
 
     const auto active = service_->findActiveSession();
@@ -130,15 +127,13 @@ void SessionServiceTest::listSessionsForGame_returnsNewestFirstAndFiltersByGame(
     QVERIFY(gameOneId > 0);
     QVERIFY(gameTwoId > 0);
 
-    Session oldest = makeSession(gameOneId, utcDateTime(2026, 1, 1, 8, 0, 0));
-    oldest.status = SessionStatus::Completed;
+    Session oldest = makeSession(gameOneId, utcDateTime(2026, 1, 1, 8, 0, 0), SessionStatus::Completed);
     oldest.endTimestamp = utcDateTime(2026, 1, 1, 9, 0, 0);
 
-    Session newest = makeSession(gameOneId, utcDateTime(2026, 1, 2, 8, 0, 0));
-    newest.status = SessionStatus::Interrupted;
+    Session newest = makeSession(gameOneId, utcDateTime(2026, 1, 2, 8, 0, 0), SessionStatus::Interrupted);
     newest.endTimestamp = utcDateTime(2026, 1, 2, 8, 30, 0);
 
-    Session otherGame = makeSession(gameTwoId, utcDateTime(2026, 1, 3, 8, 0, 0));
+    Session otherGame = makeSession(gameTwoId, utcDateTime(2026, 1, 3, 8, 0, 0), SessionStatus::Completed);
 
     QVERIFY(service_->addSession(oldest));
     QVERIFY(service_->addSession(newest));
@@ -166,9 +161,8 @@ void SessionServiceTest::addSession_persistsSessionAndAssignsId()
     const int gameId = addSessionGame("Hades");
     QVERIFY(gameId > 0);
 
-    Session session = makeSession(gameId, utcDateTime(2026, 5, 5, 18, 10, 0));
+    Session session = makeSession(gameId, utcDateTime(2026, 5, 5, 18, 10, 0), SessionStatus::Completed);
     session.source = SessionSource::Manual;
-    session.status = SessionStatus::Completed;
     session.endTimestamp = utcDateTime(2026, 5, 5, 18, 40, 0);
     session.trackedDuration = std::chrono::seconds{1800};
 
@@ -185,7 +179,7 @@ void SessionServiceTest::addSession_persistsSessionAndAssignsId()
 
 void SessionServiceTest::addSession_failsForUnknownGameId()
 {
-    Session session = makeSession(999999, utcDateTime(2026, 6, 1, 10, 0, 0));
+    Session session = makeSession(999999, utcDateTime(2026, 6, 1, 10, 0, 0), SessionStatus::Active);
     QVERIFY(!service_->addSession(session));
     QCOMPARE(session.id, 0);
 }
@@ -195,11 +189,10 @@ void SessionServiceTest::updateSession_persistsModifiedFields()
     const int gameId = addSessionGame("Terraria");
     QVERIFY(gameId > 0);
 
-    Session session = makeSession(gameId, utcDateTime(2026, 3, 1, 11, 0, 0));
+    Session session = makeSession(gameId, utcDateTime(2026, 3, 1, 11, 0, 0), SessionStatus::Completed);
     QVERIFY(service_->addSession(session));
 
     session.source = SessionSource::Manual;
-    session.status = SessionStatus::Completed;
     session.endTimestamp = utcDateTime(2026, 3, 1, 11, 45, 0);
     session.trackedDuration = std::chrono::seconds{2700};
 
@@ -220,7 +213,7 @@ void SessionServiceTest::updateSession_returnsFalseForMissingRow()
     const int gameId = addSessionGame("Missing Session");
     QVERIFY(gameId > 0);
 
-    Session session = makeSession(gameId, utcDateTime(2026, 4, 2, 9, 15, 0));
+    Session session = makeSession(gameId, utcDateTime(2026, 4, 2, 9, 15, 0), SessionStatus::Active);
     session.id = 999999;
 
     QVERIFY(!service_->updateSession(session));
@@ -231,7 +224,7 @@ void SessionServiceTest::removeSession_deletesExistingRow()
     const int gameId = addSessionGame("Delete Session");
     QVERIFY(gameId > 0);
 
-    Session session = makeSession(gameId, utcDateTime(2026, 2, 2, 20, 0, 0));
+    Session session = makeSession(gameId, utcDateTime(2026, 2, 2, 20, 0, 0), SessionStatus::Completed);
     QVERIFY(service_->addSession(session));
 
     QVERIFY(service_->removeSession(session.id));
@@ -269,15 +262,25 @@ int SessionServiceTest::addSessionGame(const QString& title) const
     return query.lastInsertId().toInt();
 }
 
-Session SessionServiceTest::makeSession(int gameId, const QDateTime& startUtc)
+Session SessionServiceTest::makeSession(int gameId, const QDateTime& startUtc, const SessionStatus status)
 {
     Session session;
     session.gameId = gameId;
     session.startTimestamp = startUtc;
-    session.endTimestamp.reset();
+    session.endTimestamp = startUtc.addSecs(120);
+    switch (status)
+    {
+    case SessionStatus::Active:
+        session.endTimestamp = std::nullopt;
+        break;
+    case SessionStatus::Completed:
+    case SessionStatus::Interrupted:
+        session.endTimestamp = startUtc.addSecs(120);
+    default: ;
+    }
     session.trackedDuration = std::chrono::seconds{120};
     session.source = SessionSource::Automatic;
-    session.status = SessionStatus::Active;
+    session.status = status;
     return session;
 }
 

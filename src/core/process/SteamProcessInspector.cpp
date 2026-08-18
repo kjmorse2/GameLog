@@ -8,6 +8,12 @@
 
 namespace gamelog::core::process
 {
+    SteamProcessInspector::SteamProcessInspector()
+        : SteamProcessInspector{[](qint64 pid) { return ProcessHelpers::readSteamAppId(pid); }} {}
+
+    SteamProcessInspector::SteamProcessInspector(SteamAppIdReader steamAppIdReader)
+        : steamAppIdReader_{std::move(steamAppIdReader)} {}
+
     void SteamProcessInspector::annotate(std::vector<ProcessInfo>& processes)
     {
         QSet<qint64> livePids;
@@ -18,14 +24,11 @@ namespace gamelog::core::process
             livePids.insert(process.pid);
 
             auto cached = cache_.find(process.pid);
-
             if(cached == cache_.end() || cached->executablePath != process.executablePath)
             {
                 CacheEntry entry;
                 entry.executablePath = process.executablePath;
-
-                entry.steamAppId = ProcessHelpers::readSteamAppId(process.pid);
-
+                entry.steamAppId = steamAppIdReader_ ? steamAppIdReader_(process.pid) : std::nullopt;
                 cached = cache_.insert(process.pid, std::move(entry));
             }
 

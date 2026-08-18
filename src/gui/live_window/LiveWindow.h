@@ -8,9 +8,11 @@
 #include <QMainWindow>
 #include <QTime>
 
-class QTimer;
-
 #include "application/GameLogRuntime.h"
+#include "core/domain/Game.h"
+#include "core/domain/Session.h"
+
+class QTimer;
 
 QT_BEGIN_NAMESPACE
 
@@ -33,28 +35,29 @@ namespace gamelog::gui
         ~LiveWindow() override;
 
     private
-        slots  :
+        slots :
         /**
-         * Connected to the GameLogRuntime::sessionStarted signal. Updates the UI to reflect the new session.
+         * Connected to SessionService::sessionStarted. Updates the UI to reflect the new session.
          * @param game The Game struct that was started.
          */
-        void onSessionStarted(const Game& game);
+        void onSessionStarted(const core::domain::Game& game);
 
         /**
-         * Connected to the GameLogRuntime::sessionFinished signal. Updates the UI to reflect the completed session.
-         * @param completedSession The Session struct that was completed.
+         * Connected to SessionService::sessionStopped. The Session is received by
+         * value so this slot may add notes to its own copy and explicitly persist them.
+         * @param completedSession The Session struct that was completed or interrupted.
          */
-        void onSessionFinished(Session& completedSession);
+        void onSessionFinished(core::domain::Session completedSession);
 
         /**
-         * Connected to the GameLogRuntime::sessionUpdated signal. Updates the UI to reflect the updated session.
+         * Updates the visible elapsed-session timer.
          */
         void updateTimerText();
 
     private:
         Ui::LiveWindow* ui{};
         application::GameLogRuntime& gameLogRuntime;
-        QTimer* clockTimer;
+        QTimer* clockTimer{};
         QTime currentTime;
     };
 } // namespace gamelog::gui

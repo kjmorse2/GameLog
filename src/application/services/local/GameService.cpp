@@ -1,11 +1,11 @@
 #include "GameService.h"
 
-#include <QJsonObject>
-#include <utility>
-#include <application/services/web/SteamApiService.h>
-
-#include "../web/GameArtworkService.h"
+#include "application/services/web/SteamApiService.h"
 #include "logging/LoggingCategories.h"
+
+#include <utility>
+
+#include <QJsonObject>
 
 namespace gamelog::application::services
 {
@@ -18,9 +18,9 @@ namespace gamelog::application::services
         }
     } // namespace
 
-    GameService::GameService(core::database::GameRepository& repository, SteamApiService& steamApiService) :
-        repository_{repository},
-        steamApiService_{steamApiService}
+    GameService::GameService(core::database::GameRepository& repository, SteamApiService& steamApiService)
+        : repository_{repository},
+          steamApiService_{steamApiService}
     {
         connect(&steamApiService_, &SteamApiService::ownedGamesReceived, this, &GameService::onSteamGamesReceived);
         qCInfo(gamelogRuntimeLog) << "Starting game service";
@@ -48,7 +48,7 @@ namespace gamelog::application::services
 
     std::optional<Game> GameService::findById(std::int64_t id) const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning game with id: " << id;
+        qCDebug(gamelogRuntimeLog) << "Returning game with id:" << id;
         GameQuery query;
         query.ids = {id};
         query.limit = 1;
@@ -57,7 +57,7 @@ namespace gamelog::application::services
 
     std::optional<Game> GameService::findByExecutableName(const QString& name) const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning game with name: " << name;
+        qCDebug(gamelogRuntimeLog) << "Returning game with name:" << name;
         GameQuery query;
         query.executableName = name;
         query.limit = 1;
@@ -66,7 +66,7 @@ namespace gamelog::application::services
 
     std::optional<Game> GameService::findByExecutablePath(const QString& path) const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning game with executable path: " << path;
+        qCDebug(gamelogRuntimeLog) << "Returning game with executable path:" << path;
         GameQuery query;
         query.executablePath = path;
         query.limit = 1;
@@ -75,7 +75,7 @@ namespace gamelog::application::services
 
     bool GameService::addGame(Game& game)
     {
-        qCDebug(gamelogRuntimeLog) << "Adding game: " << game;
+        qCDebug(gamelogRuntimeLog) << "Adding game:" << game;
         if(!repository_.insert(game)) { return false; }
 
         syncGamesWithDatabase();
@@ -85,16 +85,17 @@ namespace gamelog::application::services
 
     bool GameService::updateGame(const Game& game)
     {
-        qCDebug(gamelogRuntimeLog) << "Updating game " << game;
+        qCDebug(gamelogRuntimeLog) << "Updating game" << game;
         if(!repository_.update(game)) { return false; }
 
         syncGamesWithDatabase();
+        emit gameUpdated(game);
         return true;
     }
 
     bool GameService::removeGame(std::int64_t id)
     {
-        qCDebug(gamelogRuntimeLog) << "Removing game with id: " << id;
+        qCDebug(gamelogRuntimeLog) << "Removing game with id:" << id;
         if(!repository_.remove(id)) { return false; }
 
         syncGamesWithDatabase();
@@ -113,7 +114,13 @@ namespace gamelog::application::services
             {
                 trackedSteamGames_.insert(static_cast<std::uint32_t>(*game.steamAppId), game);
             }
-            if(!game.executablePath.isEmpty()) { trackedPathGames_.insert(game.executablePath, game); }
+            if(!game.executablePath.isEmpty())
+            {
+                // Executable paths are not yet unique in persistence. Preserve
+                // the existing QHash replacement behavior until that schema
+                // contract is deliberately changed.
+                trackedPathGames_.insert(game.executablePath, game);
+            }
         }
 
         qCInfo(gamelogRuntimeLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.
@@ -141,11 +148,11 @@ namespace gamelog::application::services
     bool GameService::setHasArtwork(int gameId, bool hasArtwork)
     {
         auto game = findById(gameId);
-
         if(!game) { return false; }
 
-        game->hasArtwork = hasArtwork;
+        if(game->hasArtwork == hasArtwork) { return true; }
 
+        game->hasArtwork = hasArtwork;
         return updateGame(*game);
     }
 
@@ -160,26 +167,25 @@ namespace gamelog::application::services
             if(!value.isObject()) { continue; }
 
             const QJsonObject object = value.toObject();
-
             const int appId = object.value(QStringLiteral("appid")).toInt();
-
             const QString title = object.value(QStringLiteral("name")).toString();
 
-            if(appId <= 0 || title.isEmpty()) { continue; }
+            if(appId <= 0 || title.trimmed().isEmpty()) { continue; }
+
+            GameQuery existingQuery;
+            existingQuery.steamAppId = appId;
+            existingQuery.limit = 1;
+
+            // Synchronization never updates, re-enables, retitles, or duplicates
+            // an App ID that already exists anywhere in the database.
+            if(!search(existingQuery).empty()) { continue; }
 
             Game game;
-
             game.title = title;
             game.steamAppId = appId;
 
-            if(!trackedSteamGames_.contains(appId))
-            {
-                qCDebug(gamelogRuntimeLog) << "Adding game with steam id: " << appId;
-                if(bool success = addGame(game); !success)
-                {
-                    qCWarning(gamelogRuntimeLog) << "Failed to add game with steam id: " << appId;
-                }
-            }
+            qCDebug(gamelogRuntimeLog) << "Adding game with Steam ID:" << appId;
+            if(!addGame(game)) { qCWarning(gamelogRuntimeLog) << "Failed to add game with Steam ID:" << appId; }
         }
     }
 } // namespace gamelog::application::services

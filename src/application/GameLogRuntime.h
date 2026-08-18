@@ -1,8 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <optional>
+
+#include <QObject>
 
 #include "database/DatabaseManager.h"
 #include "database/GameRepository.h"
@@ -10,9 +13,9 @@
 #include "process/SteamProcessInspector.h"
 #include "services/local/CredentialService.h"
 #include "services/local/GameService.h"
+#include "services/local/SessionService.h"
 #include "services/web/GameArtworkService.h"
 #include "services/web/SteamApiService.h"
-#include "services/local/SessionService.h"
 
 namespace gamelog::core::process
 {
@@ -24,27 +27,42 @@ namespace gamelog::application
     /**
      * Owns the long-lived resources used by both headless and GUI launch modes.
      * Application operations flow through GameService and SessionService.
+     *
+     * The fixed database connection name intentionally permits one live runtime
+     * per process. A runtime instance may nevertheless be started again after
+     * stop() has completed.
      */
     class GameLogRuntime : public QObject
     {
         Q_OBJECT
 
     public:
+        using ProcessSourceFactory = std::function<std::unique_ptr<core::process::ProcessSource>()>;
+
         explicit GameLogRuntime(QString databasePath);
+
+        /**
+         * Creates a runtime with deterministic process dependencies for tests.
+         * Production callers use the single-argument constructor.
+         * @param databasePath SQLite database path.
+         * @param processSourceFactory Factory used on every successful start attempt.
+         * @param steamAppIdReader Reader used by SteamProcessInspector.
+         */
+        GameLogRuntime(QString databasePath,
+                       ProcessSourceFactory processSourceFactory,
+                       core::process::SteamProcessInspector::SteamAppIdReader steamAppIdReader);
 
         ~GameLogRuntime() override;
 
         GameLogRuntime(const GameLogRuntime&) = delete;
-
         GameLogRuntime& operator=(const GameLogRuntime&) = delete;
-
         GameLogRuntime(GameLogRuntime&&) = delete;
-
         GameLogRuntime& operator=(GameLogRuntime&&) = delete;
 
         /**
-         * Starts process monitoring and restores service state.
-         * @return true if the runtime started successfully, false otherwise.
+         * Starts process monitoring and restores service state. Starting an
+         * already-running instance is rejected; starting again after stop() is supported.
+         * @return True if the runtime started successfully.
          */
         [[nodiscard]] bool start();
 
@@ -55,103 +73,93 @@ namespace gamelog::application
 
         /**
          * Polls the process source and delegates session tracking to SessionService.
-         * @param elapsed The time that has elapsed since the last update.
+         * @param elapsed The time elapsed since the prior update.
          */
         void update(std::chrono::seconds elapsed);
 
         /**
          * Returns the owned game service, or nullptr if database initialization failed.
-         * @return The GameService instance, or nullptr if the database is not ready.
          */
         [[nodiscard]] services::GameService* getGameService() noexcept;
 
         /**
          * Returns the owned session service, or nullptr if database initialization failed.
-         * @return The SessionService instance, or nullptr if the database is not ready.
          */
         [[nodiscard]] services::SessionService* getSessionService() noexcept;
 
         /**
          * Returns the owned artwork service, or nullptr if database initialization failed.
-         * @return The GameArtworkService instance, or nullptr if the database is not ready.
          */
         [[nodiscard]] services::GameArtworkService* getArtworkService() noexcept;
 
         /**
          * Returns the owned credential service, or nullptr if database initialization failed.
-         * @return The CredentialService instance, or nullptr if the database is not ready.
          */
         [[nodiscard]] services::CredentialService* getCredentialService() noexcept;
 
     private:
         /**
-         * @brief Manages the retrieval of sensitive credentials, such as the Steam API key and player ID,
-         * which are required for certain operations. This service is optional and only initialized if the database is ready.
-         */
-        std::optional<services::CredentialService> credentialService_;
-
-        /**
-         * Depends on the CredentialService for Steam API operations and the GameRepository for game data.
-         */
-        std::optional<services::SteamApiService> steamApiService_;
-
-        /**
-         * @brief The DatabaseManager instance responsible for managing the database connection and schema, initialized
-         * before repos to ensure dependencies are available for the repositories and services that follow.
+         * @brief Owns the SQLite connection and applies schema migrations before dependent objects are created.
          */
         core::database::DatabaseManager databaseManager_;
 
         /**
-         * @brief The GameRepository instance responsible for managing game data in the database.
-         * This repository is optional and only initialized if the database is ready.
+         * @brief Repository responsible for persisted game data.
          */
         std::optional<core::database::GameRepository> gameRepository_;
 
         /**
-         * @brief The SessionRepository instance responsible for managing session data in the database.j
+         * @brief Repository responsible for persisted session and note data.
          */
         std::optional<core::database::SessionRepository> sessionRepository_;
 
         /**
-         * @brief The GameService instance responsible for application-facing game operations,
-         * including querying and managing games. Dependent on the GameRepository and SteamApiService,
-         * this service is optional and only initialized if the database is ready.
+         * @brief Service responsible for retrieving sensitive credentials.
+         */
+        std::optional<services::CredentialService> credentialService_;
+
+        /**
+         * @brief Service responsible for Steam Web API requests.
+         */
+        std::optional<services::SteamApiService> steamApiService_;
+
+        /**
+         * @brief Application-facing game operations and process indexes.
          */
         std::optional<services::GameService> gameService_;
 
         /**
-         * @brief The SessionService instance responsible for managing game sessions, including tracking and updating session data.
-         * Dependent on the SessionRepository and GameService, this service is optional and only initialized
+         * @brief Application-facing session operations and lifecycle state.
          */
         std::optional<services::SessionService> sessionService_;
 
         /**
-         * @brief The GameArtworkService instance responsible for managing game artwork, including downloading and storing artwork.
+         * @brief Service responsible for local and downloaded game artwork.
          */
         std::optional<services::GameArtworkService> gameArtworkService_;
 
         /**
-         * @brief The ProcessSource instance responsible for providing a list of currently running processes on the system.
+         * @brief Factory used to recreate the process source on each start.
+         */
+        ProcessSourceFactory processSourceFactory_;
+
+        /**
+         * @brief Current process source while the runtime is running.
          */
         std::unique_ptr<core::process::ProcessSource> processSource_;
 
         /**
-         * @brief The SteamProcessInspector instance responsible for annotating processes with Steam-related information,
-         * such as identifying which processes correspond to tracked Steam games. This inspector is used during the
-         * update() method to enhance the process list with Steam-specific data.
+         * @brief Adds cached Steam environment identity to process snapshots.
          */
         core::process::SteamProcessInspector steamProcessInspector_;
 
         /**
-         * @brief Indicates whether the GameLogRuntime is currently running. This flag is used to prevent multiple
-         * starts and to ensure that update() is only called when the runtime is active.
+         * @brief True while process polling is active.
          */
         bool running_{false};
 
         /**
-         * @brief Indicates whether the database and all required services are ready for use. This flag is set to true
-         * after successful initialization of the DatabaseManager, GameRepository, SessionRepository, and all dependent
-         * services. If the database is not ready, the runtime will not start, and service accessors will return nullptr.
+         * @brief True when the database and all required services were initialized.
          */
         bool databaseReady_{false};
     };

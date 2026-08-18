@@ -24,44 +24,30 @@ namespace
         Headless, Gui, Live
     };
 
-    std::map<const char*, RunMode> RunModeMap{
-        {"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}
-    };
-
     /**
- * @brief Determine the run mode based on the command-line arguments.
- * @param argc of main.
- * @param argv of main.
- * @return enum RunMode of the options above.
- */
+     * @brief Determine the run mode based on the command-line arguments.
+     *
+     * Exactly one recognized run-mode argument is required. Duplicate run-mode
+     * arguments and unrecognized arguments are rejected.
+     * @param argc of main.
+     * @param argv of main.
+     * @return enum RunMode of the options above, or std::nullopt for invalid arguments.
+     */
     std::optional<RunMode> determineRunMode(int argc, char* argv[])
     {
-        std::vector<const char*> runModesArguments;
-        // Extract keys using a loop
-        for(const auto& key : RunModeMap | std::views::keys) { runModesArguments.push_back(key); }
+        if(argc != 2 || argv == nullptr || argv[1] == nullptr) { return std::nullopt; }
 
-        std::optional<RunMode> foundRunMode = std::nullopt;
-        int numOfModes = 0;
+        if(std::strcmp(argv[1], "--headless") == 0) { return RunMode::Headless; }
+        if(std::strcmp(argv[1], "--gui") == 0) { return RunMode::Gui; }
+        if(std::strcmp(argv[1], "--live") == 0) { return RunMode::Live; }
 
-        for(auto runMode : runModesArguments)
-        {
-            for(int index = 1; index < argc; ++index)
-            {
-                if(std::strcmp(argv[index], runMode) == 0)
-                {
-                    numOfModes++;
-                    foundRunMode = RunModeMap.at(runMode);
-                }
-            }
-        }
-        if(numOfModes == 1) { return foundRunMode; }
         return std::nullopt;
     }
 
     /**
- * @brief Get the path to the GameLog runtime lock file.
- * @return The path to the lock file, or an empty string if it cannot be determined.
- */
+     * @brief Get the path to the GameLog runtime lock file.
+     * @return The path to the lock file, or an empty string if it cannot be determined.
+     */
     QString runtimeLockPath()
     {
         QString runtimeDirectory = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
@@ -85,7 +71,7 @@ int main(int argc, char* argv[])
 
     if(!mode)
     {
-        qCritical("Use either --headless or --gui, not both.");
+        qCritical("Specify exactly one of --headless, --gui, or --live and no other arguments.");
         return EXIT_FAILURE;
     }
 
@@ -146,7 +132,7 @@ int main(int argc, char* argv[])
         mainWindow = std::make_unique<gamelog::gui::MainWindow>(runtime);
         mainWindow->show();
     }
-    if(*mode == RunMode::Live)
+    else if(*mode == RunMode::Live)
     {
         mainWindow = std::make_unique<gamelog::gui::LiveWindow>(runtime);
         mainWindow->show();

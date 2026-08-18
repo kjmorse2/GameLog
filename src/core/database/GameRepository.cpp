@@ -30,8 +30,7 @@ namespace gamelog::core::database
             const QVariant steamAppId = query.value(QStringLiteral("steam_app_id"));
             if(!steamAppId.isNull()) { game.steamAppId = steamAppId.toInt(); }
 
-            const QVariant hasArtwork = query.value(QStringLiteral("has_artwork"));
-
+            game.hasArtwork = query.value(QStringLiteral("has_artwork")).toBool();
             game.trackingEnabled = query.value(QStringLiteral("tracking_enabled")).toBool();
             return game;
         }
@@ -41,9 +40,30 @@ namespace gamelog::core::database
             query.bindValue(placeholder, value ? QVariant{*value} : QVariant{});
         }
 
-        void bindNullableString(QSqlQuery& query, const QString& placeholder, const std::optional<QString>& value)
+        bool validateGame(const Game& game, bool inserting)
         {
-            query.bindValue(placeholder, value ? QVariant{*value} : QVariant{});
+            if((inserting && game.id != 0) || (!inserting && game.id <= 0))
+            {
+                qCWarning(gamelogDatabaseLog) << (inserting
+                                                      ? "Refusing to insert a game with a preassigned ID:"
+                                                      : "Refusing to update a game without a valid ID:") << game.id;
+                return false;
+            }
+
+            if(game.title.trimmed().isEmpty())
+            {
+                qCWarning(gamelogDatabaseLog) << "Refusing to persist a game with an empty or whitespace-only title.";
+                return false;
+            }
+
+            if(game.steamAppId && *game.steamAppId <= 0)
+            {
+                qCWarning(gamelogDatabaseLog) << "Refusing to persist a game with a non-positive Steam App ID:" << *game
+                                            .steamAppId;
+                return false;
+            }
+
+            return true;
         }
 
         QString orderColumn(GameSortField field)
@@ -90,8 +110,9 @@ namespace gamelog::core::database
         QList<QPair<QString, QVariant>> bindings;
         appendIdPredicate(specification.ids, predicates, bindings);
 
-        const auto addEquality = [&predicates, &bindings
-            ](const QString& column, const QString& placeholder, const QVariant& value)
+        const auto addEquality = [&predicates, &bindings](const QString& column,
+                                                          const QString& placeholder,
+                                                          const QVariant& value)
         {
             predicates.push_back(column + QStringLiteral(" = ") + placeholder);
             bindings.push_back({placeholder, value});
@@ -171,11 +192,17 @@ namespace gamelog::core::database
 
     bool GameRepository::insert(domain::Game& game)
     {
+        if(!validateGame(game, true)) { return false; }
+
         QSqlQuery query{database_};
-        query.prepare(QStringLiteral("INSERT INTO games "
-                                     "(title, executable_path, executable_name, steam_app_id, has_artwork, "
-                                     "tracking_enabled) VALUES (:title, :executable_path, :executable_name, "
-                                     ":steam_app_id, :has_artwork, :tracking_enabled)"));
+        if(!query.prepare(QStringLiteral("INSERT INTO games "
+                                         "(title, executable_path, executable_name, steam_app_id, has_artwork, "
+                                         "tracking_enabled) VALUES (:title, :executable_path, :executable_name, "
+                                         ":steam_app_id, :has_artwork, :tracking_enabled)")))
+        {
+            qCWarning(gamelogDatabaseLog) << "Failed to prepare game insert:" << query.lastError().text();
+            return false;
+        }
 
         query.bindValue(QStringLiteral(":title"), game.title);
         query.bindValue(QStringLiteral(":executable_path"), game.executablePath);
@@ -190,21 +217,31 @@ namespace gamelog::core::database
             return false;
         }
 
-        game.id = query.lastInsertId().toInt();
+        const QVariant insertedId = query.lastInsertId();
+        if(!insertedId.isValid() || insertedId.toLongLong() <= 0)
+        {
+            qCWarning(gamelogDatabaseLog) << "Game insert returned no valid primary key.";
+            return false;
+        }
+
+        game.id = insertedId.toInt();
         return true;
     }
 
     bool GameRepository::update(const domain::Game& game)
     {
+        if(!validateGame(game, false)) { return false; }
+
         QSqlQuery query{database_};
-        if(!query.prepare(QStringLiteral("UPDATE games " "SET title = :title, " "executable_path = :executable_path, "
+        if(!query.prepare(QStringLiteral("UPDATE games SET " "title = :title, " "executable_path = :executable_path, "
                                          "executable_name = :executable_name, " "steam_app_id = :steam_app_id, "
-                                         "has_artwork= :has_artwork, " "tracking_enabled = :tracking_enabled "
+                                         "has_artwork = :has_artwork, " "tracking_enabled = :tracking_enabled "
                                          "WHERE id = :game_id")))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to prepare game update:" << query.lastError().text();
             return false;
         }
+
         query.bindValue(QStringLiteral(":title"), game.title);
         query.bindValue(QStringLiteral(":executable_path"), game.executablePath);
         query.bindValue(QStringLiteral(":executable_name"), game.executableName);
@@ -213,21 +250,19 @@ namespace gamelog::core::database
         query.bindValue(QStringLiteral(":tracking_enabled"), game.trackingEnabled);
         query.bindValue(QStringLiteral(":game_id"), game.id);
 
-        qDebug() << "SQL:" << query.lastQuery();
-        qDebug() << "Bound value count:" << query.boundValues().size();
-        qDebug() << "Bound values:" << query.boundValues();
-
         if(!query.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to update game:" << query.lastError().text();
             return false;
         }
 
-        return true;
+        return query.numRowsAffected() == 1;
     }
 
     bool GameRepository::remove(std::int64_t id)
     {
+        if(id <= 0) { return false; }
+
         QSqlQuery query{database_};
         query.prepare(QStringLiteral("DELETE FROM games WHERE id = :id"));
         query.bindValue(QStringLiteral(":id"), QVariant::fromValue<qlonglong>(id));
@@ -238,6 +273,6 @@ namespace gamelog::core::database
             return false;
         }
 
-        return true;
+        return query.numRowsAffected() == 1;
     }
 } // namespace gamelog::core::database

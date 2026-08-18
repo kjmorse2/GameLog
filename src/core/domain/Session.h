@@ -5,6 +5,7 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QMetaType>
 
 namespace gamelog::core::domain
 {
@@ -19,18 +20,24 @@ namespace gamelog::core::domain
     };
 
     QDebug operator<<(QDebug debug, SessionSource source);
-
     QDebug operator<<(QDebug debug, SessionStatus status);
 
     /**
-     * @brief Converts a string to a SessionSource enum.
+     * @brief Converts an exact supported string to a SessionSource enum.
+     *
+     * Only "automatic"/"Automatic" and "manual"/"Manual" are accepted.
+     * Input is not trimmed or made generally case-insensitive; invalid values
+     * throw std::invalid_argument.
      * @param sourceString the string to convert.
      * @return the corresponding SessionSource enum.
      */
     SessionSource sessionSourceFromString(const QString& sourceString);
 
     /**
-     * @brief Converts a string to a SessionStatus enum.
+     * @brief Converts an exact supported string to a SessionStatus enum.
+     *
+     * Only lowercase and leading-capital forms of active, completed, and
+     * interrupted are accepted. Invalid values throw std::invalid_argument.
      * @param statusString the string to convert.
      * @return the corresponding SessionStatus enum.
      */
@@ -38,6 +45,10 @@ namespace gamelog::core::domain
 
     /**
      * @brief Represents one tracked play session.
+     *
+     * Persistence requires a valid start timestamp and a nonnegative tracked
+     * duration. Active sessions have no end timestamp. Completed and interrupted
+     * sessions have a valid end timestamp that is not earlier than their start.
      */
     struct Session
     {
@@ -50,27 +61,28 @@ namespace gamelog::core::domain
         QDateTime startTimestamp;
 
         /**
-         * @brief UTC end time; absent while the session is active.
+         * @brief UTC end time; absent while active and required once inactive.
          */
         std::optional<QDateTime> endTimestamp;
 
         /**
-         * @brief Duration of the session that has been tracked so far. Lifecycle code updates this value while the session is active.
+         * @brief Nonnegative tracked duration. Automatic completion replaces it
+         * with the wall-clock difference between start and end.
          */
         std::chrono::seconds trackedDuration{0};
 
         /**
-         * @brief Source of the session, either automatic or manual. Lifecycle code sets this value when the session is created.
+         * @brief Source of the session, either automatic or manual.
          */
         SessionSource source{SessionSource::Automatic};
 
         /**
-         * @brief Status of the session, either active, completed, or interrupted. Lifecycle code updates this value when the session is completed or interrupted.
+         * @brief Status of the session: active, completed, or interrupted.
          */
         SessionStatus status{SessionStatus::Active};
 
         /**
-         * @brief Optional notes about the session. Lifecycle code may set this value when the session is completed or interrupted.
+         * @brief Notes persisted in the corresponding session_documents row.
          */
         QString notes{QStringLiteral("")};
     };
@@ -83,3 +95,5 @@ namespace gamelog::core::domain
      */
     QDebug operator<<(QDebug debug, const Session& session);
 } // namespace gamelog::core::domain
+
+Q_DECLARE_METATYPE(gamelog::core::domain::Session)

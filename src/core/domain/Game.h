@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QDebug>
 #include <QString>
 
 namespace gamelog::core::domain
@@ -40,7 +41,10 @@ namespace gamelog::core::domain
         std::optional<int> steamAppId;
 
         /**
-         * @brief Optional local artwork file path.
+         * @brief True when a valid local cover.jpg is available for this game.
+         *
+         * The flag is persisted as a non-null boolean. Header and logo files do
+         * not currently affect this value.
          */
         bool hasArtwork{false};
 

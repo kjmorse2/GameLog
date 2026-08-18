@@ -13,14 +13,18 @@
 using gamelog::application::services::GameService;
 using gamelog::application::services::SessionService;
 
-QT_BEGIN_NAMESPACE namespace Ui
+QT_BEGIN_NAMESPACE
+
+namespace Ui
 {
     class CalendarView;
 }
 
 QT_END_NAMESPACE class CalendarView : public QWidget
 {
-    Q_OBJECT public:
+    Q_OBJECT
+
+public:
     /**
      * Creates a new CalendarView.
      * @param parent The parent widget.
@@ -54,7 +58,8 @@ private:
      */
     QCalendarWidget* calendar_;
 
-private slots :
+private
+    slots  :
     /**
      * Called when the calendar page is changed.
      * @param year The year the calendar is on

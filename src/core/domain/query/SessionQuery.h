@@ -58,12 +58,12 @@ namespace gamelog::core::domain::query
         std::vector<SessionStatus> statuses;
 
         /**
-        * The earliest start time of the sessions to select
+        * The inclusive lower bound for session start timestamps.
         */
         std::optional<QDateTime> startedAtOrAfter;
 
         /**
-        * The latest start time of the sessions to select
+        * The exclusive upper bound for session start timestamps.
         */
         std::optional<QDateTime> startedBefore;
 
