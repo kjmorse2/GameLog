@@ -23,13 +23,12 @@ using gamelog::core::domain::SessionStatus;
 
 namespace
 {
-    class SessionServiceTest:public QObject
+    class SessionServiceTest : public QObject
     {
         Q_OBJECT
 
     private
-        slots:
-
+        slots  :
         void init();
 
         void cleanup();
@@ -72,7 +71,9 @@ namespace
 
 void SessionServiceTest::init()
 {
-    databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(QString{"session-repository-%1"}.arg(QTest::currentTestFunction()));
+    databasePath_ =
+        gamelog::tests::fixtures::createFreshTestDatabasePath(QString{"session-repository-%1"}.
+                                                              arg(QTest::currentTestFunction()));
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("session-repository");
 
     manager_ = std::make_unique<DatabaseManager>(databasePath_, connectionName);
@@ -238,16 +239,12 @@ void SessionServiceTest::removeSession_deletesExistingRow()
     QVERIFY(sessions.empty());
 }
 
-void SessionServiceTest::removeSession_returnsFalseForMissingRow()
-{
-    QVERIFY(!service_->removeSession(999999));
-}
+void SessionServiceTest::removeSession_returnsFalseForMissingRow() { QVERIFY(!service_->removeSession(999999)); }
 
 int SessionServiceTest::addSessionGame(const QString& title) const
 {
     QSqlQuery query{manager_->database()};
-    query.prepare(
-                  R"(
+    query.prepare(R"(
                 INSERT INTO games
                 (
                     title,
@@ -262,16 +259,12 @@ int SessionServiceTest::addSessionGame(const QString& title) const
                     :executable_name,
                     1
                 )
-            )"
-                 );
+            )");
     query.bindValue(":title", title);
     query.bindValue(":executable_path", "/games/" + title.toLower());
     query.bindValue(":executable_name", title.toLower() + ".bin");
 
-    if(!query.exec())
-    {
-        return 0;
-    }
+    if(!query.exec()) { return 0; }
 
     return query.lastInsertId().toInt();
 }

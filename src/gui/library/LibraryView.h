@@ -26,7 +26,7 @@ namespace Ui
 
 QT_END_NAMESPACE
 
-class LibraryView:public QWidget
+class LibraryView : public QWidget
 {
     Q_OBJECT
 
@@ -41,14 +41,10 @@ public:
     ~LibraryView() override;
 
 public
-    slots:
+    slots  :
     /**
      * Displays all games in the library.
      */
-
-
-
-
     void displayAllGames();
 
 private:

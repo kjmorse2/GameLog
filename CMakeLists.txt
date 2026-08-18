@@ -72,4 +72,4 @@ if (GAMELOG_ENABLE_INSTALL)
             FILES ${CMAKE_CURRENT_BINARY_DIR}/gamelog.desktop
             DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
     )
-endif()
+endif ()

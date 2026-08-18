@@ -2,15 +2,14 @@
 Language: Cpp
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
-AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: true
 AlignTrailingComments: false
-AllowShortBlocksOnASingleLine: false
-AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: false
+AlwaysBreakTemplateDeclarations: No
 BinPackArguments: false
 BinPackParameters: false
 BraceWrapping:
@@ -25,19 +24,17 @@ BraceWrapping:
   AfterExternBlock: true
   BeforeCatch: true
   BeforeElse: true
-  BeforeLambdaBody: false
+  BeforeLambdaBody: true
   BeforeWhile: true
   IndentBraces: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
-BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
-ColumnLimit: 180
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
-ContinuationIndentWidth: 8
+ColumnLimit: 120
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IncludeCategories:
   - Regex: '^<.*'
     Priority: 1
@@ -46,17 +43,15 @@ IncludeCategories:
   - Regex: '.*'
     Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
-IndentCaseLabels: true
 IndentWidth: 4
 InsertNewlineAtEOF: true
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
-ReflowComments: Never
 NamespaceIndentation: All
-SpaceAfterCStyleCast: true
-SpaceAfterTemplateKeyword: false
-SpaceBeforeRangeBasedForLoopColon: false
+PointerAlignment: Left
+ReflowComments: Never
+SpaceBeforeParens: Never
 SpaceInEmptyParentheses: false
 SpacesInAngles: false
 SpacesInConditionalStatement: false

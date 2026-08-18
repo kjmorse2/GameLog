@@ -14,8 +14,8 @@
 #include <QTextList>
 #include <QToolButton>
 
-TextEditor::TextEditor(QWidget* parent): QWidget{parent},
-                                         ui{new Ui::TextEditor}
+TextEditor::TextEditor(QWidget* parent) : QWidget{parent},
+                                          ui{new Ui::TextEditor}
 {
     ui->setupUi(this);
 
@@ -31,57 +31,27 @@ TextEditor::TextEditor(QWidget* parent): QWidget{parent},
 
     connect(ui->bulletListButton, &QToolButton::clicked, this, &TextEditor::toggleBulletList);
 
-    connect(
-            ui->zoomOutButton,
-            &QToolButton::clicked,
-            this,
-            [this]
-            {
-                ui->textEdit->zoomOut(1);
-            }
-           );
+    connect(ui->zoomOutButton, &QToolButton::clicked, this, [this] { ui->textEdit->zoomOut(1); });
 
-    connect(
-            ui->zoomInButton,
-            &QToolButton::clicked,
-            this,
-            [this]
-            {
-                ui->textEdit->zoomIn(1);
-            }
-           );
+    connect(ui->zoomInButton, &QToolButton::clicked, this, [this] { ui->textEdit->zoomIn(1); });
 
     connect(ui->textEdit, &QTextEdit::cursorPositionChanged, this, &TextEditor::updateToolbarState);
 
-    connect(
-            ui->textEdit,
+    connect(ui->textEdit,
             &QTextEdit::currentCharFormatChanged,
             this,
-            [this](const QTextCharFormat&)
-            {
-                updateToolbarState();
-            }
-           );
+            [this](const QTextCharFormat&) { updateToolbarState(); });
 
     updateToolbarState();
 
     setAbleToEdit(false);
 }
 
-QString TextEditor::getMarkdown()
-{
-    return ui->textEdit->toMarkdown();
-}
+QString TextEditor::getMarkdown() { return ui->textEdit->toMarkdown(); }
 
-TextEditor::~TextEditor()
-{
-    delete ui;
-}
+TextEditor::~TextEditor() { delete ui; }
 
-void TextEditor::setAbleToEdit(bool enabled)
-{
-    ui->textEdit->setDisabled(!enabled);
-}
+void TextEditor::setAbleToEdit(bool enabled) { ui->textEdit->setDisabled(!enabled); }
 
 void TextEditor::applyHeading(int index)
 {
@@ -159,17 +129,16 @@ void TextEditor::addLink()
         }
     }
 
-    if(initialValue.isEmpty())
-    {
-        initialValue = QStringLiteral("https://");
-    }
+    if(initialValue.isEmpty()) { initialValue = QStringLiteral("https://"); }
 
-    const QString url = QInputDialog::getText(this, tr("Insert Link"), tr("URL:"), QLineEdit::Normal, initialValue, &accepted);
+    const QString url = QInputDialog::getText(this,
+                                              tr("Insert Link"),
+                                              tr("URL:"),
+                                              QLineEdit::Normal,
+                                              initialValue,
+                                              &accepted);
 
-    if(!accepted || url.trimmed().isEmpty())
-    {
-        return;
-    }
+    if(!accepted || url.trimmed().isEmpty()) { return; }
 
     QTextCharFormat format;
     format.setAnchor(true);
@@ -242,10 +211,7 @@ void TextEditor::updateToolbarState()
         // 3 = H3
         ui->headingComboBox->setCurrentIndex(headingLevel);
     }
-    else
-    {
-        ui->headingComboBox->setCurrentIndex(0);
-    }
+    else { ui->headingComboBox->setCurrentIndex(0); }
 }
 
 
@@ -261,23 +227,20 @@ qreal TextEditor::headingFontSize(int level) const
 
     // Some fonts may not have a valid point size, e.g. if they
     // are specified in pixels. Give ourselves a sane fallback.
-    if(baseSize <= 0.0)
-    {
-        baseSize = 11.0;
-    }
+    if(baseSize <= 0.0) { baseSize = 11.0; }
 
     switch(level)
     {
-        case 1 :
-            return baseSize * 1.8;
+    case 1:
+        return baseSize * 1.8;
 
-        case 2 :
-            return baseSize * 1.5;
+    case 2:
+        return baseSize * 1.5;
 
-        case 3 :
-            return baseSize * 1.25;
+    case 3:
+        return baseSize * 1.25;
 
-        default :
-            return baseSize;
+    default:
+        return baseSize;
     }
 }

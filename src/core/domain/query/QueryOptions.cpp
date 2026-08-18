@@ -8,10 +8,10 @@ namespace
     {
         switch(direction)
         {
-            case gamelog::core::domain::query::SortDirection::Ascending :
-                return QStringLiteral("Ascending");
-            case gamelog::core::domain::query::SortDirection::Descending :
-                return QStringLiteral("Descending");
+        case gamelog::core::domain::query::SortDirection::Ascending:
+            return QStringLiteral("Ascending");
+        case gamelog::core::domain::query::SortDirection::Descending:
+            return QStringLiteral("Descending");
         }
 
         return QStringLiteral("Unknown");

@@ -20,7 +20,7 @@ namespace Ui
 
 QT_END_NAMESPACE
 
-class GameCard:public QWidget
+class GameCard : public QWidget
 {
     Q_OBJECT
 
@@ -61,14 +61,9 @@ public:
 
 private:
     Ui::GameCard* ui;
-    inline static const gamelog::core::domain::Game emptyGameCard = {
-        .id = -1,
-        .title = QStringLiteral(""),
-        .executablePath = QStringLiteral(""),
-        .executableName = QStringLiteral(""),
-        .steamAppId = -1,
-        .hasArtwork = false,
-        .trackingEnabled = false
+    inline static const Game emptyGameCard = {
+        .id = -1, .title = QStringLiteral(""), .executablePath = QStringLiteral(""),
+        .executableName = QStringLiteral(""), .steamAppId = -1, .hasArtwork = false, .trackingEnabled = false
     };
 };
 

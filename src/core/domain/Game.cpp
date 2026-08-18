@@ -10,15 +10,10 @@ namespace gamelog::core::domain
     {
         QDebugStateSaver saver{debug};
 
-        debug.nospace() << "Game {"
-                << "id: " << game.id
-                << ", title: " << game.title
-                << ", executablePath: " << game.executablePath
-                << ", executableName: " << game.executableName
-                << ", steamAppId: " << (game.steamAppId.has_value() ? QString::number(*game.steamAppId) : "nullopt")
-                << ", hasArtwor: " << (game.hasArtwork)
-                << ", trackingEnabled: " << game.trackingEnabled
-                << "}";
+        debug.nospace() << "Game {" << "id: " << game.id << ", title: " << game.title << ", executablePath: " << game.
+            executablePath << ", executableName: " << game.executableName << ", steamAppId: " << (
+                game.steamAppId.has_value() ? QString::number(*game.steamAppId) : "nullopt") << ", hasArtwor: " << (game
+               .hasArtwork) << ", trackingEnabled: " << game.trackingEnabled << "}";
         return debug;
     }
 }

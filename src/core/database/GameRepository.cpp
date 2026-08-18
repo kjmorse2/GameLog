@@ -11,7 +11,9 @@
 #include <QStringList>
 #include <QVariant>
 
-namespace gamelog::core::database { namespace
+namespace gamelog::core::database
+{
+    namespace
     {
         using domain::query::GameQuery;
         using domain::query::GameSortField;
@@ -26,10 +28,7 @@ namespace gamelog::core::database { namespace
             game.executableName = query.value(QStringLiteral("executable_name")).toString();
 
             const QVariant steamAppId = query.value(QStringLiteral("steam_app_id"));
-            if(!steamAppId.isNull())
-            {
-                game.steamAppId = steamAppId.toInt();
-            }
+            if(!steamAppId.isNull()) { game.steamAppId = steamAppId.toInt(); }
 
             const QVariant hasArtwork = query.value(QStringLiteral("has_artwork"));
 
@@ -51,21 +50,20 @@ namespace gamelog::core::database { namespace
         {
             switch(field)
             {
-                case GameSortField::Title :
-                    return QStringLiteral("title COLLATE NOCASE");
-                case GameSortField::Id :
-                    return QStringLiteral("id");
+            case GameSortField::Title:
+                return QStringLiteral("title COLLATE NOCASE");
+            case GameSortField::Id:
+                return QStringLiteral("id");
             }
 
             return QStringLiteral("title COLLATE NOCASE");
         }
 
-        void appendIdPredicate(const std::vector<std::int64_t>& ids, QStringList& predicates, QList<QPair<QString, QVariant>>& bindings)
+        void appendIdPredicate(const std::vector<std::int64_t>& ids,
+                               QStringList& predicates,
+                               QList<QPair<QString, QVariant>>& bindings)
         {
-            if(ids.empty())
-            {
-                return;
-            }
+            if(ids.empty()) { return; }
 
             QStringList placeholders;
             placeholders.reserve(static_cast<qsizetype>(ids.size()));
@@ -81,20 +79,19 @@ namespace gamelog::core::database { namespace
         }
     } // namespace
 
-    GameRepository::GameRepository(const QSqlDatabase& database)
-        : database_{database}
-    {
-    }
+    GameRepository::GameRepository(const QSqlDatabase& database) : database_{database} {}
 
     std::vector<domain::Game> GameRepository::query(const GameQuery& specification) const
     {
-        QString sql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, " "has_artwork, tracking_enabled FROM games");
+        QString sql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, "
+                                     "has_artwork, tracking_enabled FROM games");
 
         QStringList predicates;
         QList<QPair<QString, QVariant>> bindings;
         appendIdPredicate(specification.ids, predicates, bindings);
 
-        const auto addEquality = [&predicates, &bindings](const QString& column, const QString& placeholder, const QVariant& value)
+        const auto addEquality = [&predicates, &bindings
+            ](const QString& column, const QString& placeholder, const QVariant& value)
         {
             predicates.push_back(column + QStringLiteral(" = ") + placeholder);
             bindings.push_back({placeholder, value});
@@ -107,12 +104,16 @@ namespace gamelog::core::database { namespace
 
         if(specification.executableName)
         {
-            addEquality(QStringLiteral("executable_name"), QStringLiteral(":executable_name"), *specification.executableName);
+            addEquality(QStringLiteral("executable_name"),
+                        QStringLiteral(":executable_name"),
+                        *specification.executableName);
         }
 
         if(specification.executablePath)
         {
-            addEquality(QStringLiteral("executable_path"), QStringLiteral(":executable_path"), *specification.executablePath);
+            addEquality(QStringLiteral("executable_path"),
+                        QStringLiteral(":executable_path"),
+                        *specification.executablePath);
         }
 
         if(specification.steamAppId)
@@ -122,16 +123,17 @@ namespace gamelog::core::database { namespace
 
         if(specification.trackingEnabled)
         {
-            addEquality(QStringLiteral("tracking_enabled"), QStringLiteral(":tracking_enabled"), *specification.trackingEnabled);
+            addEquality(QStringLiteral("tracking_enabled"),
+                        QStringLiteral(":tracking_enabled"),
+                        *specification.trackingEnabled);
         }
 
-        if(!predicates.isEmpty())
-        {
-            sql += QStringLiteral(" WHERE ") + predicates.join(QStringLiteral(" AND "));
-        }
+        if(!predicates.isEmpty()) { sql += QStringLiteral(" WHERE ") + predicates.join(QStringLiteral(" AND ")); }
 
         sql += QStringLiteral(" ORDER BY ") + orderColumn(specification.sortBy);
-        sql += specification.sortDirection == SortDirection::Ascending ? QStringLiteral(" ASC") : QStringLiteral(" DESC");
+        sql += specification.sortDirection == SortDirection::Ascending
+                   ? QStringLiteral(" ASC")
+                   : QStringLiteral(" DESC");
 
         if(specification.limit)
         {
@@ -142,10 +144,7 @@ namespace gamelog::core::database { namespace
         if(specification.offset)
         {
             // SQLite requires LIMIT when OFFSET is present. -1 means no upper limit.
-            if(!specification.limit)
-            {
-                sql += QStringLiteral(" LIMIT -1");
-            }
+            if(!specification.limit) { sql += QStringLiteral(" LIMIT -1"); }
             sql += QStringLiteral(" OFFSET :offset");
             bindings.push_back({QStringLiteral(":offset"), QVariant::fromValue<qulonglong>(*specification.offset)});
         }
@@ -157,10 +156,7 @@ namespace gamelog::core::database { namespace
             return {};
         }
 
-        for(const auto& [placeholder, value] : bindings)
-        {
-            sqlQuery.bindValue(placeholder, value);
-        }
+        for(const auto& [placeholder, value] : bindings) { sqlQuery.bindValue(placeholder, value); }
 
         if(!sqlQuery.exec())
         {
@@ -169,22 +165,17 @@ namespace gamelog::core::database { namespace
         }
 
         std::vector<domain::Game> games;
-        while(sqlQuery.next())
-        {
-            games.push_back(gameFromQuery(sqlQuery));
-        }
+        while(sqlQuery.next()) { games.push_back(gameFromQuery(sqlQuery)); }
         return games;
     }
 
     bool GameRepository::insert(domain::Game& game)
     {
         QSqlQuery query{database_};
-        query.prepare(
-                      QStringLiteral(
-                                     "INSERT INTO games " "(title, executable_path, executable_name, steam_app_id, has_artwork, "
-                                     "tracking_enabled) VALUES (:title, :executable_path, :executable_name, " ":steam_app_id, :has_artwork, :tracking_enabled)"
-                                    )
-                     );
+        query.prepare(QStringLiteral("INSERT INTO games "
+                                     "(title, executable_path, executable_name, steam_app_id, has_artwork, "
+                                     "tracking_enabled) VALUES (:title, :executable_path, :executable_name, "
+                                     ":steam_app_id, :has_artwork, :tracking_enabled)"));
 
         query.bindValue(QStringLiteral(":title"), game.title);
         query.bindValue(QStringLiteral(":executable_path"), game.executablePath);
@@ -206,13 +197,10 @@ namespace gamelog::core::database { namespace
     bool GameRepository::update(const domain::Game& game)
     {
         QSqlQuery query{database_};
-        if(!query.prepare(
-                          QStringLiteral(
-                                         "UPDATE games " "SET title = :title, " "executable_path = :executable_path, " "executable_name = :executable_name, "
-                                         "steam_app_id = :steam_app_id, "
-                                         "has_artwork= :has_artwork, " "tracking_enabled = :tracking_enabled " "WHERE id = :game_id"
-                                        )
-                         ))
+        if(!query.prepare(QStringLiteral("UPDATE games " "SET title = :title, " "executable_path = :executable_path, "
+                                         "executable_name = :executable_name, " "steam_app_id = :steam_app_id, "
+                                         "has_artwork= :has_artwork, " "tracking_enabled = :tracking_enabled "
+                                         "WHERE id = :game_id")))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to prepare game update:" << query.lastError().text();
             return false;

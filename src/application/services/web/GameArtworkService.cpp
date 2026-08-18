@@ -12,11 +12,9 @@
 
 namespace gamelog::application::services
 {
-    GameArtworkService::GameArtworkService():
-        networkAccessManager_(new QNetworkAccessManager(this))
+    GameArtworkService::GameArtworkService() : networkAccessManager_(new QNetworkAccessManager(this))
     {
-        connect(
-                networkAccessManager_,
+        connect(networkAccessManager_,
                 &QNetworkAccessManager::finished,
                 this,
                 [](QNetworkReply* reply)
@@ -36,17 +34,14 @@ namespace gamelog::application::services
 
                     const auto artworkType = static_cast<ArtworkType>(artworkTypeInt);
 
-                    if(reply->error() == QNetworkReply::NoError)
-                    {
-                        parseSteamArtworkReply(reply, artworkType, gameId);
-                    }
+                    if(reply->error() == QNetworkReply::NoError) { parseSteamArtworkReply(reply, artworkType, gameId); }
                     else
                     {
-                        qWarning() << "Network error for" << artworkTypeToString(artworkType) << ":" << reply->errorString();
+                        qWarning() << "Network error for" << artworkTypeToString(artworkType) << ":" << reply->
+                            errorString();
                     }
                     reply->deleteLater();
-                }
-               );
+                });
     }
 
     bool GameArtworkService::getGameArtwork(const core::domain::Game& game)
@@ -91,14 +86,14 @@ namespace gamelog::application::services
     {
         switch(artworkType)
         {
-            case ArtworkType::Cover :
-                return QStringLiteral("cover");
-            case ArtworkType::Header :
-                return QStringLiteral("header");
-            case ArtworkType::Logo :
-                return QStringLiteral("logo");
-            default :
-                return QStringLiteral("Unknown");
+        case ArtworkType::Cover:
+            return QStringLiteral("cover");
+        case ArtworkType::Header:
+            return QStringLiteral("header");
+        case ArtworkType::Logo:
+            return QStringLiteral("logo");
+        default:
+            return QStringLiteral("Unknown");
         }
     }
 
@@ -140,18 +135,17 @@ namespace gamelog::application::services
 
         switch(artworkType)
         {
-            case ArtworkType::Cover :
-            case ArtworkType::Header :
-                extension = QStringLiteral("jpg");
-                break;
+        case ArtworkType::Cover:
+        case ArtworkType::Header:
+            extension = QStringLiteral("jpg");
+            break;
 
-            case ArtworkType::Logo :
-                extension = QStringLiteral("png");
-                break;
+        case ArtworkType::Logo:
+            extension = QStringLiteral("png");
+            break;
 
-            default :
-                qWarning() << "Unknown artwork type:" << static_cast<int>(artworkType);
-                return;
+        default: qWarning() << "Unknown artwork type:" << static_cast<int>(artworkType);
+            return;
         }
 
         const QString fileName = QStringLiteral("%1.%2").arg(artworkTypeToString(artworkType), extension);
@@ -175,17 +169,13 @@ namespace gamelog::application::services
     QUrl GameArtworkService::makeSteamArtworkUrl(int steamAppId, ArtworkType artworkType)
     {
         return QUrl{
-            QStringLiteral(
-                           "https://cdn.cloudflare.steamstatic.com/steam/apps/%1/%2"
-                          )
-           .arg(steamAppId)
-           .arg(ArtWorkTypeToSteamUrl.at(artworkType))
+            QStringLiteral("https://cdn.cloudflare.steamstatic.com/steam/apps/%1/%2").arg(steamAppId).
+            arg(ArtWorkTypeToSteamUrl.at(artworkType))
         };
     }
 
     const std::pmr::map<ArtworkType, QString> GameArtworkService::ArtWorkTypeToSteamUrl{
-        {ArtworkType::Cover, "library_600x900.jpg"},
-        {ArtworkType::Header, "header.jpg"},
+        {ArtworkType::Cover, "library_600x900.jpg"}, {ArtworkType::Header, "header.jpg"},
         {ArtworkType::Logo, "logo.png"},
     };
 }

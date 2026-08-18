@@ -14,8 +14,9 @@ using std::chrono::seconds;
 
 namespace gamelog::application
 {
-    GameLogRuntime::GameLogRuntime(QString databasePath)
-        : databaseManager_{std::move(databasePath), QStringLiteral("GameLogRuntimeConnection")}
+    GameLogRuntime::GameLogRuntime(QString databasePath) : databaseManager_{
+        std::move(databasePath), QStringLiteral("GameLogRuntimeConnection")
+    }
     {
         databaseReady_ = databaseManager_.initialize();
         if(!databaseReady_)
@@ -33,13 +34,14 @@ namespace gamelog::application
         sessionService_.emplace(*sessionRepository_, *gameService_);
         gameArtworkService_.emplace();
 
-        connect(
-                &*gameArtworkService_,
+        connect(&*gameArtworkService_,
                 &services::GameArtworkService::artworkAvailable,
                 &*gameService_,
-                [this](const int gameId) { gameService_->setHasArtwork(gameId, true); }
-               );
-        connect(&*gameService_, &services::GameService::gameAdded, &*gameArtworkService_, &services::GameArtworkService::getGameArtwork);
+                [this](const int gameId) { gameService_->setHasArtwork(gameId, true); });
+        connect(&*gameService_,
+                &services::GameService::gameAdded,
+                &*gameArtworkService_,
+                &services::GameArtworkService::getGameArtwork);
     }
 
     GameLogRuntime::~GameLogRuntime() = default;
@@ -77,10 +79,7 @@ namespace gamelog::application
 
     void GameLogRuntime::stop()
     {
-        if(!running_)
-        {
-            return;
-        }
+        if(!running_) { return; }
 
         running_ = false;
         processSource_.reset();
@@ -115,18 +114,12 @@ namespace gamelog::application
 
         std::vector<ProcessInfo> processes = processSource_->listProcesses();
 
-        if(gameService_->hasTrackedSteamGames())
-        {
-            steamProcessInspector_.annotate(processes);
-        }
+        if(gameService_->hasTrackedSteamGames()) { steamProcessInspector_.annotate(processes); }
 
         sessionService_->updateAutomaticTracking(processes, elapsed);
     }
 
-    services::GameService* GameLogRuntime::getGameService() noexcept
-    {
-        return gameService_ ? &*gameService_ : nullptr;
-    }
+    services::GameService* GameLogRuntime::getGameService() noexcept { return gameService_ ? &*gameService_ : nullptr; }
 
     services::SessionService* GameLogRuntime::getSessionService() noexcept
     {

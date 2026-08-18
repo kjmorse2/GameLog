@@ -13,10 +13,7 @@ namespace gamelog::tests::fixtures
         const QString baseDirectory = QDir::temp().filePath("gamelog-test-databases");
         QDir directory;
 
-        if(!directory.mkpath(baseDirectory))
-        {
-            return {};
-        }
+        if(!directory.mkpath(baseDirectory)) { return {}; }
 
         const QString databasePath = QDir{baseDirectory}.filePath(namePrefix + ".sqlite");
 

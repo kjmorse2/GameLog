@@ -14,19 +14,16 @@
 
 namespace gamelog::core::database
 {
-    DatabaseManager::DatabaseManager(QString databasePath, QString connectionName): databasePath_{std::move(databasePath)},
-                                                                                    connectionName_{std::move(connectionName)}
-    {
-    }
+    DatabaseManager::DatabaseManager(QString databasePath, QString connectionName) : databasePath_{
+            std::move(databasePath)
+        },
+        connectionName_{std::move(connectionName)} {}
 
     DatabaseManager::~DatabaseManager()
     {
         const QString connectionName = connectionName_;
 
-        if(database_.isValid())
-        {
-            database_.close();
-        }
+        if(database_.isValid()) { database_.close(); }
         // All QSqlDatabase handles must release the connection before
         // removeDatabase() is called.
         database_ = QSqlDatabase{};
@@ -39,45 +36,27 @@ namespace gamelog::core::database
     bool DatabaseManager::initialize()
     {
         // Open the connection first so every later step has a live handle.
-        if(!openDatabase())
-        {
-            return false;
-        }
+        if(!openDatabase()) { return false; }
         // Apply SQLite connection settings before any schema access happens.
-        if(!configureDatabase())
-        {
-            return false;
-        }
+        if(!configureDatabase()) { return false; }
         // Finally, bring the schema up to date.
         return runMigrations();
     }
 
-    bool DatabaseManager::isOpen() const
-    {
-        return database_.isOpen();
-    }
+    bool DatabaseManager::isOpen() const { return database_.isOpen(); }
 
-    QSqlDatabase DatabaseManager::database() const
-    {
-        return database_;
-    }
+    QSqlDatabase DatabaseManager::database() const { return database_; }
 
     QString DatabaseManager::defaultDatabasePath()
     {
         // AppLocalDataLocation is the portable default for a per-user SQLite file.
         const QString dataDirectory = AppPaths::dataDirectory();
 
-        if(dataDirectory.isEmpty())
-        {
-            return {};
-        }
+        if(dataDirectory.isEmpty()) { return {}; }
 
         // Ensure the directory exists before returning the final database file path.
 
-        if(const QDir directory; !directory.mkpath(dataDirectory))
-        {
-            return {};
-        }
+        if(const QDir directory; !directory.mkpath(dataDirectory)) { return {}; }
 
         return AppPaths::databasePath();
     }
@@ -85,10 +64,7 @@ namespace gamelog::core::database
     QString DatabaseManager::resolveDatabasePath(const QString& commandLinePath)
     {
         // Command-line overrides win when they are present.
-        if(!commandLinePath.isEmpty())
-        {
-            return QFileInfo{commandLinePath}.absoluteFilePath();
-        }
+        if(!commandLinePath.isEmpty()) { return QFileInfo{commandLinePath}.absoluteFilePath(); }
 
         // Allow local development and test runs to redirect storage.
 

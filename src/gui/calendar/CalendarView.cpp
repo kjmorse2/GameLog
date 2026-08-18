@@ -9,8 +9,8 @@
 #include "ui_calendarview.h"
 
 
-CalendarView::CalendarView(QWidget* parent, GameService* gameService, SessionService* sessionService): QWidget(parent),
-                                                                                                       ui(new Ui::CalendarView)
+CalendarView::CalendarView(QWidget* parent, GameService* gameService, SessionService* sessionService) : QWidget(parent),
+    ui(new Ui::CalendarView)
 {
     ui->setupUi(this);
     gameService_ = gameService;
@@ -21,16 +21,14 @@ CalendarView::CalendarView(QWidget* parent, GameService* gameService, SessionSer
     calendar_->currentPageChanged(calendar_->yearShown(), calendar_->monthShown());
 }
 
-CalendarView::~CalendarView()
-{
-    delete ui;
-}
+CalendarView::~CalendarView() { delete ui; }
 
 void CalendarView::onPageChanged(int year, int month) const
 {
     const auto startDate = QDateTime{QDate(year, month, 1), QTime{0, 0}};
     const auto endDate = QDateTime{QDate(year, (month + 1) % 12, 1), QTime{0, 0}};
-    for(const vector<Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate, endDate); const auto& session : foundSessions)
+    for(const vector<Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate, endDate); const auto&
+        session : foundSessions)
     {
         const QDate date = session.startTimestamp.date();
 

@@ -21,14 +21,12 @@ using gamelog::core::database::GameRepository;
 
 namespace
 {
-    class GameServiceTest:public QObject
+    class GameServiceTest : public QObject
     {
         Q_OBJECT
 
     private
-        slots:
-
-
+        slots  :
         void init();
 
         void cleanup();
@@ -80,7 +78,9 @@ namespace
 void GameServiceTest::init()
 {
     QTest::failOnWarning();
-    databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(QString{"game-repository-%1"}.arg(QTest::currentTestFunction()));
+    databasePath_ =
+        gamelog::tests::fixtures::createFreshTestDatabasePath(QString{"game-repository-%1"}.
+                                                              arg(QTest::currentTestFunction()));
     const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("game-repository");
 
     manager_ = std::make_unique<DatabaseManager>(databasePath_, connectionName);
@@ -274,10 +274,7 @@ void GameServiceTest::removeGame_deletesExistingRow()
     QVERIFY(!loaded.has_value());
 }
 
-void GameServiceTest::removeGame_returnsTrueForMissingRow()
-{
-    QVERIFY(service_->removeGame(999999));
-}
+void GameServiceTest::removeGame_returnsTrueForMissingRow() { QVERIFY(service_->removeGame(999999)); }
 
 void GameServiceTest::syncGamesWithDatabase_rebuildsInMemoryIndexes()
 {

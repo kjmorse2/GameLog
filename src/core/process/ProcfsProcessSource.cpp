@@ -9,7 +9,9 @@
 
 #include <libproc2/pids.h>
 
-namespace gamelog::core::process { namespace
+namespace gamelog::core::process
+{
+    namespace
     {
         enum ResultIndex
         {
@@ -59,10 +61,7 @@ namespace gamelog::core::process { namespace
         {
             const pids_stack* stack = fetched->stacks[index];
 
-            if(stack == nullptr)
-            {
-                continue;
-            }
+            if(stack == nullptr) { continue; }
 
             const int pid = PIDS_VAL(ResultPid, s_int, stack);
             const char* command = PIDS_VAL(ResultCommand, str, stack);
@@ -71,15 +70,9 @@ namespace gamelog::core::process { namespace
             ProcessInfo process;
             process.pid = static_cast<qint64>(pid);
 
-            if(command != nullptr)
-            {
-                process.executableName = QString::fromLocal8Bit(command);
-            }
+            if(command != nullptr) { process.executableName = QString::fromLocal8Bit(command); }
 
-            if(executable != nullptr)
-            {
-                process.executablePath = QString::fromLocal8Bit(executable);
-            }
+            if(executable != nullptr) { process.executablePath = QString::fromLocal8Bit(executable); }
             // qInfo(gamelogCoreLog) << "Detected process:" << process.executableName << "PID:" << process.pid << "Path:" << process.executablePath;
             processes.push_back(std::move(process));
         }

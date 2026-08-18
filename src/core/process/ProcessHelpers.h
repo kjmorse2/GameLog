@@ -20,7 +20,9 @@ namespace gamelog::core::process
         /**
          * Reads an environment variable for a process with a provided pid.
          */
-        [[nodiscard]] static std::optional<QByteArray> readProcessEnvironmentValue(qint64 pid, const QByteArray& variableName);
+        [[nodiscard]] static std::optional<QByteArray> readProcessEnvironmentValue(
+            qint64 pid,
+            const QByteArray& variableName);
 
         /**
          * Reads the Steam App ID for a process with a provided pid.
@@ -32,11 +34,11 @@ namespace gamelog::core::process
          * The returned pointer refers to an element in one of the supplied hashes
          * and remains valid only while those hashes are not modified.
          */
-        [[nodiscard]] static const domain::Game* matchTrackedGame(
-                const ProcessInfo& process,
-                const QHash<std::uint32_t, domain::Game>& trackedSteamGames,
-                const QHash<QString, domain::Game>& trackedPathGames
-                ) noexcept;
+        [[nodiscard]] static const domain::Game* matchTrackedGame(const ProcessInfo& process,
+                                                                  const QHash<std::uint32_t, domain::Game>&
+                                                                  trackedSteamGames,
+                                                                  const QHash<QString, domain::Game>& trackedPathGames)
+            noexcept;
 
         /**
          * Checks whether one process corresponds to one game.

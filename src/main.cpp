@@ -21,12 +21,12 @@ namespace
 {
     enum class RunMode
     {
-        Headless,
-        Gui,
-        Live
+        Headless, Gui, Live
     };
 
-    std::map<const char*, RunMode> RunModeMap{{"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}};
+    std::map<const char*, RunMode> RunModeMap{
+        {"--headless", RunMode::Headless}, {"--gui", RunMode::Gui}, {"--live", RunMode::Live}
+    };
 
     /**
  * @brief Determine the run mode based on the command-line arguments.
@@ -38,10 +38,7 @@ namespace
     {
         std::vector<const char*> runModesArguments;
         // Extract keys using a loop
-        for(const auto& key : RunModeMap | std::views::keys)
-        {
-            runModesArguments.push_back(key);
-        }
+        for(const auto& key : RunModeMap | std::views::keys) { runModesArguments.push_back(key); }
 
         std::optional<RunMode> foundRunMode = std::nullopt;
         int numOfModes = 0;
@@ -57,10 +54,7 @@ namespace
                 }
             }
         }
-        if(numOfModes == 1)
-        {
-            return foundRunMode;
-        }
+        if(numOfModes == 1) { return foundRunMode; }
         return std::nullopt;
     }
 
@@ -79,10 +73,7 @@ namespace
 
         const QDir directory{runtimeDirectory};
 
-        if(!directory.mkpath(QStringLiteral("gamelog")))
-        {
-            return {};
-        }
+        if(!directory.mkpath(QStringLiteral("gamelog"))) { return {}; }
 
         return directory.filePath(QStringLiteral("gamelog/runtime.lock"));
     }
@@ -100,14 +91,8 @@ int main(int argc, char* argv[])
 
     std::unique_ptr<QCoreApplication> application;
 
-    if(*mode == RunMode::Gui || *mode == RunMode::Live)
-    {
-        application = std::make_unique<QApplication>(argc, argv);
-    }
-    else
-    {
-        application = std::make_unique<QCoreApplication>(argc, argv);
-    }
+    if(*mode == RunMode::Gui || *mode == RunMode::Live) { application = std::make_unique<QApplication>(argc, argv); }
+    else { application = std::make_unique<QCoreApplication>(argc, argv); }
 
     QCoreApplication::setOrganizationName(QStringLiteral("GameLog"));
     QCoreApplication::setApplicationName(QStringLiteral("GameLog"));
@@ -139,28 +124,14 @@ int main(int argc, char* argv[])
 
     gamelog::application::GameLogRuntime runtime{databasePath};
 
-    QObject::connect(
-                     application.get(),
-                     &QCoreApplication::aboutToQuit,
-                     [&runtime]
-                     {
-                         runtime.stop();
-                     }
-                    );
+    QObject::connect(application.get(), &QCoreApplication::aboutToQuit, [&runtime] { runtime.stop(); });
 
     constexpr std::chrono::seconds updateInterval{5};
 
     QTimer updateTimer;
     updateTimer.setInterval(std::chrono::duration_cast<std::chrono::milliseconds>(updateInterval).count());
 
-    QObject::connect(
-                     &updateTimer,
-                     &QTimer::timeout,
-                     [&runtime, updateInterval]
-                     {
-                         runtime.update(updateInterval);
-                     }
-                    );
+    QObject::connect(&updateTimer, &QTimer::timeout, [&runtime, updateInterval] { runtime.update(updateInterval); });
 
     if(!runtime.start())
     {
@@ -180,10 +151,7 @@ int main(int argc, char* argv[])
         mainWindow = std::make_unique<gamelog::gui::LiveWindow>(runtime);
         mainWindow->show();
     }
-    else
-    {
-        qCInfo(gamelogRuntimeLog) << "Running in headless mode.";
-    }
+    else { qCInfo(gamelogRuntimeLog) << "Running in headless mode."; }
 
     updateTimer.start();
     return application->exec();

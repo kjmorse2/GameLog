@@ -30,16 +30,18 @@ static void initializeGUIResources()
 
 namespace gamelog::gui
 {
-    MainWindow::MainWindow(application::GameLogRuntime& runtime, QWidget* parent): QMainWindow{parent},
-                                                                                   ui(new Ui::MainWindow),
-                                                                                   runtime_{runtime}
+    MainWindow::MainWindow(application::GameLogRuntime& runtime, QWidget* parent) : QMainWindow{parent},
+        ui(new Ui::MainWindow),
+        runtime_{runtime}
     {
         initializeGUIResources();
         ui->setupUi(this);
         auto* libraryViewWidget = new LibraryView{ui->libraryTab, &runtime};
         ui->libraryTabLayout->addWidget(libraryViewWidget);
 
-        ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getGameService(), runtime.getSessionService()});
+        ui->calanderTabLayout->addWidget(new CalendarView{
+                                             ui->calanderTab, runtime.getGameService(), runtime.getSessionService()
+                                         });
 
         statusActiveLabel_ = new QLabel{ui->statusBar};
         statusTitleLabel_ = new QLabel{ui->statusBar};
@@ -54,31 +56,27 @@ namespace gamelog::gui
         connect(sessionService, &SessionService::sessionStarted, this, &MainWindow::onSessionStarted);
         connect(runtime_.getSessionService(), &SessionService::sessionStopped, this, &MainWindow::onSessionEnded);
         connect(ui->actionAdd_SteamAPI_Key, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
-        connect(
-                this,
+        connect(this,
                 &MainWindow::steamAPIKeyEntered,
                 runtime_.getCredentialService(),
                 [credentialService = runtime_.getCredentialService()](const QString& key)
                 {
-                    credentialService->setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), key);
-                }
-               );
+                    credentialService->
+                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), key);
+                });
         connect(ui->actionAdd_Steam_Player_ID, &QAction::triggered, this, &MainWindow::onAddSteamPlayerId);
-        connect(
-                this,
+        connect(this,
                 &MainWindow::steamPlayerIdEntered,
                 runtime_.getCredentialService(),
                 [credentialService = runtime_.getCredentialService()](const QString& key)
                 {
-                    credentialService->setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey), key);
-                }
-               );
+                    credentialService->
+                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey),
+                                  key);
+                });
     }
 
-    MainWindow::~MainWindow()
-    {
-        delete ui;
-    }
+    MainWindow::~MainWindow() { delete ui; }
 
     void MainWindow::onSessionStarted(const core::domain::Game& game)
     {
@@ -103,11 +101,8 @@ namespace gamelog::gui
         auto* layout = new QVBoxLayout{&dialog};
 
         auto* explanation = new QLabel{
-            tr(
-               "GameLog uses the Steam Web API to import your Steam library. "
-               "Enter your Steam Web API key below. "
-               "You can obtain a key from Steam's developer page."
-              ),
+            tr("GameLog uses the Steam Web API to import your Steam library. " "Enter your Steam Web API key below. "
+               "You can obtain a key from Steam's developer page."),
             &dialog
         };
         explanation->setWordWrap(true);
@@ -116,10 +111,7 @@ namespace gamelog::gui
         keyEdit->setEchoMode(QLineEdit::Password);
         keyEdit->setPlaceholderText(tr("Steam Web API key"));
 
-        auto* buttons = new QDialogButtonBox{
-            QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-            &dialog
-        };
+        auto* buttons = new QDialogButtonBox{QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog};
 
         buttons->button(QDialogButtonBox::Ok)->setText(tr("Submit"));
 
@@ -127,30 +119,20 @@ namespace gamelog::gui
         layout->addWidget(keyEdit);
         layout->addWidget(buttons);
 
-        connect(
-                buttons,
+        connect(buttons,
                 &QDialogButtonBox::accepted,
                 &dialog,
                 [&dialog, keyEdit, this]
                 {
                     const QString key = keyEdit->text().trimmed();
 
-                    if(key.isEmpty())
-                    {
-                        return;
-                    }
+                    if(key.isEmpty()) { return; }
 
                     emit steamAPIKeyEntered(key);
                     dialog.accept();
-                }
-               );
+                });
 
-        connect(
-                buttons,
-                &QDialogButtonBox::rejected,
-                &dialog,
-                &QDialog::reject
-               );
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
 
         dialog.exec();
     }
@@ -164,11 +146,8 @@ namespace gamelog::gui
         auto* layout = new QVBoxLayout{&dialog};
 
         auto* explanation = new QLabel{
-            tr(
-               "GameLog uses the Steam Web API to import your Steam library. "
-               "Enter your Steam player API key below. "
-               "You can obtain a key from Steam's developer page."
-              ),
+            tr("GameLog uses the Steam Web API to import your Steam library. " "Enter your Steam player API key below. "
+               "You can obtain a key from Steam's developer page."),
             &dialog
         };
         explanation->setWordWrap(true);
@@ -177,10 +156,7 @@ namespace gamelog::gui
         keyEdit->setEchoMode(QLineEdit::Password);
         keyEdit->setPlaceholderText(tr("Steam player ID"));
 
-        auto* buttons = new QDialogButtonBox{
-            QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-            &dialog
-        };
+        auto* buttons = new QDialogButtonBox{QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog};
 
         buttons->button(QDialogButtonBox::Ok)->setText(tr("Submit"));
 
@@ -188,30 +164,20 @@ namespace gamelog::gui
         layout->addWidget(keyEdit);
         layout->addWidget(buttons);
 
-        connect(
-                buttons,
+        connect(buttons,
                 &QDialogButtonBox::accepted,
                 &dialog,
                 [&dialog, keyEdit, this]
                 {
                     const QString key = keyEdit->text().trimmed();
 
-                    if(key.isEmpty())
-                    {
-                        return;
-                    }
+                    if(key.isEmpty()) { return; }
 
                     emit steamPlayerIdEntered(key);
                     dialog.accept();
-                }
-               );
+                });
 
-        connect(
-                buttons,
-                &QDialogButtonBox::rejected,
-                &dialog,
-                &QDialog::reject
-               );
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
 
         dialog.exec();
     }

@@ -14,8 +14,7 @@ namespace gamelog::core::domain::query
 {
     enum class GameSortField
     {
-        Title,
-        Id
+        Title, Id
     };
 
     QDebug operator<<(QDebug debug, GameSortField sortField);
@@ -79,5 +78,11 @@ namespace gamelog::core::domain::query
         std::optional<std::size_t> offset;
     };
 
+    /**
+     * Allows for easy logging of GameQuery objects using QDebug.
+     * @param debug The QDebug stream to write to.
+     * @param query The GameQuery object to log.
+     * @return The QDebug stream after writing the GameQuery object.
+     */
     QDebug operator<<(QDebug debug, const GameQuery& query);
 } // namespace gamelog::core::domain::query

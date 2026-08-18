@@ -3,16 +3,12 @@
 #include "domain/Game.h"
 #include "domain/Session.h"
 
-class CoreSmokeTest:public QObject
+class CoreSmokeTest : public QObject
 {
     Q_OBJECT
 
 private
-    slots:
-
-
-
-
+    slots  :
     void gameDefaultsAreSensible();
 
     void sessionDefaultsAreSensible();

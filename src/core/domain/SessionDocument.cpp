@@ -8,11 +8,8 @@ namespace gamelog::core::domain
     {
         QDebugStateSaver saver{debug};
 
-        debug.nospace() << "SessionDocument {"
-                << "sessionId: " << document.sessionId
-                << ", htmlContent: " << document.htmlContent
-                << ", lastSavedTimestamp: " << document.lastSavedTimestamp
-                << "}";
+        debug.nospace() << "SessionDocument {" << "sessionId: " << document.sessionId << ", htmlContent: " << document.
+            htmlContent << ", lastSavedTimestamp: " << document.lastSavedTimestamp << "}";
         return debug;
     }
 } // namespace gamelog::core::domain

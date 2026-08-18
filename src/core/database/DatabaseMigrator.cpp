@@ -15,7 +15,8 @@
 // resource initializer ensures the linker includes the resource object.
 static void initializeMigrationResources()
 {
-    static const bool initialized = [] {
+    static const bool initialized = []
+    {
         Q_INIT_RESOURCE(migrations);
         return true;
     }();
@@ -25,8 +26,7 @@ static void initializeMigrationResources()
 
 namespace gamelog::core::database
 {
-    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase &database) :
-        database_{database}
+    DatabaseMigrator::DatabaseMigrator(const QSqlDatabase& database) : database_{database}
     {
         initializeMigrationResources();
     }
@@ -34,37 +34,25 @@ namespace gamelog::core::database
     bool DatabaseMigrator::applyPendingMigrations()
     {
         // The migrator only operates on a live connection.
-        if (!database_.isValid() || !database_.isOpen())
+        if(!database_.isValid() || !database_.isOpen())
         {
             qCWarning(gamelogDatabaseLog) << "Cannot run migrations on a closed or invalid database.";
             return false;
         }
 
         // Make sure the ledger exists before we inspect or record anything.
-        if (!ensureMigrationTable())
-        {
-            return false;
-        }
+        if(!ensureMigrationTable()) { return false; }
 
         // Apply each compiled-in migration in order.
-        for (const Migration &migration: knownMigrations())
+        for(const Migration& migration : knownMigrations())
         {
             const std::optional<bool> applied = isApplied(migration.version);
 
-            if (!applied.has_value())
-            {
-                return false;
-            }
+            if(!applied.has_value()) { return false; }
 
-            if (*applied)
-            {
-                continue;
-            }
+            if(*applied) { continue; }
 
-            if (!applyMigration(migration))
-            {
-                return false;
-            }
+            if(!applyMigration(migration)) { return false; }
         }
 
         return true;
@@ -74,16 +62,14 @@ namespace gamelog::core::database
     {
         // Keep the migration ledger as a tiny, dependency-free table.
 
-        if (QSqlQuery query{database_}; !query.exec(
-                R"(
+        if(QSqlQuery query{database_}; !query.exec(R"(
                 CREATE TABLE IF NOT EXISTS schema_migrations
                 (
                     version INTEGER PRIMARY KEY,
                     name TEXT NOT NULL UNIQUE,
                     applied_at_utc TEXT NOT NULL
                 )
-            )"
-                ))
+            )"))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to create schema_migrations table:" << query.lastError().text();
             return false;
@@ -96,17 +82,15 @@ namespace gamelog::core::database
     {
         // A single existence check is enough because version is the primary key.
         QSqlQuery query{database_};
-        query.prepare(
-                R"(
+        query.prepare(R"(
             SELECT 1
             FROM schema_migrations
             WHERE version = :version
             LIMIT 1
-        )"
-                );
+        )");
         query.bindValue(":version", version);
 
-        if (!query.exec())
+        if(!query.exec())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to inspect applied migrations:" << query.lastError().text();
 
@@ -116,18 +100,18 @@ namespace gamelog::core::database
         return query.next();
     }
 
-    bool DatabaseMigrator::applyMigration(const Migration &migration)
+    bool DatabaseMigrator::applyMigration(const Migration& migration)
     {
         // Read the SQL script first so we can fail before opening the transaction.
         const std::optional<QString> sql = readMigration(migration.resourcePath);
 
-        if (!sql.has_value())
+        if(!sql.has_value())
         {
             qCWarning(gamelogDatabaseLog) << "Unable to read migration:" << migration.resourcePath;
             return false;
         }
 
-        if (!database_.transaction())
+        if(!database_.transaction())
         {
             qCWarning(gamelogDatabaseLog) << "Failed to begin migration transaction:" << database_.lastError().text();
             return false;
@@ -137,48 +121,46 @@ namespace gamelog::core::database
 
         // Execute the script in discrete chunks so future migrations can bundle
         // multiple statements without depending on SQLite semicolon parsing.
-        for (const QString &statement: statements)
+        for(const QString& statement : statements)
         {
             const QString trimmed = statement.trimmed();
 
-            if (trimmed.isEmpty())
-            {
-                continue;
-            }
+            if(trimmed.isEmpty()) { continue; }
 
             QSqlQuery query{database_};
 
-            if (!query.exec(trimmed))
+            if(!query.exec(trimmed))
             {
-                qCWarning(gamelogDatabaseLog) << "Migration failed:" << migration.version << migration.name << query.lastError().text();
+                qCWarning(gamelogDatabaseLog) << "Migration failed:" << migration.version << migration.name << query.
+                    lastError().text();
                 database_.rollback();
                 return false;
             }
         }
 
         QSqlQuery record{database_};
-        record.prepare(
-                R"(
+        record.prepare(R"(
             INSERT INTO schema_migrations
                 (version, name, applied_at_utc)
             VALUES
                 (:version, :name, :applied_at_utc)
-        )"
-                );
+        )");
         record.bindValue(":version", migration.version);
         record.bindValue(":name", migration.name);
         record.bindValue(":applied_at_utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
 
-        if (!record.exec())
+        if(!record.exec())
         {
-            qCWarning(gamelogDatabaseLog) << "Failed to record migration:" << migration.version << migration.name << record.lastError().text();
+            qCWarning(gamelogDatabaseLog) << "Failed to record migration:" << migration.version << migration.name <<
+                record.lastError().text();
             database_.rollback();
             return false;
         }
 
-        if (!database_.commit())
+        if(!database_.commit())
         {
-            qCWarning(gamelogDatabaseLog) << "Failed to commit migration:" << migration.version << migration.name << database_.lastError().text();
+            qCWarning(gamelogDatabaseLog) << "Failed to commit migration:" << migration.version << migration.name <<
+                database_.lastError().text();
             database_.rollback();
             return false;
         }
@@ -188,27 +170,33 @@ namespace gamelog::core::database
         return true;
     }
 
-    std::optional<QString> DatabaseMigrator::readMigration(const QString &resourcePath)
+    std::optional<QString> DatabaseMigrator::readMigration(const QString& resourcePath)
     {
         // Resource-backed scripts stay in sync with the compiled binary.
         QFile file{resourcePath};
 
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            return std::nullopt;
-        }
+        if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) { return std::nullopt; }
 
         return QString::fromUtf8(file.readAll());
     }
 
-    const std::vector<Migration> &DatabaseMigrator::knownMigrations()
+    const std::vector<Migration>& DatabaseMigrator::knownMigrations()
     {
         // Keep this list ordered so migration application stays deterministic.econfig_session_documents
         static const std::vector<Migration> migrations{
-                {.version = 1, .name = "initial_schema", .resourcePath = ":/migrations/001_initial_schema.sql"},
-                {.version = 2, .name = "reconfig_session_documents_table", .resourcePath = ":/migrations/002_reconfig_session_documents.sql"},
-                {.version = 3, .name = "remove_format_from_session_documents", .resourcePath = ":/migrations/003_remove_format_session_documents.sql"},
-                {.version = 4, .name = "artwork_path_to_has_artwork", .resourcePath = ":/migrations/004_artwork_path_to_has_artwork.sql"}
+            {.version = 1, .name = "initial_schema", .resourcePath = ":/migrations/001_initial_schema.sql"},
+            {
+                .version = 2, .name = "reconfig_session_documents_table",
+                .resourcePath = ":/migrations/002_reconfig_session_documents.sql"
+            },
+            {
+                .version = 3, .name = "remove_format_from_session_documents",
+                .resourcePath = ":/migrations/003_remove_format_session_documents.sql"
+            },
+            {
+                .version = 4, .name = "artwork_path_to_has_artwork",
+                .resourcePath = ":/migrations/004_artwork_path_to_has_artwork.sql"
+            }
         };
 
         return migrations;

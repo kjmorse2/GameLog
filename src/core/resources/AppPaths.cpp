@@ -9,22 +9,11 @@
 
 namespace gamelog::core
 {
-    QString AppPaths::dataDirectory()
-    {
-        return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    }
+    QString AppPaths::dataDirectory() { return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation); }
 
-    QString AppPaths::databasePath()
-    {
-        return QDir{dataDirectory()}.filePath(QStringLiteral("gamelog.sqlite"));
-    }
+    QString AppPaths::databasePath() { return QDir{dataDirectory()}.filePath(QStringLiteral("gamelog.sqlite")); }
 
-    QString AppPaths::artworkDirectory()
-    {
-        return QDir{dataDirectory()}.filePath(
-                                              QStringLiteral("artwork")
-                                             );
-    }
+    QString AppPaths::artworkDirectory() { return QDir{dataDirectory()}.filePath(QStringLiteral("artwork")); }
 
     QString AppPaths::gameArtworkDirectory(int gameId)
     {

@@ -23,7 +23,7 @@ QT_END_NAMESPACE
 
 namespace gamelog::gui
 {
-    class LiveWindow final:public QMainWindow
+    class LiveWindow final : public QMainWindow
     {
         Q_OBJECT
 
@@ -33,15 +33,22 @@ namespace gamelog::gui
         ~LiveWindow() override;
 
     private
-        slots:
-
-
-
-
+        slots  :
+        /**
+         * Connected to the GameLogRuntime::sessionStarted signal. Updates the UI to reflect the new session.
+         * @param game The Game struct that was started.
+         */
         void onSessionStarted(const Game& game);
 
+        /**
+         * Connected to the GameLogRuntime::sessionFinished signal. Updates the UI to reflect the completed session.
+         * @param completedSession The Session struct that was completed.
+         */
         void onSessionFinished(Session& completedSession);
 
+        /**
+         * Connected to the GameLogRuntime::sessionUpdated signal. Updates the UI to reflect the updated session.
+         */
         void updateTimerText();
 
     private:

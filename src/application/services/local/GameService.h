@@ -22,11 +22,16 @@ namespace gamelog::application::services
      * convenience methods. SQL remains entirely behind GameRepository.
      * The service also owns the in-memory index used by process matching.
      */
-    class GameService:public QObject
+    class GameService : public QObject
     {
         Q_OBJECT
 
     public:
+        /**
+         * @breif Constructs a GameService with the provided repository and SteamApiService.
+         * @param repository The GameRepository used for database operations.
+         * @param steamApiService The SteamApiService used for Steam-related operations.
+         */
         explicit GameService(core::database::GameRepository& repository, SteamApiService& steamApiService);
 
         ~GameService() override = default;
@@ -86,7 +91,7 @@ namespace gamelog::application::services
         [[nodiscard]] bool updateGame(const Game& game);
 
         /**
-         * removes the game with the provide id in the database and updates the in-memory indexes.
+         * Removes the game with the provide id in the database and updates the in-memory indexes.
          * @param id of the Game struct to remove.
          * @return A boolean describing if the operation succeeded.
          */
@@ -119,31 +124,36 @@ namespace gamelog::application::services
         bool setHasArtwork(int gameId, bool available);
 
     public
-        slots:
-
-
+        slots  :
+        /**
+         * Wrapper for SteamApiService::getOwnedGames() that updates the in-memory index of tracked Steam games.
+         */
         void syncSteamGames();
 
 
-        signals:
+        signals  :
+        /**
+         * Emitted when a new game is added to the database and the in-memory indexes are updated.
+         * @param game The Game struct that was added.
+         */
+        void gameAdded(const Game& game);
 
-
-
-
-        void gameAdded(const Game&);
-
-        void gameUpdated(const Game&);
+        /**
+         * Emitted when a game is updated in the database and the in-memory indexes are updated.
+         * @param game The Game struct that was updated.
+         */
+        void gameUpdated(const Game& game);
 
     private:
-        void onSteamGamesReceived(const QJsonArray& steamGames);
-
         /**
          * @breif the repository where the games are stored.
          */
         core::database::GameRepository& repository_;
 
+        /**
+         * @brief the SteamApiService used for Steam-related operations.
+         */
         SteamApiService& steamApiService_;
-
 
         /**
          * The in-memory index of tracked Steam games, keyed by Steam App ID.
@@ -154,5 +164,13 @@ namespace gamelog::application::services
          * The in-memory index of tracked path games, keyed by executable path.
          */
         QHash<QString, Game> trackedPathGames_;
+
+    private
+        slots  :
+        /**
+         * Connected to the SteamApiService::ownedGamesReceived signal. Updates the in-memory index of tracked Steam games.
+         * @param steamGames The array of Steam games received from the Steam API.
+         */
+        void onSteamGamesReceived(const QJsonArray& steamGames);
     };
 } // namespace gamelog::application::services

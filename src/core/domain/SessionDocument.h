@@ -27,5 +27,11 @@ namespace gamelog::core::domain
         QDateTime lastSavedTimestamp;
     };
 
+    /**
+     * Allows for easy logging of SessionDocument objects using QDebug.
+     * @param debug The QDebug stream to write to.
+     * @param document The SessionDocument object to log.
+     * @return The QDebug stream after writing the SessionDocument object.
+     */
     QDebug operator<<(QDebug debug, const SessionDocument& document);
 } // namespace gamelog::core::domain

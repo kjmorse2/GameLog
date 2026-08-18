@@ -13,22 +13,25 @@
 
 namespace gamelog::gui
 {
-    LiveWindow::LiveWindow(application::GameLogRuntime& gameLogRuntime, QWidget* parent): QMainWindow(parent),
-                                                                                          ui(new Ui::LiveWindow),
-                                                                                          gameLogRuntime(gameLogRuntime)
+    LiveWindow::LiveWindow(application::GameLogRuntime& gameLogRuntime, QWidget* parent) : QMainWindow(parent),
+        ui(new Ui::LiveWindow),
+        gameLogRuntime(gameLogRuntime)
     {
         ui->setupUi(this);
-        connect(gameLogRuntime.getSessionService(), &application::services::SessionService::sessionStarted, this, &LiveWindow::onSessionStarted);
-        connect(gameLogRuntime.getSessionService(), &application::services::SessionService::sessionStopped, this, &LiveWindow::onSessionFinished);
+        connect(gameLogRuntime.getSessionService(),
+                &application::services::SessionService::sessionStarted,
+                this,
+                &LiveWindow::onSessionStarted);
+        connect(gameLogRuntime.getSessionService(),
+                &application::services::SessionService::sessionStopped,
+                this,
+                &LiveWindow::onSessionFinished);
         clockTimer = new QTimer(this);
         clockTimer->setInterval(1000);
         currentTime = QTime(0, 0);
     }
 
-    LiveWindow::~LiveWindow()
-    {
-        delete ui;
-    }
+    LiveWindow::~LiveWindow() { delete ui; }
 
     void LiveWindow::onSessionStarted(const Game& game)
     {

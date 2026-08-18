@@ -13,27 +13,23 @@
 using gamelog::application::services::GameService;
 using gamelog::application::services::SessionService;
 
-QT_BEGIN_NAMESPACE
-
-namespace Ui
+QT_BEGIN_NAMESPACE namespace Ui
 {
     class CalendarView;
 }
 
-QT_END_NAMESPACE
-
-class CalendarView:public QWidget
+QT_END_NAMESPACE class CalendarView : public QWidget
 {
-    Q_OBJECT
-
-public:
+    Q_OBJECT public:
     /**
      * Creates a new CalendarView.
      * @param parent The parent widget.
      * @param gameService The game service to query/edit for games.
      * @param sessionService The session service to querey/edit  for sessions
      */
-    explicit CalendarView(QWidget* parent = nullptr, GameService* gameService = nullptr, SessionService* sessionService = nullptr);
+    explicit CalendarView(QWidget* parent = nullptr,
+                          GameService* gameService = nullptr,
+                          SessionService* sessionService = nullptr);
 
     ~CalendarView() override;
 
@@ -58,18 +54,12 @@ private:
      */
     QCalendarWidget* calendar_;
 
-private
-    slots:
-
+private slots :
     /**
      * Called when the calendar page is changed.
      * @param year The year the calendar is on
      * @param month The month the calendar is on.
      */
-
-
-
-
     void onPageChanged(int year, int month) const;
 };
 

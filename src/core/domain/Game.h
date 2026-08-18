@@ -50,5 +50,11 @@ namespace gamelog::core::domain
         bool trackingEnabled{true};
     };
 
-    QDebug operator<<(QDebug debug, const Game &game);
+    /**
+     * Allows for easy logging of Game objects using QDebug.
+     * @param debug The QDebug stream to write to.
+     * @param game The Game object to log.
+     * @return The QDebug stream after writing the Game object.
+     */
+    QDebug operator<<(QDebug debug, const Game& game);
 } // namespace gamelog::core::domain

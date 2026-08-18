@@ -15,12 +15,12 @@ namespace
 } // namespace
 namespace
 {
-    class SessionTest:public QObject
+    class SessionTest : public QObject
     {
         Q_OBJECT
 
     private
-        slots:
+        slots  :
 
         static void parsesSourceFromString();
 
@@ -32,11 +32,13 @@ void SessionTest::parsesSourceFromString()
 {
     for(const QString& sourceString : source_StringsReturnAutomatic)
     {
-        QCOMPARE(gamelog::core::domain::sessionSourceFromString(sourceString), gamelog::core::domain::SessionSource::Automatic);
+        QCOMPARE(gamelog::core::domain::sessionSourceFromString(sourceString),
+                 gamelog::core::domain::SessionSource::Automatic);
     }
     for(const QString& sourceString : source_StringsReturnManual)
     {
-        QCOMPARE(gamelog::core::domain::sessionSourceFromString(sourceString), gamelog::core::domain::SessionSource::Manual);
+        QCOMPARE(gamelog::core::domain::sessionSourceFromString(sourceString),
+                 gamelog::core::domain::SessionSource::Manual);
     }
 }
 
@@ -44,15 +46,18 @@ void SessionTest::parsesStatusFromString()
 {
     for(const QString& statusString : status_StringsReturnActive)
     {
-        QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString), gamelog::core::domain::SessionStatus::Active);
+        QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString),
+                 gamelog::core::domain::SessionStatus::Active);
     }
     for(const QString& statusString : status_StringsReturnCompleted)
     {
-        QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString), gamelog::core::domain::SessionStatus::Completed);
+        QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString),
+                 gamelog::core::domain::SessionStatus::Completed);
     }
     for(const QString& statusString : status_StringsReturnInterrupted)
     {
-        QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString), gamelog::core::domain::SessionStatus::Interrupted);
+        QCOMPARE(gamelog::core::domain::sessionStatusFromString(statusString),
+                 gamelog::core::domain::SessionStatus::Interrupted);
     }
 }
 

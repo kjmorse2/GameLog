@@ -17,9 +17,9 @@
 
 using gamelog::application::services::GameService;
 
-LibraryView::LibraryView(QWidget* parent, gamelog::application::GameLogRuntime* runtime): QWidget(parent),
-                                                                                          ui(new Ui::LibraryView),
-                                                                                          runtime_(runtime)
+LibraryView::LibraryView(QWidget* parent, gamelog::application::GameLogRuntime* runtime) : QWidget(parent),
+    ui(new Ui::LibraryView),
+    runtime_(runtime)
 {
     ui->setupUi(this);
     ui->gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -31,10 +31,7 @@ LibraryView::LibraryView(QWidget* parent, gamelog::application::GameLogRuntime* 
     displayAllGames();
 }
 
-LibraryView::~LibraryView()
-{
-    delete ui;
-}
+LibraryView::~LibraryView() { delete ui; }
 
 void LibraryView::displayAllGames()
 {

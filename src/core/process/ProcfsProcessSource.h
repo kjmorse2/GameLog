@@ -7,7 +7,7 @@ namespace gamelog::core::process
     /**
      * @brief Enumerates processes from the Linux /proc filesystem.
      */
-    class ProcfsProcessSource final:public ProcessSource
+    class ProcfsProcessSource final : public ProcessSource
     {
     public:
         /**

@@ -5,16 +5,12 @@
 
 namespace
 {
-    class ProcessTest:public QObject
+    class ProcessTest : public QObject
     {
         Q_OBJECT
 
     private
-        slots:
-
-
-
-
+        slots  :
         void detectsSomeProcesses();
     };
 }

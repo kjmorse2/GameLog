@@ -34,14 +34,8 @@ namespace gamelog::core::process
 
         for(auto cached = cache_.begin(); cached != cache_.end();)
         {
-            if(!livePids.contains(cached.key()))
-            {
-                cached = cache_.erase(cached);
-            }
-            else
-            {
-                ++cached;
-            }
+            if(!livePids.contains(cached.key())) { cached = cache_.erase(cached); }
+            else { ++cached; }
         }
     }
 } // namespace gamelog::core::process

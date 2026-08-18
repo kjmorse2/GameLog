@@ -14,14 +14,12 @@ namespace
     bool tableExists(QSqlDatabase database, const QString& tableName)
     {
         QSqlQuery query{database};
-        query.prepare(
-                      R"(
+        query.prepare(R"(
                     SELECT 1
                     FROM sqlite_master
                     WHERE type = 'table' AND name = :table_name
                     LIMIT 1
-                )"
-                     );
+                )");
         query.bindValue(":table_name", tableName);
 
         return query.exec() && query.next();
@@ -30,16 +28,12 @@ namespace
 
 namespace
 {
-    class DatabaseManagerTest:public QObject
+    class DatabaseManagerTest : public QObject
     {
         Q_OBJECT
 
     private
-        slots:
-
-
-
-
+        slots  :
         void init();
 
         void cleanup();
@@ -74,28 +68,16 @@ void DatabaseManagerTest::init()
 {
     hadOriginalEnvironmentValue_ = qEnvironmentVariableIsSet("GAMELOG_DATABASE_PATH");
 
-    if(hadOriginalEnvironmentValue_)
-    {
-        originalEnvironmentValue_ = qgetenv("GAMELOG_DATABASE_PATH");
-    }
-    else
-    {
-        originalEnvironmentValue_.clear();
-    }
+    if(hadOriginalEnvironmentValue_) { originalEnvironmentValue_ = qgetenv("GAMELOG_DATABASE_PATH"); }
+    else { originalEnvironmentValue_.clear(); }
 
     qunsetenv("GAMELOG_DATABASE_PATH");
 }
 
 void DatabaseManagerTest::cleanup()
 {
-    if(hadOriginalEnvironmentValue_)
-    {
-        qputenv("GAMELOG_DATABASE_PATH", originalEnvironmentValue_);
-    }
-    else
-    {
-        qunsetenv("GAMELOG_DATABASE_PATH");
-    }
+    if(hadOriginalEnvironmentValue_) { qputenv("GAMELOG_DATABASE_PATH", originalEnvironmentValue_); }
+    else { qunsetenv("GAMELOG_DATABASE_PATH"); }
 }
 
 void DatabaseManagerTest::initialize_opensDatabaseAndRunsMigrations()
@@ -182,7 +164,8 @@ void DatabaseManagerTest::database_isValidAndOpenAfterInitialize()
     const QString databasePath = gamelog::tests::fixtures::createFreshTestDatabasePath("database-after-initialize");
 
     {
-        const QString connectionName = gamelog::tests::fixtures::createUniqueConnectionName("database-after-initialize");
+        const QString connectionName =
+            gamelog::tests::fixtures::createUniqueConnectionName("database-after-initialize");
         DatabaseManager manager{databasePath, connectionName};
         QVERIFY(manager.initialize());
 
