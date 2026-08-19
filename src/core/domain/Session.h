@@ -23,6 +23,52 @@ namespace gamelog::core::domain
     QDebug operator<<(QDebug debug, SessionStatus status);
 
     /**
+     * @brief Human-readable spelling of a source, for logging and display.
+     *
+     * Capitalized ("Automatic"). Never persisted; use toDatabaseString() for
+     * anything that reaches the database.
+     */
+    [[nodiscard]] QString toDisplayString(SessionSource source);
+
+    /**
+     * @brief Human-readable spelling of a status, for logging and display.
+     *
+     * Capitalized ("Active"). Never persisted; use toDatabaseString() for
+     * anything that reaches the database.
+     */
+    [[nodiscard]] QString toDisplayString(SessionStatus status);
+
+    /**
+     * @brief On-disk spelling of a source, written to sessions.source.
+     *
+     * Lowercase ("automatic"). These exact values are constrained by the
+     * schema's CHECK on sessions.source, so changing one requires a migration.
+     */
+    [[nodiscard]] QString toDatabaseString(SessionSource source);
+
+    /**
+     * @brief On-disk spelling of a status, written to sessions.status.
+     *
+     * Lowercase ("active"). These exact values are constrained by the schema's
+     * CHECK on sessions.status, so changing one requires a migration.
+     */
+    [[nodiscard]] QString toDatabaseString(SessionStatus status);
+
+    /**
+     * @brief Parses a persisted sessions.source value.
+     * @return The source, or std::nullopt when the stored text is unrecognized
+     * so callers can skip a corrupted row rather than fail outright.
+     */
+    [[nodiscard]] std::optional<SessionSource> sessionSourceFromDatabase(const QString& value);
+
+    /**
+     * @brief Parses a persisted sessions.status value.
+     * @return The status, or std::nullopt when the stored text is unrecognized
+     * so callers can skip a corrupted row rather than fail outright.
+     */
+    [[nodiscard]] std::optional<SessionStatus> sessionStatusFromDatabase(const QString& value);
+
+    /**
      * @brief Converts an exact supported string to a SessionSource enum.
      *
      * Only "automatic"/"Automatic" and "manual"/"Manual" are accepted.

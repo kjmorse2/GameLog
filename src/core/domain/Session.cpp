@@ -4,50 +4,90 @@
 
 #include <stdexcept>
 
-namespace
+namespace gamelog::core::domain
 {
-    QString sessionSourceToString(const gamelog::core::domain::SessionSource source)
+    QString toDisplayString(const SessionSource source)
     {
         switch(source)
         {
-        case gamelog::core::domain::SessionSource::Automatic:
+        case SessionSource::Automatic:
             return QStringLiteral("Automatic");
-        case gamelog::core::domain::SessionSource::Manual:
+        case SessionSource::Manual:
             return QStringLiteral("Manual");
         }
 
         return QStringLiteral("Unknown");
     }
 
-    QString sessionStatusToString(const gamelog::core::domain::SessionStatus status)
+    QString toDisplayString(const SessionStatus status)
     {
         switch(status)
         {
-        case gamelog::core::domain::SessionStatus::Active:
+        case SessionStatus::Active:
             return QStringLiteral("Active");
-        case gamelog::core::domain::SessionStatus::Completed:
+        case SessionStatus::Completed:
             return QStringLiteral("Completed");
-        case gamelog::core::domain::SessionStatus::Interrupted:
+        case SessionStatus::Interrupted:
             return QStringLiteral("Interrupted");
         }
 
         return QStringLiteral("Unknown");
     }
-}
 
-namespace gamelog::core::domain
-{
+    QString toDatabaseString(const SessionSource source)
+    {
+        switch(source)
+        {
+        case SessionSource::Automatic:
+            return QStringLiteral("automatic");
+        case SessionSource::Manual:
+            return QStringLiteral("manual");
+        }
+
+        return QStringLiteral("automatic");
+    }
+
+    QString toDatabaseString(const SessionStatus status)
+    {
+        switch(status)
+        {
+        case SessionStatus::Active:
+            return QStringLiteral("active");
+        case SessionStatus::Completed:
+            return QStringLiteral("completed");
+        case SessionStatus::Interrupted:
+            return QStringLiteral("interrupted");
+        }
+
+        return QStringLiteral("interrupted");
+    }
+
+    std::optional<SessionSource> sessionSourceFromDatabase(const QString& value)
+    {
+        if(value == QStringLiteral("automatic")) { return SessionSource::Automatic; }
+        if(value == QStringLiteral("manual")) { return SessionSource::Manual; }
+        return std::nullopt;
+    }
+
+    std::optional<SessionStatus> sessionStatusFromDatabase(const QString& value)
+    {
+        if(value == QStringLiteral("active")) { return SessionStatus::Active; }
+        if(value == QStringLiteral("completed")) { return SessionStatus::Completed; }
+        if(value == QStringLiteral("interrupted")) { return SessionStatus::Interrupted; }
+        return std::nullopt;
+    }
+
     QDebug operator<<(QDebug debug, const SessionSource source)
     {
         QDebugStateSaver saver{debug};
-        debug.nospace() << sessionSourceToString(source);
+        debug.nospace() << toDisplayString(source);
         return debug;
     }
 
     QDebug operator<<(QDebug debug, const SessionStatus status)
     {
         QDebugStateSaver saver{debug};
-        debug.nospace() << sessionStatusToString(status);
+        debug.nospace() << toDisplayString(status);
         return debug;
     }
 

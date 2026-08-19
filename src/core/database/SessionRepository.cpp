@@ -24,49 +24,6 @@ namespace gamelog::core::database
 
     namespace
     {
-        QString sourceToString(SessionSource source)
-        {
-            switch(source)
-            {
-            case SessionSource::Automatic:
-                return QStringLiteral("automatic");
-            case SessionSource::Manual:
-                return QStringLiteral("manual");
-            }
-
-            return QStringLiteral("automatic");
-        }
-
-        QString statusToString(SessionStatus status)
-        {
-            switch(status)
-            {
-            case SessionStatus::Active:
-                return QStringLiteral("active");
-            case SessionStatus::Completed:
-                return QStringLiteral("completed");
-            case SessionStatus::Interrupted:
-                return QStringLiteral("interrupted");
-            }
-
-            return QStringLiteral("interrupted");
-        }
-
-        std::optional<SessionSource> sourceFromString(const QString& value)
-        {
-            if(value == QStringLiteral("automatic")) { return SessionSource::Automatic; }
-            if(value == QStringLiteral("manual")) { return SessionSource::Manual; }
-            return std::nullopt;
-        }
-
-        std::optional<SessionStatus> statusFromString(const QString& value)
-        {
-            if(value == QStringLiteral("active")) { return SessionStatus::Active; }
-            if(value == QStringLiteral("completed")) { return SessionStatus::Completed; }
-            if(value == QStringLiteral("interrupted")) { return SessionStatus::Interrupted; }
-            return std::nullopt;
-        }
-
         QDateTime dateTimeFromDatabase(const QVariant& value)
         {
             QDateTime result = QDateTime::fromString(value.toString(), Qt::ISODateWithMs);
@@ -151,8 +108,8 @@ namespace gamelog::core::database
 
         std::optional<Session> sessionFromQuery(const QSqlQuery& query)
         {
-            const auto source = sourceFromString(query.value(QStringLiteral("source")).toString());
-            const auto status = statusFromString(query.value(QStringLiteral("status")).toString());
+            const auto source = domain::sessionSourceFromDatabase(query.value(QStringLiteral("source")).toString());
+            const auto status = domain::sessionStatusFromDatabase(query.value(QStringLiteral("status")).toString());
 
             if(!source || !status)
             {
@@ -323,11 +280,11 @@ namespace gamelog::core::database
         appendInPredicate(QStringLiteral("s.game_id"), QStringLiteral("game_id"), gameIds, predicates, bindings);
 
         QList<QVariant> sources;
-        for(const SessionSource source : specification.sources) { sources.push_back(sourceToString(source)); }
+        for(const SessionSource source : specification.sources) { sources.push_back(domain::toDatabaseString(source)); }
         appendInPredicate(QStringLiteral("s.source"), QStringLiteral("source"), sources, predicates, bindings);
 
         QList<QVariant> statuses;
-        for(const SessionStatus status : specification.statuses) { statuses.push_back(statusToString(status)); }
+        for(const SessionStatus status : specification.statuses) { statuses.push_back(domain::toDatabaseString(status)); }
         appendInPredicate(QStringLiteral("s.status"), QStringLiteral("status"), statuses, predicates, bindings);
 
         const auto addComparison = [&predicates, &bindings](const QString& column,
@@ -452,8 +409,8 @@ namespace gamelog::core::database
         bindEndTimestamp(query, session.endTimestamp);
         query.bindValue(QStringLiteral(":tracked_duration_seconds"),
                         QVariant::fromValue<qlonglong>(session.trackedDuration.count()));
-        query.bindValue(QStringLiteral(":source"), sourceToString(session.source));
-        query.bindValue(QStringLiteral(":status"), statusToString(session.status));
+        query.bindValue(QStringLiteral(":source"), domain::toDatabaseString(session.source));
+        query.bindValue(QStringLiteral(":status"), domain::toDatabaseString(session.status));
 
         if(!query.exec())
         {
@@ -521,8 +478,8 @@ namespace gamelog::core::database
         bindEndTimestamp(query, session.endTimestamp);
         query.bindValue(QStringLiteral(":tracked_duration_seconds"),
                         QVariant::fromValue<qlonglong>(session.trackedDuration.count()));
-        query.bindValue(QStringLiteral(":source"), sourceToString(session.source));
-        query.bindValue(QStringLiteral(":status"), statusToString(session.status));
+        query.bindValue(QStringLiteral(":source"), domain::toDatabaseString(session.source));
+        query.bindValue(QStringLiteral(":status"), domain::toDatabaseString(session.status));
         query.bindValue(QStringLiteral(":id"), session.id);
 
         if(!query.exec() || query.numRowsAffected() != 1)
