@@ -46,7 +46,8 @@ class AutomaticSessionTrackerTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots :
     void advance_ignoresNonPositiveElapsed();
 
     void advance_doesNotStartBeforeTheGracePeriodElapses();
@@ -255,8 +256,7 @@ void AutomaticSessionTrackerTest::advance_prefersSteamMatchesOverPathMatches()
 
     // The path game has the lower ID, so only precedence can explain the winner.
     const std::vector<ProcessInfo> processes{
-        makeProcess(QStringLiteral("/games/path")),
-        makeProcess(QStringLiteral("/games/steam"), 600U)
+        makeProcess(QStringLiteral("/games/path")), makeProcess(QStringLiteral("/games/steam"), 600U)
     };
 
     const TrackingDecision decision = tracker.advance(processes, kGracePeriod, nullptr, steam, paths);
@@ -282,8 +282,7 @@ void AutomaticSessionTrackerTest::advance_retainsThePendingGameWhileItIsStillDet
     // Game 1 appears alongside it. Despite the lower ID tie-break, the pending
     // game is retained because it is still detected.
     const std::vector<ProcessInfo> both{
-        makeProcess(QStringLiteral("/games/a")),
-        makeProcess(QStringLiteral("/games/b"))
+        makeProcess(QStringLiteral("/games/a")), makeProcess(QStringLiteral("/games/b"))
     };
 
     const TrackingDecision decision = tracker.advance(both, seconds{20}, nullptr, {}, paths);

@@ -62,7 +62,7 @@ namespace gamelog::application::services
          */
         void setCredentialTimeout(std::chrono::milliseconds timeout);
 
-    Q_SIGNALS:
+        Q_SIGNALS :
         /**
          * Emitted when Steam successfully returns the user's game library.
          *
@@ -78,7 +78,8 @@ namespace gamelog::application::services
          */
         void requestFailed(QString error);
 
-    private Q_SLOTS:
+    private
+        Q_SLOTS :
         /**
          * Connected to CredentialService::secretRetrieved. Starts the HTTP request
          * when both required, nonblank credentials are available.

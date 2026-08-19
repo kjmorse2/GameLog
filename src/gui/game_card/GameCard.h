@@ -74,7 +74,8 @@ namespace gamelog::gui
 
         inline static const gamelog::core::domain::Game emptyGameCard{
             .id = -1, .title = QStringLiteral(""), .executablePath = QStringLiteral(""),
-            .executableName = QStringLiteral(""), .steamAppId = std::nullopt, .hasArtwork = false, .trackingEnabled = false
+            .executableName = QStringLiteral(""), .steamAppId = std::nullopt, .hasArtwork = false,
+            .trackingEnabled = false
         };
     };
 } // namespace gamelog::gui

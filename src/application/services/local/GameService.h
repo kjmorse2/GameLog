@@ -133,13 +133,14 @@ namespace gamelog::application::services
          */
         [[nodiscard]] bool setHasArtwork(int gameId, bool available);
 
-    public Q_SLOTS:
+    public
+        Q_SLOTS :
         /**
          * Wrapper for SteamApiService::getOwnedGames() that updates the database when results arrive.
          */
         void syncSteamGames();
 
-    Q_SIGNALS:
+        Q_SIGNALS :
         /**
          * Emitted when a new game is added to the database and the in-memory indexes are updated.
          * @param game The Game struct that was added.
@@ -173,7 +174,8 @@ namespace gamelog::application::services
          */
         QHash<QString, core::domain::Game> trackedPathGames_;
 
-    private Q_SLOTS:
+    private
+        Q_SLOTS :
         /**
          * Connected to the SteamApiService::ownedGamesReceived signal. Inserts
          * only Steam App IDs that do not already exist anywhere in the database.

@@ -50,10 +50,7 @@ namespace gamelog::core::process
         if(process.steamAppId)
         {
             const auto steamGame = trackedSteamGames.constFind(*process.steamAppId);
-            if(steamGame != trackedSteamGames.constEnd())
-            {
-                return {&steamGame.value(), MatchKind::SteamAppId};
-            }
+            if(steamGame != trackedSteamGames.constEnd()) { return {&steamGame.value(), MatchKind::SteamAppId}; }
         }
 
         if(!process.executablePath.isEmpty())

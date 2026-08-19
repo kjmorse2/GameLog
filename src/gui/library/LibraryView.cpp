@@ -25,7 +25,10 @@ namespace gamelog::gui
         ui->gridLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
         connect(ui->refreshButton, &QPushButton::clicked, this, &LibraryView::displayAllGames);
-        connect(ui->syncSteamGamesButton, &QPushButton::clicked, runtime_->getGameService(), &GameService::syncSteamGames);
+        connect(ui->syncSteamGamesButton,
+                &QPushButton::clicked,
+                runtime_->getGameService(),
+                &GameService::syncSteamGames);
         displayAllGames();
     }
 

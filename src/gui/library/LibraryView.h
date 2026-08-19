@@ -40,7 +40,8 @@ namespace gamelog::gui
 
         ~LibraryView() override;
 
-    public Q_SLOTS:
+    public
+        Q_SLOTS :
         /**
          * Displays all games in the library.
          */

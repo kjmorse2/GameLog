@@ -236,7 +236,6 @@ namespace gamelog::core::database
 
             return QStringLiteral("s.start_timestamp_utc");
         }
-
     } // namespace
 
     SessionRepository::SessionRepository(const QSqlDatabase& database) : database_{database} {}
@@ -244,13 +243,12 @@ namespace gamelog::core::database
     std::vector<domain::Session> SessionRepository::query(const domain::query::SessionQuery& specification) const
     {
         const QString baseSql = QStringLiteral("SELECT s.id AS id, s.game_id AS game_id, "
-                                              "s.start_timestamp_utc AS start_timestamp_utc, "
-                                              "s.end_timestamp_utc AS end_timestamp_utc, "
-                                              "s.tracked_duration_seconds AS tracked_duration_seconds, "
-                                              "s.source AS source, s.status AS status, "
-                                              "COALESCE(d.content, '') AS notes "
-                                              "FROM sessions AS s "
-                                              "LEFT JOIN session_documents AS d ON d.session_id = s.id");
+                                               "s.start_timestamp_utc AS start_timestamp_utc, "
+                                               "s.end_timestamp_utc AS end_timestamp_utc, "
+                                               "s.tracked_duration_seconds AS tracked_duration_seconds, "
+                                               "s.source AS source, s.status AS status, "
+                                               "COALESCE(d.content, '') AS notes " "FROM sessions AS s "
+                                               "LEFT JOIN session_documents AS d ON d.session_id = s.id");
 
         SqlQueryBuilder builder;
 
@@ -263,10 +261,7 @@ namespace gamelog::core::database
         builder.addInPredicate(QStringLiteral("s.game_id"), QStringLiteral("game_id"), gameIds);
 
         QList<QVariant> sources;
-        for(const SessionSource source : specification.sources)
-        {
-            sources.push_back(domain::toDatabaseString(source));
-        }
+        for(const SessionSource source : specification.sources) { sources.push_back(domain::toDatabaseString(source)); }
         builder.addInPredicate(QStringLiteral("s.source"), QStringLiteral("source"), sources);
 
         QList<QVariant> statuses;

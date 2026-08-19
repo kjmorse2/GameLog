@@ -242,8 +242,8 @@ namespace gamelog::application::services
 
             if(!game)
             {
-                qCWarning(gamelogSessionServiceLog) << "Active session" << session.id << "references missing game" << session.
-                    gameId << "and will be interrupted.";
+                qCWarning(gamelogSessionServiceLog) << "Active session" << session.id << "references missing game" <<
+                    session.gameId << "and will be interrupted.";
             }
             else
             {
@@ -261,8 +261,8 @@ namespace gamelog::application::services
 
         if(activeSession_)
         {
-            qCInfo(gamelogSessionServiceLog) << "Restored active session" << activeSession_->id << "for game:" << activeGame_->
-                title;
+            qCInfo(gamelogSessionServiceLog) << "Restored active session" << activeSession_->id << "for game:" <<
+                activeGame_->title;
         }
 
         return true;
@@ -322,7 +322,8 @@ namespace gamelog::application::services
 
         if(game.id <= 0 || !game.trackingEnabled)
         {
-            qCWarning(gamelogSessionServiceLog) << "Cannot start an automatic session for an invalid or untracked game.";
+            qCWarning(gamelogSessionServiceLog) <<
+                "Cannot start an automatic session for an invalid or untracked game.";
             return std::nullopt;
         }
 
@@ -341,7 +342,8 @@ namespace gamelog::application::services
         activeSession_ = session;
         activeGame_ = game;
 
-        qCInfo(gamelogSessionServiceLog) << "Started session" << activeSession_->id << "for game:" << activeGame_->title;
+        qCInfo(gamelogSessionServiceLog) << "Started session" << activeSession_->id << "for game:" << activeGame_->
+            title;
 
         emit sessionStarted(*activeGame_);
         return activeSession_;
@@ -385,5 +387,4 @@ namespace gamelog::application::services
         emit sessionStopped(session);
         return true;
     }
-
 } // namespace gamelog::application::services

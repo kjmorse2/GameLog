@@ -119,31 +119,29 @@ namespace gamelog::gui
 
     void MainWindow::onAddSteamApiKey()
     {
-        const std::optional<QString> key = promptForSecret(
-            tr("Add Steam Web API Key"),
-            tr("GameLog uses the Steam Web API to import your Steam library. "
-               "Enter your Steam Web API key below. "
-               "You can obtain a key from Steam's developer page."),
-            tr("Steam Web API key"));
+        const std::optional<QString> key = promptForSecret(tr("Add Steam Web API Key"),
+                                                           tr("GameLog uses the Steam Web API to import your Steam library. "
+                                                              "Enter your Steam Web API key below. "
+                                                              "You can obtain a key from Steam's developer page."),
+                                                           tr("Steam Web API key"));
 
         if(!key) { return; }
 
         runtime_.getCredentialService()->
-            setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), *key);
+                 setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), *key);
     }
 
     void MainWindow::onAddSteamPlayerId()
     {
-        const std::optional<QString> playerId = promptForSecret(
-            tr("Add Steam Player ID"),
-            tr("GameLog uses the Steam Web API to import your Steam library. "
-               "Enter your 64-bit Steam player ID below. "
-               "You can find it on your Steam profile page."),
-            tr("Steam player ID"));
+        const std::optional<QString> playerId = promptForSecret(tr("Add Steam Player ID"),
+                                                                tr("GameLog uses the Steam Web API to import your Steam library. "
+                                                                   "Enter your 64-bit Steam player ID below. "
+                                                                   "You can find it on your Steam profile page."),
+                                                                tr("Steam player ID"));
 
         if(!playerId) { return; }
 
         runtime_.getCredentialService()->
-            setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey), *playerId);
+                 setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey), *playerId);
     }
 } // namespace gamelog::gui

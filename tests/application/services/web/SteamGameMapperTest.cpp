@@ -11,10 +11,7 @@ using gamelog::core::domain::Game;
 
 namespace
 {
-    QJsonArray parseArray(const QByteArray& json)
-    {
-        return QJsonDocument::fromJson(json).array();
-    }
+    QJsonArray parseArray(const QByteArray& json) { return QJsonDocument::fromJson(json).array(); }
 } // namespace
 
 /**
@@ -25,7 +22,8 @@ class SteamGameMapperTest : public QObject
 {
     Q_OBJECT
 
-private slots:
+private
+    slots :
     void mapsWellFormedEntries();
 
     void skipsNonObjectEntries();
@@ -43,8 +41,8 @@ private slots:
 
 void SteamGameMapperTest::mapsWellFormedEntries()
 {
-    const std::vector<Game> games = gamesFromSteamOwnedGames(
-        parseArray(R"([{"appid":10,"name":"Half-Life"},{"appid":20,"name":"Team Fortress"}])"));
+    const std::vector<Game> games =
+        gamesFromSteamOwnedGames(parseArray(R"([{"appid":10,"name":"Half-Life"},{"appid":20,"name":"Team Fortress"}])"));
 
     QCOMPARE(games.size(), std::size_t{2});
     QCOMPARE(games[0].title, QStringLiteral("Half-Life"));
@@ -56,8 +54,8 @@ void SteamGameMapperTest::mapsWellFormedEntries()
 void SteamGameMapperTest::skipsNonObjectEntries()
 {
     // One malformed entry must not discard the rest of the library.
-    const std::vector<Game> games = gamesFromSteamOwnedGames(
-        parseArray(R"([1, "text", null, {"appid":10,"name":"Half-Life"}])"));
+    const std::vector<Game> games =
+        gamesFromSteamOwnedGames(parseArray(R"([1, "text", null, {"appid":10,"name":"Half-Life"}])"));
 
     QCOMPARE(games.size(), std::size_t{1});
     QCOMPARE(games[0].steamAppId.value_or(0), 10);
@@ -65,8 +63,8 @@ void SteamGameMapperTest::skipsNonObjectEntries()
 
 void SteamGameMapperTest::skipsNonPositiveAppIds()
 {
-    const std::vector<Game> games = gamesFromSteamOwnedGames(
-        parseArray(R"([{"appid":0,"name":"Zero"},{"appid":-5,"name":"Negative"},{"name":"Missing"},
+    const std::vector<Game> games =
+        gamesFromSteamOwnedGames(parseArray(R"([{"appid":0,"name":"Zero"},{"appid":-5,"name":"Negative"},{"name":"Missing"},
                        {"appid":10,"name":"Valid"}])"));
 
     QCOMPARE(games.size(), std::size_t{1});
@@ -75,8 +73,8 @@ void SteamGameMapperTest::skipsNonPositiveAppIds()
 
 void SteamGameMapperTest::skipsBlankTitles()
 {
-    const std::vector<Game> games = gamesFromSteamOwnedGames(
-        parseArray(R"([{"appid":10,"name":""},{"appid":11,"name":"   "},{"appid":12},
+    const std::vector<Game> games =
+        gamesFromSteamOwnedGames(parseArray(R"([{"appid":10,"name":""},{"appid":11,"name":"   "},{"appid":12},
                        {"appid":13,"name":"Valid"}])"));
 
     QCOMPARE(games.size(), std::size_t{1});
@@ -92,10 +90,7 @@ void SteamGameMapperTest::preservesTitleWhitespaceItDoesNotReject()
     QCOMPARE(games[0].title, QStringLiteral(" Portal "));
 }
 
-void SteamGameMapperTest::returnsEmptyForAnEmptyArray()
-{
-    QVERIFY(gamesFromSteamOwnedGames(QJsonArray{}).empty());
-}
+void SteamGameMapperTest::returnsEmptyForAnEmptyArray() { QVERIFY(gamesFromSteamOwnedGames(QJsonArray{}).empty()); }
 
 void SteamGameMapperTest::leavesIdUnsetSoTheRepositoryAssignsIt()
 {

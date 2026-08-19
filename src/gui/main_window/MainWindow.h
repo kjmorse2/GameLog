@@ -55,7 +55,8 @@ namespace gamelog::gui
                                                              const QString& explanation,
                                                              const QString& placeholder);
 
-    private Q_SLOTS:
+    private
+        Q_SLOTS :
         void onSessionStarted(const core::domain::Game& game);
 
         void onSessionEnded();

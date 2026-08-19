@@ -96,7 +96,6 @@ namespace gamelog::core::database
 
             return QStringLiteral("title COLLATE NOCASE");
         }
-
     } // namespace
 
     GameRepository::GameRepository(const QSqlDatabase& database) : database_{database} {}
@@ -104,7 +103,7 @@ namespace gamelog::core::database
     std::vector<domain::Game> GameRepository::query(const GameQuery& specification) const
     {
         const QString baseSql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, "
-                                              "has_artwork, tracking_enabled FROM games");
+                                               "has_artwork, tracking_enabled FROM games");
 
         SqlQueryBuilder builder;
 

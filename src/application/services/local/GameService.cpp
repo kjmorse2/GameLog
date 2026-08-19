@@ -128,8 +128,8 @@ namespace gamelog::application::services
             }
         }
 
-        qCInfo(gamelogGameServiceLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.
-            size() << "path-based games.";
+        qCInfo(gamelogGameServiceLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_
+           .size() << "path-based games.";
     }
 
     const QHash<std::uint32_t, Game>& GameService::trackedSteamGames() const noexcept { return trackedSteamGames_; }
@@ -161,10 +161,7 @@ namespace gamelog::application::services
         // Note this must consider the whole database, not just the tracked
         // index, so untracked rows are still recognized as existing.
         QSet<int> knownSteamAppIds;
-        for(const Game& game : search({}))
-        {
-            if(game.steamAppId) { knownSteamAppIds.insert(*game.steamAppId); }
-        }
+        for(const Game& game : search({})) { if(game.steamAppId) { knownSteamAppIds.insert(*game.steamAppId); } }
 
         std::vector<Game> insertedGames;
 

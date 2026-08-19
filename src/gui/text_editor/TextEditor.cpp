@@ -125,10 +125,8 @@ namespace gamelog::gui
         {
             const QString selectedText = cursor.selectedText();
 
-            if(selectedText.startsWith(QStringLiteral("http://")) || selectedText.startsWith(QStringLiteral("https://")))
-            {
-                initialValue = selectedText;
-            }
+            if(selectedText.startsWith(QStringLiteral("http://")) || selectedText.
+               startsWith(QStringLiteral("https://"))) { initialValue = selectedText; }
         }
 
         if(initialValue.isEmpty()) { initialValue = QStringLiteral("https://"); }

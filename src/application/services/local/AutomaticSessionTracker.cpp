@@ -22,9 +22,7 @@ namespace gamelog::application::services
 
         if(activeGame == nullptr)
         {
-            const std::optional<Game> detectedGame = selectDetectedGame(processes,
-                                                                        trackedSteamGames,
-                                                                        trackedPathGames);
+            const std::optional<Game> detectedGame = selectDetectedGame(processes, trackedSteamGames, trackedPathGames);
             if(!detectedGame)
             {
                 resetPendingStart();
@@ -70,10 +68,9 @@ namespace gamelog::application::services
         gameClosedDuration_ = seconds::zero();
     }
 
-    std::optional<Game> AutomaticSessionTracker::selectDetectedGame(
-        const std::vector<ProcessInfo>& processes,
-        const QHash<std::uint32_t, Game>& trackedSteamGames,
-        const QHash<QString, Game>& trackedPathGames) const
+    std::optional<Game> AutomaticSessionTracker::selectDetectedGame(const std::vector<ProcessInfo>& processes,
+                                                                    const QHash<std::uint32_t, Game>& trackedSteamGames,
+                                                                    const QHash<QString, Game>& trackedPathGames) const
     {
         struct Candidate
         {
