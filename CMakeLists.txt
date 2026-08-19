@@ -45,14 +45,6 @@ pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)
 
 add_library(gamelog-warnings INTERFACE)
 
-include(CTest)
-include(GNUInstallDirs)
-
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network Sql Test Keychain)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)
-
 target_compile_options(gamelog-warnings
         INTERFACE
         $<$<CXX_COMPILER_ID:GNU>:-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion>

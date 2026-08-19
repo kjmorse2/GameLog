@@ -22,6 +22,7 @@ namespace gamelog::core::database
 using gamelog::core::database::DatabaseManager;
 using gamelog::application::services::GameService;
 using gamelog::core::domain::Game;
+using gamelog::core::domain::query::GameQuery;
 using gamelog::core::database::GameRepository;
 using gamelog::application::services::CredentialService;
 using gamelog::application::services::SteamApiService;

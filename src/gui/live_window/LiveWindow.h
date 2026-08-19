@@ -1,9 +1,4 @@
-//
-// Created by kj on 8/12/26.
-//
-
-#ifndef GAMELOG_LIVEWINDOW_H
-#define GAMELOG_LIVEWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QTime>
@@ -34,8 +29,7 @@ namespace gamelog::gui
 
         ~LiveWindow() override;
 
-    private
-        slots  :
+    private Q_SLOTS:
         /**
          * Connected to SessionService::sessionStarted. Updates the UI to reflect the new session.
          * @param game The Game struct that was started.
@@ -55,11 +49,9 @@ namespace gamelog::gui
         void updateTimerText();
 
     private:
-        Ui::LiveWindow* ui{};
-        application::GameLogRuntime& gameLogRuntime;
-        QTimer* clockTimer{};
-        QTime currentTime;
+        Ui::LiveWindow* ui_{};
+        application::GameLogRuntime& gameLogRuntime_;
+        QTimer* clockTimer_{};
+        QTime currentTime_;
     };
 } // namespace gamelog::gui
-
-#endif // GAMELOG_LIVEWINDOW_H

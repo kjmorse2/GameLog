@@ -43,61 +43,61 @@ namespace gamelog::application::services
          * @param query The query struct describing the search criteria.
          * @return A vector of Game objects returned from the query.
          */
-        [[nodiscard]] std::vector<Game> search(const GameQuery& query) const;
+        [[nodiscard]] std::vector<core::domain::Game> search(const core::domain::query::GameQuery& query) const;
 
         /**
          * Returns all games in the database.
          * @return A vector of all games.
          */
-        [[nodiscard]] std::vector<Game> listGames() const;
+        [[nodiscard]] std::vector<core::domain::Game> listGames() const;
 
         /**
          * Returns all tracked games in the database.
          * @return A vector of all tracked games.
          */
-        [[nodiscard]] std::vector<Game> listTrackedGames() const;
+        [[nodiscard]] std::vector<core::domain::Game> listTrackedGames() const;
 
         /**
          * Gets the game with the specified ID from the database if it exists.
          * @param id of the game to find
          * @return The Game struct if found, or std::nullopt if not found.
          */
-        [[nodiscard]] std::optional<Game> findById(std::int64_t id) const;
+        [[nodiscard]] std::optional<core::domain::Game> findById(int id) const;
 
         /**
          * Gets the game with the specified executable name from the database if it exists.
          * @param name of the executable.
          * @return The Game struct if found, or std::nullopt if not found.
          */
-        [[nodiscard]] std::optional<Game> findByExecutableName(const QString& name) const;
+        [[nodiscard]] std::optional<core::domain::Game> findByExecutableName(const QString& name) const;
 
         /**
          * Gets the game with the specified executable path from the database if it exists.
          * @param path to the executable.
          * @return The Game struct if found, or std::nullopt if not found.
          */
-        [[nodiscard]] std::optional<Game> findByExecutablePath(const QString& path) const;
+        [[nodiscard]] std::optional<core::domain::Game> findByExecutablePath(const QString& path) const;
 
         /**
          * Adds a new game to the database and updates the in-memory indexes.
          * @param game The Game struct to add.
          * @return A boolean describing if the operation succeeded.
          */
-        [[nodiscard]] bool addGame(Game& game);
+        [[nodiscard]] bool addGame(core::domain::Game& game);
 
         /**
          * Updates the provided game in the database and updates the in-memory indexes.
          * @param game the Game struct to update.
          * @return A boolean describing if the operation succeeded.
          */
-        [[nodiscard]] bool updateGame(const Game& game);
+        [[nodiscard]] bool updateGame(const core::domain::Game& game);
 
         /**
          * Removes the game with the provided id in the database and updates the in-memory indexes.
          * @param id of the Game struct to remove.
          * @return A boolean describing if the operation succeeded.
          */
-        [[nodiscard]] bool removeGame(std::int64_t id);
+        [[nodiscard]] bool removeGame(int id);
 
         /**
          * Rebuilds the process-matching indexes from the repository. Steam App
@@ -111,13 +111,13 @@ namespace gamelog::application::services
          * References remain valid until the next cache refresh.
          * @return The tracked Steam games indexed by Steam App ID.
          */
-        [[nodiscard]] const QHash<std::uint32_t, Game>& trackedSteamGames() const noexcept;
+        [[nodiscard]] const QHash<std::uint32_t, core::domain::Game>& trackedSteamGames() const noexcept;
 
         /**
          * Read-only access to the service-owned process-matching indexes for path tracked games.
          * @return The tracked path games indexed by executable path.
          */
-        [[nodiscard]] const QHash<QString, Game>& trackedPathGames() const noexcept;
+        [[nodiscard]] const QHash<QString, core::domain::Game>& trackedPathGames() const noexcept;
 
         /**
          * Returns true if there are any tracked Steam games in the in-memory index.
@@ -133,25 +133,24 @@ namespace gamelog::application::services
          */
         [[nodiscard]] bool setHasArtwork(int gameId, bool available);
 
-    public
-        slots  :
+    public Q_SLOTS:
         /**
          * Wrapper for SteamApiService::getOwnedGames() that updates the database when results arrive.
          */
         void syncSteamGames();
 
-        signals  :
+    Q_SIGNALS:
         /**
          * Emitted when a new game is added to the database and the in-memory indexes are updated.
          * @param game The Game struct that was added.
          */
-        void gameAdded(const Game& game);
+        void gameAdded(const core::domain::Game& game);
 
         /**
          * Emitted when a game is updated in the database and the in-memory indexes are updated.
          * @param game The Game struct that was updated.
          */
-        void gameUpdated(const Game& game);
+        void gameUpdated(const core::domain::Game& game);
 
     private:
         /**
@@ -167,15 +166,14 @@ namespace gamelog::application::services
         /**
          * The in-memory index of tracked Steam games, keyed by Steam App ID.
          */
-        QHash<std::uint32_t, Game> trackedSteamGames_;
+        QHash<std::uint32_t, core::domain::Game> trackedSteamGames_;
 
         /**
          * The in-memory index of tracked path games, keyed by executable path.
          */
-        QHash<QString, Game> trackedPathGames_;
+        QHash<QString, core::domain::Game> trackedPathGames_;
 
-    private
-        slots  :
+    private Q_SLOTS:
         /**
          * Connected to the SteamApiService::ownedGamesReceived signal. Inserts
          * only Steam App IDs that do not already exist anywhere in the database.

@@ -13,6 +13,8 @@
 
 namespace gamelog::core::database
 {
+    using domain::Game;
+
     namespace
     {
         using domain::query::GameQuery;
@@ -40,16 +42,9 @@ namespace gamelog::core::database
             query.bindValue(placeholder, value ? QVariant{*value} : QVariant{});
         }
 
-        bool validateGame(const Game& game, bool inserting)
+        /// Field rules shared by insert and update; the ID rule differs and is checked by each caller.
+        bool validateGameFields(const Game& game)
         {
-            if((inserting && game.id != 0) || (!inserting && game.id <= 0))
-            {
-                qCWarning(gamelogDatabaseLog) << (inserting
-                                                      ? "Refusing to insert a game with a preassigned ID:"
-                                                      : "Refusing to update a game without a valid ID:") << game.id;
-                return false;
-            }
-
             if(game.title.trimmed().isEmpty())
             {
                 qCWarning(gamelogDatabaseLog) << "Refusing to persist a game with an empty or whitespace-only title.";
@@ -66,6 +61,28 @@ namespace gamelog::core::database
             return true;
         }
 
+        bool validateGameForInsert(const Game& game)
+        {
+            if(game.id != 0)
+            {
+                qCWarning(gamelogDatabaseLog) << "Refusing to insert a game with a preassigned ID:" << game.id;
+                return false;
+            }
+
+            return validateGameFields(game);
+        }
+
+        bool validateGameForUpdate(const Game& game)
+        {
+            if(game.id <= 0)
+            {
+                qCWarning(gamelogDatabaseLog) << "Refusing to update a game without a valid ID:" << game.id;
+                return false;
+            }
+
+            return validateGameFields(game);
+        }
+
         QString orderColumn(GameSortField field)
         {
             switch(field)
@@ -79,7 +96,7 @@ namespace gamelog::core::database
             return QStringLiteral("title COLLATE NOCASE");
         }
 
-        void appendIdPredicate(const std::vector<std::int64_t>& ids,
+        void appendIdPredicate(const std::vector<int>& ids,
                                QStringList& predicates,
                                QList<QPair<QString, QVariant>>& bindings)
         {
@@ -192,7 +209,7 @@ namespace gamelog::core::database
 
     bool GameRepository::insert(domain::Game& game)
     {
-        if(!validateGame(game, true)) { return false; }
+        if(!validateGameForInsert(game)) { return false; }
 
         QSqlQuery query{database_};
         if(!query.prepare(QStringLiteral("INSERT INTO games "
@@ -230,7 +247,7 @@ namespace gamelog::core::database
 
     bool GameRepository::update(const domain::Game& game)
     {
-        if(!validateGame(game, false)) { return false; }
+        if(!validateGameForUpdate(game)) { return false; }
 
         QSqlQuery query{database_};
         if(!query.prepare(QStringLiteral("UPDATE games SET " "title = :title, " "executable_path = :executable_path, "
@@ -259,7 +276,7 @@ namespace gamelog::core::database
         return query.numRowsAffected() == 1;
     }
 
-    bool GameRepository::remove(std::int64_t id)
+    bool GameRepository::remove(int id)
     {
         if(id <= 0) { return false; }
 

@@ -21,9 +21,7 @@ namespace gamelog::application::services
           credentialService_{credentialService},
           networkAccessManager_{new QNetworkAccessManager{this}}
     {
-        connect(&credentialService_, &CredentialService::secretRetrieved, this, &SteamApiService::onSecretRetrieved);
-        connect(&credentialService_, &CredentialService::secretNotFound, this, &SteamApiService::onSecretNotFound);
-        connect(&credentialService_, &CredentialService::credentialError, this, &SteamApiService::onCredentialError);
+        connectCredentialService();
     }
 
     SteamApiService::SteamApiService(CredentialService& credentialService,
@@ -32,6 +30,11 @@ namespace gamelog::application::services
         : QObject{parent},
           credentialService_{credentialService},
           networkAccessManager_{&networkAccessManager}
+    {
+        connectCredentialService();
+    }
+
+    void SteamApiService::connectCredentialService()
     {
         connect(&credentialService_, &CredentialService::secretRetrieved, this, &SteamApiService::onSecretRetrieved);
         connect(&credentialService_, &CredentialService::secretNotFound, this, &SteamApiService::onSecretNotFound);

@@ -1,9 +1,4 @@
-//
-// Created by kj on 8/14/26.
-//
-
-#ifndef GAMELOG_APPPATHS_H
-#define GAMELOG_APPPATHS_H
+#pragma once
 
 #include <QString>
 
@@ -39,4 +34,3 @@ namespace gamelog::core
         [[nodiscard]] static QString gameArtworkDirectory(int gameId);
     };
 }
-#endif //GAMELOG_APPPATHS_H

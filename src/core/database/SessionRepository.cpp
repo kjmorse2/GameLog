@@ -20,6 +20,8 @@ using gamelog::core::domain::query::SortDirection;
 
 namespace gamelog::core::database
 {
+    using domain::Session;
+
     namespace
     {
         QString sourceToString(SessionSource source)
@@ -300,7 +302,7 @@ namespace gamelog::core::database
 
     SessionRepository::SessionRepository(const QSqlDatabase& database) : database_{database} {}
 
-    vector<Session> SessionRepository::query(const SessionQuery& specification) const
+    std::vector<domain::Session> SessionRepository::query(const domain::query::SessionQuery& specification) const
     {
         QString sql = QStringLiteral("SELECT s.id AS id, s.game_id AS game_id, "
                                      "s.start_timestamp_utc AS start_timestamp_utc, "
@@ -414,12 +416,12 @@ namespace gamelog::core::database
             return {};
         }
 
-        vector<Session> sessions;
+        std::vector<domain::Session> sessions;
         while(sqlQuery.next()) { if(const auto session = sessionFromQuery(sqlQuery)) { sessions.push_back(*session); } }
         return sessions;
     }
 
-    bool SessionRepository::insert(Session& session)
+    bool SessionRepository::insert(domain::Session& session)
     {
         if(session.id != 0)
         {
@@ -489,7 +491,7 @@ namespace gamelog::core::database
         return true;
     }
 
-    bool SessionRepository::update(const Session& session)
+    bool SessionRepository::update(const domain::Session& session)
     {
         if(session.id <= 0) { return false; }
 

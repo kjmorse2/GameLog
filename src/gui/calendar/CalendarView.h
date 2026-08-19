@@ -1,17 +1,10 @@
-//
-// Created by kj on 8/7/26.
-//
-
-#ifndef GAMELOG_CALENDARVIEW_H
-#define GAMELOG_CALENDARVIEW_H
+#pragma once
 
 #include <QCalendarWidget>
 #include <QWidget>
 
-#include "../../application/services/local/GameService.h"
-#include "../../application/services/local/SessionService.h"
-using gamelog::application::services::GameService;
-using gamelog::application::services::SessionService;
+#include "application/services/local/GameService.h"
+#include "application/services/local/SessionService.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -20,53 +13,54 @@ namespace Ui
     class CalendarView;
 }
 
-QT_END_NAMESPACE class CalendarView : public QWidget
+QT_END_NAMESPACE
+
+namespace gamelog::gui
 {
-    Q_OBJECT
+    class CalendarView : public QWidget
+    {
+        Q_OBJECT
 
-public:
-    /**
-     * Creates a new CalendarView.
-     * @param parent The parent widget.
-     * @param gameService The game service to query/edit for games.
-     * @param sessionService The session service to querey/edit  for sessions
-     */
-    explicit CalendarView(QWidget* parent = nullptr,
-                          GameService* gameService = nullptr,
-                          SessionService* sessionService = nullptr);
+    public:
+        /**
+         * Creates a new CalendarView.
+         * @param parent The parent widget.
+         * @param gameService The game service to query/edit for games.
+         * @param sessionService The session service to query/edit for sessions.
+         */
+        explicit CalendarView(QWidget* parent = nullptr,
+                              gamelog::application::services::GameService* gameService = nullptr,
+                              gamelog::application::services::SessionService* sessionService = nullptr);
 
-    ~CalendarView() override;
+        ~CalendarView() override;
 
-private:
-    /**
-     * @brief ui pointer from QT
-     */
-    Ui::CalendarView* ui{};
+    private:
+        /**
+         * @brief ui pointer from QT
+         */
+        Ui::CalendarView* ui{};
 
-    /**
-     * @brief The game service to query/edit for games.
-     */
-    GameService* gameService_{};
+        /**
+         * @brief The game service to query/edit for games.
+         */
+        gamelog::application::services::GameService* gameService_{};
 
-    /**
-     * @brief the session service to query/edit for sessions
-     */
-    SessionService* sessionService_{};
+        /**
+         * @brief the session service to query/edit for sessions
+         */
+        gamelog::application::services::SessionService* sessionService_{};
 
-    /**
-     * @brief The calendar widget.
-     */
-    QCalendarWidget* calendar_;
+        /**
+         * @brief The calendar widget.
+         */
+        QCalendarWidget* calendar_{};
 
-private
-    slots  :
-    /**
-     * Called when the calendar page is changed.
-     * @param year The year the calendar is on
-     * @param month The month the calendar is on.
-     */
-    void onPageChanged(int year, int month) const;
-};
-
-
-#endif // GAMELOG_CALENDARVIEW_H
+    private Q_SLOTS:
+        /**
+         * Called when the calendar page is changed.
+         * @param year The year the calendar is on
+         * @param month The month the calendar is on.
+         */
+        void onPageChanged(int year, int month) const;
+    };
+} // namespace gamelog::gui

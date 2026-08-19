@@ -3,7 +3,6 @@
 #include "domain/query/QueryOptions.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -30,7 +29,7 @@ namespace gamelog::core::domain::query
         /**
          * @brief The IDs to select.
          */
-        std::vector<std::int64_t> ids;
+        std::vector<int> ids;
 
         /**
          * @brief The title of the Game to select.

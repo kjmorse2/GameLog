@@ -14,7 +14,7 @@ namespace gamelog::application::services
 
     void CredentialService::setSecret(const QString& key, const QString& secret)
     {
-        qCDebug(gamelogSessionServiceLog) << "Setting secret for key";
+        qCDebug(gamelogCredentialServiceLog) << "Setting secret for key";
 
         if(isBlank(key))
         {

@@ -1,16 +1,11 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
 
 #include <QSqlDatabase>
 
 #include "domain/Game.h"
 #include "domain/query/GameQuery.h"
-
-using std::vector;
-using gamelog::core::domain::Game;
-using gamelog::core::domain::query::GameQuery;
 
 namespace gamelog::core::database
 {
@@ -31,7 +26,7 @@ namespace gamelog::core::database
          * @param specification The query specification.
          * @return A vector of games matching the specification.
          */
-        [[nodiscard]] vector<Game> query(const GameQuery& specification) const;
+        [[nodiscard]] std::vector<domain::Game> query(const domain::query::GameQuery& specification) const;
 
         /**
          * Inserts a game into the database. The game must have ID zero, a
@@ -39,7 +34,7 @@ namespace gamelog::core::database
          * @param game The game to insert. Its generated ID is assigned on success.
          * @return True if the game was inserted, false otherwise.
          */
-        [[nodiscard]] bool insert(Game& game);
+        [[nodiscard]] bool insert(domain::Game& game);
 
         /**
          * Updates a persisted game. The game must have a positive ID, a
@@ -47,14 +42,14 @@ namespace gamelog::core::database
          * @param game The game to update.
          * @return True if exactly one game was updated, false otherwise.
          */
-        [[nodiscard]] bool update(const Game& game);
+        [[nodiscard]] bool update(const domain::Game& game);
 
         /**
          * Removes a Game from the database.
          * @param id The ID of the game to remove.
          * @return True if exactly one game was removed, false otherwise.
          */
-        [[nodiscard]] bool remove(std::int64_t id);
+        [[nodiscard]] bool remove(int id);
 
     private:
         QSqlDatabase database_;

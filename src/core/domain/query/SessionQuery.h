@@ -30,76 +30,76 @@ namespace gamelog::core::domain::query
     QDebug operator<<(QDebug debug, SessionSortField sortField);
 
     /**
-    * Persistence-neutral description of a session search.
-    *
-    * Set fields are combined with AND. Values within gameIds, sources, or
-    * statuses are combined with IN.
-    */
+     * Persistence-neutral description of a session search.
+     *
+     * Set fields are combined with AND. Values within gameIds, sources, or
+     * statuses are combined with IN.
+     */
     struct SessionQuery
     {
         /**
-        * The Id's of sessions to select
-        */
+         * The IDs of the sessions to select.
+         */
         std::vector<int> ids;
 
         /**
-        * The Id's of Games to select
-        */
+         * The IDs of the games to select.
+         */
         std::vector<int> gameIds;
 
         /**
-        * The sources of the sessions to select
-        */
+         * The sources of the sessions to select.
+         */
         std::vector<SessionSource> sources;
 
         /**
-        * The status's of games to select
-        */
+         * The statuses of the sessions to select.
+         */
         std::vector<SessionStatus> statuses;
 
         /**
-        * The inclusive lower bound for session start timestamps.
-        */
+         * The inclusive lower bound for session start timestamps.
+         */
         std::optional<QDateTime> startedAtOrAfter;
 
         /**
-        * The exclusive upper bound for session start timestamps.
-        */
+         * The exclusive upper bound for session start timestamps.
+         */
         std::optional<QDateTime> startedBefore;
 
         /**
-        * The minimum tracked duration of the sessions to select
-        */
+         * The minimum tracked duration of the sessions to select
+         */
         std::optional<std::chrono::seconds> minimumTrackedDuration;
 
         /**
-        * The maximum tracked duration of the sessions to select
-        */
+         * The maximum tracked duration of the sessions to select
+         */
         std::optional<std::chrono::seconds> maximumTrackedDuration;
 
         /**
-        * Whether the sessions to select have an end timestamp
-        */
+         * Whether the sessions to select have an end timestamp
+         */
         std::optional<bool> hasEndTimestamp;
 
         /**
-        * The field to sort by.
-        */
+         * The field to sort by.
+         */
         SessionSortField sortBy{SessionSortField::StartTimestamp};
 
         /**
-        * The direction to sort by.
-        */
+         * The direction to sort by.
+         */
         SortDirection sortDirection{SortDirection::Descending};
 
         /**
-        * The maximum number of sessions to return.
-        */
+         * The maximum number of sessions to return.
+         */
         std::optional<std::size_t> limit;
 
         /**
-        * The number of sessions to skip before returning the first one.
-        */
+         * The number of sessions to skip before returning the first one.
+         */
         std::optional<std::size_t> offset;
     };
 

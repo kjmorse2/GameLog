@@ -31,7 +31,7 @@ namespace gamelog::core::process
 
         if(creationResult < 0)
         {
-            qCritical(gamelogCoreLog) << "Failed to create pids_info structure:" << std::strerror(errno);
+            qCCritical(gamelogProcessLog) << "Failed to create pids_info structure:" << std::strerror(errno);
             return {};
         }
 
@@ -41,7 +41,7 @@ namespace gamelog::core::process
         {
             const int savedErrno = errno;
             procps_pids_unref(&info);
-            qCritical(gamelogCoreLog) << "Failed to fetch process information:" << std::strerror(savedErrno);
+            qCCritical(gamelogProcessLog) << "Failed to fetch process information:" << std::strerror(savedErrno);
             return {};
         }
 
@@ -73,7 +73,7 @@ namespace gamelog::core::process
             if(command != nullptr) { process.executableName = QString::fromLocal8Bit(command); }
 
             if(executable != nullptr) { process.executablePath = QString::fromLocal8Bit(executable); }
-            // qInfo(gamelogCoreLog) << "Detected process:" << process.executableName << "PID:" << process.pid << "Path:" << process.executablePath;
+            // qCDebug(gamelogProcessLog) << "Detected process:" << process.executableName << "PID:" << process.pid << "Path:" << process.executablePath;
             processes.push_back(std::move(process));
         }
         procps_pids_unref(&info);

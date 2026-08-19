@@ -7,10 +7,6 @@
 #include "domain/Session.h"
 #include "domain/query/SessionQuery.h"
 
-using std::vector;
-using gamelog::core::domain::Session;
-using gamelog::core::domain::query::SessionQuery;
-
 namespace gamelog::core::database
 {
     /**
@@ -34,7 +30,7 @@ namespace gamelog::core::database
          * @param specification The query specification.
          * @return A vector of sessions matching the specification.
          */
-        [[nodiscard]] vector<Session> query(const SessionQuery& specification) const;
+        [[nodiscard]] std::vector<domain::Session> query(const domain::query::SessionQuery& specification) const;
 
         /**
          * Add a valid session and its note document in one transaction. Every
@@ -43,7 +39,7 @@ namespace gamelog::core::database
          * @param session The session to add.
          * @return True if the session was added, false otherwise.
          */
-        [[nodiscard]] bool insert(Session& session);
+        [[nodiscard]] bool insert(domain::Session& session);
 
         /**
          * Update a valid session and any changed note content in one transaction.
@@ -52,7 +48,7 @@ namespace gamelog::core::database
          * @param session The session to update.
          * @return true if exactly one session was updated atomically.
          */
-        [[nodiscard]] bool update(const Session& session);
+        [[nodiscard]] bool update(const domain::Session& session);
 
         /**
          * Remove a session from the repository.

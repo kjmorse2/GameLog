@@ -11,41 +11,42 @@ namespace Ui
 
 QT_END_NAMESPACE
 
-class TextEditor : public QWidget
+namespace gamelog::gui
 {
-    Q_OBJECT
+    class TextEditor : public QWidget
+    {
+        Q_OBJECT
 
-public:
-    explicit TextEditor(QWidget* parent = nullptr);
+    public:
+        explicit TextEditor(QWidget* parent = nullptr);
 
-    [[nodiscard]] QString getMarkdown();
+        [[nodiscard]] QString getMarkdown();
 
-    ~TextEditor() override;
+        ~TextEditor() override;
 
-public
-    slots  :
-    void setAbleToEdit(bool enabled);
+    public Q_SLOTS:
+        void setAbleToEdit(bool enabled);
 
-private
-    slots  :
-    void applyHeading(int index);
+    private Q_SLOTS:
+        void applyHeading(int index);
 
-    void toggleBold();
+        void toggleBold();
 
-    void toggleItalic();
+        void toggleItalic();
 
-    void toggleStrikethrough();
+        void toggleStrikethrough();
 
-    void addLink();
+        void addLink();
 
-    void toggleBulletList();
+        void toggleBulletList();
 
-    void updateToolbarState();
+        void updateToolbarState();
 
-private:
-    [[nodiscard]] int currentHeadingLevel() const;
+    private:
+        [[nodiscard]] int currentHeadingLevel() const;
 
-    [[nodiscard]] qreal headingFontSize(int level) const;
+        [[nodiscard]] qreal headingFontSize(int level) const;
 
-    Ui::TextEditor* ui{};
-};
+        Ui::TextEditor* ui{};
+    };
+} // namespace gamelog::gui

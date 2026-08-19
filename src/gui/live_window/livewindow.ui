@@ -30,7 +30,7 @@
                 <item>
                     <layout class="QGridLayout" name="mainGridLayout">
                         <item row="0" column="0">
-                            <widget class="GameCard" name="cardWidget" native="true"/>
+                            <widget class="gamelog::gui::GameCard" name="cardWidget" native="true"/>
                         </item>
                         <item row="0" column="1">
                             <widget class="QLabel" name="timeLabel">
@@ -43,7 +43,7 @@
                             </widget>
                         </item>
                         <item row="0" column="2">
-                            <widget class="TextEditor" name="textEditor" native="true"/>
+                            <widget class="gamelog::gui::TextEditor" name="textEditor" native="true"/>
                         </item>
                     </layout>
                 </item>
@@ -52,13 +52,13 @@
     </widget>
     <customwidgets>
         <customwidget>
-            <class>GameCard</class>
+            <class>gamelog::gui::GameCard</class>
             <extends>QWidget</extends>
             <header>gui/game_card/GameCard.h</header>
             <container>1</container>
         </customwidget>
         <customwidget>
-            <class>TextEditor</class>
+            <class>gamelog::gui::TextEditor</class>
             <extends>QWidget</extends>
             <header>gui/text_editor/TextEditor.h</header>
             <container>1</container>

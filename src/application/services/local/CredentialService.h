@@ -28,7 +28,7 @@ namespace gamelog::application::services
         static constexpr auto kSteamPlayerIdKey = "player_id_key";
 
         /**
-         * @brief The key used to store the Steam Player Name in the keychain.
+         * Constructs a CredentialService.
          * @param parent The parent QObject for this service.
          */
         explicit CredentialService(QObject* parent = nullptr);
@@ -59,7 +59,7 @@ namespace gamelog::application::services
          */
         void removeSecret(const QString& key);
 
-        signals  :
+    Q_SIGNALS:
         /**
          * Emitted when a secret has been successfully stored.
          * @param key the key under which the secret was stored

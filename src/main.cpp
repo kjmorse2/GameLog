@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 
     if(!mode)
     {
-        qCritical("Specify exactly one of --headless, --gui, or --live and no other arguments.");
+        qCCritical(gamelogCoreLog) << "Specify exactly one of --headless, --gui, or --live and no other arguments.";
         return EXIT_FAILURE;
     }
 

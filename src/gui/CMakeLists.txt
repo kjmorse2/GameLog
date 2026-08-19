@@ -28,6 +28,8 @@ target_include_directories(gamelog-gui
 )
 
 target_link_libraries(gamelog-gui
+        PRIVATE
+        gamelog-warnings
         PUBLIC
         gamelog-application
         Qt6::Widgets

@@ -9,6 +9,9 @@
 
 namespace gamelog::application::services
 {
+    using core::domain::Game;
+    using core::domain::query::GameQuery;
+
     namespace
     {
         template <typename T> std::optional<T> firstOrNull(std::vector<T> values)
@@ -23,32 +26,32 @@ namespace gamelog::application::services
           steamApiService_{steamApiService}
     {
         connect(&steamApiService_, &SteamApiService::ownedGamesReceived, this, &GameService::onSteamGamesReceived);
-        qCInfo(gamelogRuntimeLog) << "Starting game service";
+        qCInfo(gamelogGameServiceLog) << "Starting game service";
     }
 
     std::vector<Game> GameService::search(const GameQuery& query) const
     {
-        qCDebug(gamelogRuntimeLog) << "Searching for games with provided query:" << query;
+        qCDebug(gamelogGameServiceLog) << "Searching for games with provided query:" << query;
         return repository_.query(query);
     }
 
     std::vector<Game> GameService::listGames() const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning all games";
+        qCDebug(gamelogGameServiceLog) << "Returning all games";
         return search({});
     }
 
     std::vector<Game> GameService::listTrackedGames() const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning all tracked games";
+        qCDebug(gamelogGameServiceLog) << "Returning all tracked games";
         GameQuery query;
         query.trackingEnabled = true;
         return search(query);
     }
 
-    std::optional<Game> GameService::findById(std::int64_t id) const
+    std::optional<Game> GameService::findById(int id) const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning game with id:" << id;
+        qCDebug(gamelogGameServiceLog) << "Returning game with id:" << id;
         GameQuery query;
         query.ids = {id};
         query.limit = 1;
@@ -57,7 +60,7 @@ namespace gamelog::application::services
 
     std::optional<Game> GameService::findByExecutableName(const QString& name) const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning game with name:" << name;
+        qCDebug(gamelogGameServiceLog) << "Returning game with name:" << name;
         GameQuery query;
         query.executableName = name;
         query.limit = 1;
@@ -66,7 +69,7 @@ namespace gamelog::application::services
 
     std::optional<Game> GameService::findByExecutablePath(const QString& path) const
     {
-        qCDebug(gamelogRuntimeLog) << "Returning game with executable path:" << path;
+        qCDebug(gamelogGameServiceLog) << "Returning game with executable path:" << path;
         GameQuery query;
         query.executablePath = path;
         query.limit = 1;
@@ -75,7 +78,7 @@ namespace gamelog::application::services
 
     bool GameService::addGame(Game& game)
     {
-        qCDebug(gamelogRuntimeLog) << "Adding game:" << game;
+        qCDebug(gamelogGameServiceLog) << "Adding game:" << game;
         if(!repository_.insert(game)) { return false; }
 
         syncGamesWithDatabase();
@@ -85,7 +88,7 @@ namespace gamelog::application::services
 
     bool GameService::updateGame(const Game& game)
     {
-        qCDebug(gamelogRuntimeLog) << "Updating game" << game;
+        qCDebug(gamelogGameServiceLog) << "Updating game" << game;
         if(!repository_.update(game)) { return false; }
 
         syncGamesWithDatabase();
@@ -93,9 +96,9 @@ namespace gamelog::application::services
         return true;
     }
 
-    bool GameService::removeGame(std::int64_t id)
+    bool GameService::removeGame(int id)
     {
-        qCDebug(gamelogRuntimeLog) << "Removing game with id:" << id;
+        qCDebug(gamelogGameServiceLog) << "Removing game with id:" << id;
         if(!repository_.remove(id)) { return false; }
 
         syncGamesWithDatabase();
@@ -104,7 +107,7 @@ namespace gamelog::application::services
 
     void GameService::syncGamesWithDatabase()
     {
-        qCDebug(gamelogRuntimeLog) << "Syncing games with database";
+        qCDebug(gamelogGameServiceLog) << "Syncing games with database";
         trackedPathGames_.clear();
         trackedSteamGames_.clear();
 
@@ -123,36 +126,24 @@ namespace gamelog::application::services
             }
         }
 
-        qCInfo(gamelogRuntimeLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.
+        qCInfo(gamelogGameServiceLog) << "Synced" << trackedSteamGames_.size() << "Steam games and" << trackedPathGames_.
             size() << "path-based games.";
     }
 
-    const QHash<std::uint32_t, Game>& GameService::trackedSteamGames() const noexcept
-    {
-        qCDebug(gamelogRuntimeLog) << "Returning Steam tracked games";
-        return trackedSteamGames_;
-    }
+    const QHash<std::uint32_t, Game>& GameService::trackedSteamGames() const noexcept { return trackedSteamGames_; }
 
-    const QHash<QString, Game>& GameService::trackedPathGames() const noexcept
-    {
-        qCDebug(gamelogRuntimeLog) << "Returning path tracked games";
-        return trackedPathGames_;
-    }
+    const QHash<QString, Game>& GameService::trackedPathGames() const noexcept { return trackedPathGames_; }
 
-    bool GameService::hasTrackedSteamGames() const noexcept
-    {
-        qCDebug(gamelogRuntimeLog) << "Checking if there are any tracked Steam games";
-        return !trackedSteamGames_.isEmpty();
-    }
+    bool GameService::hasTrackedSteamGames() const noexcept { return !trackedSteamGames_.isEmpty(); }
 
-    bool GameService::setHasArtwork(int gameId, bool hasArtwork)
+    bool GameService::setHasArtwork(int gameId, bool available)
     {
         auto game = findById(gameId);
         if(!game) { return false; }
 
-        if(game->hasArtwork == hasArtwork) { return true; }
+        if(game->hasArtwork == available) { return true; }
 
-        game->hasArtwork = hasArtwork;
+        game->hasArtwork = available;
         return updateGame(*game);
     }
 
@@ -160,7 +151,7 @@ namespace gamelog::application::services
 
     void GameService::onSteamGamesReceived(const QJsonArray& steamGames)
     {
-        qCInfo(gamelogRuntimeLog) << "Received" << steamGames.size() << "Steam games from API";
+        qCInfo(gamelogGameServiceLog) << "Received" << steamGames.size() << "Steam games from API";
 
         for(const QJsonValue& value : steamGames)
         {
@@ -184,8 +175,8 @@ namespace gamelog::application::services
             game.title = title;
             game.steamAppId = appId;
 
-            qCDebug(gamelogRuntimeLog) << "Adding game with Steam ID:" << appId;
-            if(!addGame(game)) { qCWarning(gamelogRuntimeLog) << "Failed to add game with Steam ID:" << appId; }
+            qCDebug(gamelogGameServiceLog) << "Adding game with Steam ID:" << appId;
+            if(!addGame(game)) { qCWarning(gamelogGameServiceLog) << "Failed to add game with Steam ID:" << appId; }
         }
     }
 } // namespace gamelog::application::services

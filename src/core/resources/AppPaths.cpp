@@ -1,7 +1,3 @@
-//
-// Created by kj on 8/14/26.
-//
-
 #include "AppPaths.h"
 
 #include <QDir>

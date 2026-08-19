@@ -1,11 +1,9 @@
-#ifndef GAMELOG_MAINWINDOW_H
-#define GAMELOG_MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include "domain/Game.h"
 
 class QLabel;
-class QListWidget;
 
 namespace gamelog::application
 {
@@ -38,13 +36,12 @@ namespace gamelog::gui
 
         ~MainWindow() override;
 
-        signals  :
-        void steamAPIKeyEntered(QString key);
+    Q_SIGNALS:
+        void steamApiKeyEntered(QString key);
 
         void steamPlayerIdEntered(QString playerId);
 
-    private
-        slots  :
+    private Q_SLOTS:
         void onSessionStarted(const core::domain::Game& game);
 
         void onSessionEnded();
@@ -61,4 +58,3 @@ namespace gamelog::gui
         QLabel* statusTimeLabel_;
     };
 } // namespace gamelog::gui
-#endif

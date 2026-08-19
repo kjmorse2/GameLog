@@ -5,8 +5,8 @@
 namespace gamelog::core::domain::query
 {
     /**
- * @brief The direction to sort by.
- */
+     * @brief The direction to sort by.
+     */
     enum class SortDirection
     {
         Ascending, Descending

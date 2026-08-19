@@ -1,21 +1,22 @@
 #include "MainWindow.h"
 
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QObject>
-#include <QWidget>
-#include <QDialogButtonBox>
-#include <QDialog>
 #include <QPushButton>
-#include <qloggingcategory.h>
-#include <logging/LoggingCategories.h>
+#include <QVBoxLayout>
+#include <QWidget>
 
 #include "gui/calendar/CalendarView.h"
 #include "gui/library/LibraryView.h"
 #include "application/GameLogRuntime.h"
-#include "../../application/services/local/SessionService.h"
+#include "application/services/local/SessionService.h"
 
 #include "ui_mainwindow.h"
+
+using gamelog::application::services::SessionService;
 
 static void initializeGUIResources()
 {
@@ -57,7 +58,7 @@ namespace gamelog::gui
         connect(runtime_.getSessionService(), &SessionService::sessionStopped, this, &MainWindow::onSessionEnded);
         connect(ui->actionAdd_SteamAPI_Key, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
         connect(this,
-                &MainWindow::steamAPIKeyEntered,
+                &MainWindow::steamApiKeyEntered,
                 runtime_.getCredentialService(),
                 [credentialService = runtime_.getCredentialService()](const QString& key)
                 {
@@ -128,7 +129,7 @@ namespace gamelog::gui
 
                     if(key.isEmpty()) { return; }
 
-                    emit steamAPIKeyEntered(key);
+                    emit steamApiKeyEntered(key);
                     dialog.accept();
                 });
 

@@ -1,9 +1,3 @@
-//
-// Created by kj on 8/6/26.
-//
-
-// You may need to build the project (run Qt uic code generator) to get "ui_GameCard.h" resolved.
-
 #include "gui/game_card/GameCard.h"
 
 #include "resources/AppPaths.h"
@@ -16,57 +10,60 @@ using gamelog::application::services::ArtworkType;
 using gamelog::application::services::GameArtworkService;
 using gamelog::core::domain::Game;
 
-GameCard::GameCard(QWidget* parent, const Game& game, GameArtworkService* artworkService)
-    : QWidget{parent},
-      ui{new Ui::GameCard},
-      gameId_{game.id},
-      artworkService_{artworkService}
+namespace gamelog::gui
 {
-    ui->setupUi(this);
-
-    ui->gameArtLabel->setAlignment(Qt::AlignCenter);
-    ui->gameArtLabel->setScaledContents(false);
-    ui->gameTitleLabel->setText(game.title);
-
-    if(artworkService_ != nullptr)
+    GameCard::GameCard(QWidget* parent, const Game& game, GameArtworkService* artworkService)
+        : QWidget{parent},
+          ui{new Ui::GameCard},
+          gameId_{game.id},
+          artworkService_{artworkService}
     {
-        connect(artworkService_,
-                &GameArtworkService::artworkAvailable,
-                this,
-                [this](int gameId, ArtworkType artworkType)
-                {
-                    if(gameId == gameId_ && artworkType == ArtworkType::Cover) { refreshArtwork(); }
-                });
+        ui->setupUi(this);
+
+        ui->gameArtLabel->setAlignment(Qt::AlignCenter);
+        ui->gameArtLabel->setScaledContents(false);
+        ui->gameTitleLabel->setText(game.title);
+
+        if(artworkService_ != nullptr)
+        {
+            connect(artworkService_,
+                    &GameArtworkService::artworkAvailable,
+                    this,
+                    [this](int gameId, ArtworkType artworkType)
+                    {
+                        if(gameId == gameId_ && artworkType == ArtworkType::Cover) { refreshArtwork(); }
+                    });
+        }
+
+        refreshArtwork();
+
+        if(artworkService_ != nullptr && gameId_ > 0) { static_cast<void>(artworkService_->getGameArtwork(game)); }
     }
 
-    refreshArtwork();
+    GameCard::~GameCard() { delete ui; }
 
-    if(artworkService_ != nullptr && gameId_ > 0) { static_cast<void>(artworkService_->getGameArtwork(game)); }
-}
+    QSize GameCard::sizeHint() const { return {135, 240}; }
 
-GameCard::~GameCard() { delete ui; }
+    QSize GameCard::minimumSizeHint() const { return {90, 160}; }
 
-QSize GameCard::sizeHint() const { return {135, 240}; }
+    bool GameCard::hasHeightForWidth() const { return true; }
 
-QSize GameCard::minimumSizeHint() const { return {90, 160}; }
+    int GameCard::heightForWidth(int width) const { return width * 9 / 16; }
 
-bool GameCard::hasHeightForWidth() const { return true; }
-
-int GameCard::heightForWidth(int width) const { return width * 9 / 16; }
-
-void GameCard::refreshArtwork()
-{
-    QPixmap imageMap;
-
-    if(gameId_ > 0)
+    void GameCard::refreshArtwork()
     {
-        const QString coverPath = QDir{gamelog::core::AppPaths::gameArtworkDirectory(gameId_)}.
-            filePath(QStringLiteral("cover.jpg"));
-        imageMap.load(coverPath);
+        QPixmap imageMap;
+
+        if(gameId_ > 0)
+        {
+            const QString coverPath = QDir{gamelog::core::AppPaths::gameArtworkDirectory(gameId_)}.
+                filePath(QStringLiteral("cover.jpg"));
+            imageMap.load(coverPath);
+        }
+
+        if(imageMap.isNull()) { imageMap = QPixmap{QStringLiteral(":/images/GameArtPlaceholder.png")}; }
+
+        imageMap = imageMap.scaled(ui->gameArtLabel->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        ui->gameArtLabel->setPixmap(imageMap);
     }
-
-    if(imageMap.isNull()) { imageMap = QPixmap{QStringLiteral(":/images/GameArtPlaceholder.png")}; }
-
-    imageMap = imageMap.scaled(ui->gameArtLabel->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    ui->gameArtLabel->setPixmap(imageMap);
-}
+} // namespace gamelog::gui

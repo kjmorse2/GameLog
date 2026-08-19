@@ -1,11 +1,5 @@
-//
-// Created by kj on 8/14/26.
-//
+#pragma once
 
-#ifndef GAMELOG_GAMEARTWORKSERVICE_H
-#define GAMELOG_GAMEARTWORKSERVICE_H
-
-#include <map>
 
 #include <QMetaType>
 #include <QObject>
@@ -68,7 +62,7 @@ namespace gamelog::application::services
 
         // TODO bool installCustomArtwork();
 
-        signals  :
+    Q_SIGNALS:
         /**
          * Emitted when one validated artwork file for a specific game is available,
          * either from local files or after a successful Steam download.
@@ -123,12 +117,22 @@ namespace gamelog::application::services
         [[nodiscard]] static QUrl makeSteamArtworkUrl(int steamAppId, ArtworkType artworkType);
 
         /**
+         * Wires the reply handler. Shared by both constructors, which differ
+         * only in whether the network access manager is owned or injected.
+         */
+        void connectNetworkAccessManager();
+
+        /**
+         * Routes one finished reply to parsing or to artworkUnavailable, then
+         * schedules the reply for deletion. Replies missing their artworkType/
+         * gameId properties are discarded.
+         */
+        void onNetworkReplyFinished(QNetworkReply* reply);
+
+        /**
          * A static map that associates each ArtworkType with its corresponding Steam CDN file. This is used to construct the correct URL for fetching artwork.
          */
-        const static std::pmr::map<ArtworkType, QString> ArtWorkTypeToSteamUrl;
     };
 } // namespace gamelog::application::services
 
 Q_DECLARE_METATYPE(gamelog::application::services::ArtworkType)
-
-#endif // GAMELOG_GAMEARTWORKSERVICE_H

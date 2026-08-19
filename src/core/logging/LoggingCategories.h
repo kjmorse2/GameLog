@@ -18,3 +18,7 @@ Q_DECLARE_LOGGING_CATEGORY (gamelogGameServiceLog)
 Q_DECLARE_LOGGING_CATEGORY (gamelogSessionServiceLog)
 
 Q_DECLARE_LOGGING_CATEGORY (gamelogSteamApiServiceLog)
+
+Q_DECLARE_LOGGING_CATEGORY (gamelogArtworkServiceLog)
+
+Q_DECLARE_LOGGING_CATEGORY (gamelogCredentialServiceLog)

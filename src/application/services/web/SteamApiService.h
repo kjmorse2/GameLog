@@ -38,7 +38,7 @@ namespace gamelog::application::services
          */
         void getOwnedGames();
 
-        signals  :
+    Q_SIGNALS:
         /**
          * Emitted when Steam successfully returns the user's game library.
          *
@@ -54,8 +54,7 @@ namespace gamelog::application::services
          */
         void requestFailed(QString error);
 
-    private
-        slots  :
+    private Q_SLOTS:
         /**
          * Connected to CredentialService::secretRetrieved. Starts the HTTP request
          * when both required, nonblank credentials are available.
@@ -89,6 +88,12 @@ namespace gamelog::application::services
         void handleOwnedGamesReply(QNetworkReply* reply);
 
     private:
+        /**
+         * Wires the CredentialService signals used to complete a pending request.
+         * Shared by both constructors, which differ only in manager ownership.
+         */
+        void connectCredentialService();
+
         /**
          * @brief Fails the current request and emits requestFailed() with the provided error message.
          * @param error The error message describing why the request failed.

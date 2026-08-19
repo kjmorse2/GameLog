@@ -22,6 +22,8 @@ target_include_directories(gamelog-application
 )
 
 target_link_libraries(gamelog-application
+        PRIVATE
+        gamelog-warnings
         PUBLIC
         gamelog-core
         Qt6::Core
