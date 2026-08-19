@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include <QSet>
+
 
 namespace gamelog::application::services
 {
@@ -153,21 +155,44 @@ namespace gamelog::application::services
     {
         qCInfo(gamelogGameServiceLog) << "Received" << steamGames.size() << "Steam games from API";
 
+        // Resolve existing App IDs with one query rather than one per entry, and
+        // rebuild the indexes once at the end rather than once per insert. Doing
+        // either per game made a first-time sync of a large library quadratic.
+        // Note this must consider the whole database, not just the tracked
+        // index, so untracked rows are still recognized as existing.
+        QSet<int> knownSteamAppIds;
+        for(const Game& game : search({}))
+        {
+            if(game.steamAppId) { knownSteamAppIds.insert(*game.steamAppId); }
+        }
+
+        std::vector<Game> insertedGames;
+
         for(Game game : gamesFromSteamOwnedGames(steamGames))
         {
-            GameQuery existingQuery;
-            existingQuery.steamAppId = game.steamAppId;
-            existingQuery.limit = 1;
-
             // Synchronization never updates, re-enables, retitles, or duplicates
             // an App ID that already exists anywhere in the database.
-            if(!search(existingQuery).empty()) { continue; }
+            if(knownSteamAppIds.contains(*game.steamAppId)) { continue; }
 
             qCDebug(gamelogGameServiceLog) << "Adding game with Steam ID:" << *game.steamAppId;
-            if(!addGame(game))
+
+            if(!repository_.insert(game))
             {
                 qCWarning(gamelogGameServiceLog) << "Failed to add game with Steam ID:" << *game.steamAppId;
+                continue;
             }
+
+            // Guards against a duplicate App ID appearing twice in one payload.
+            knownSteamAppIds.insert(*game.steamAppId);
+            insertedGames.push_back(std::move(game));
         }
+
+        if(insertedGames.empty()) { return; }
+
+        syncGamesWithDatabase();
+
+        // Emitted only after the indexes are consistent, so a handler that reads
+        // them back sees every game from this batch.
+        for(const Game& game : insertedGames) { emit gameAdded(game); }
     }
 } // namespace gamelog::application::services
