@@ -36,8 +36,6 @@ namespace gamelog::gui
         }
 
         refreshArtwork();
-
-        if(artworkService_ != nullptr && gameId_ > 0) { static_cast<void>(artworkService_->getGameArtwork(game)); }
     }
 
     GameCard::~GameCard() { delete ui; }

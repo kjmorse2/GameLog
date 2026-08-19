@@ -47,6 +47,13 @@ namespace gamelog::gui
         ui_->cardWidget = new GameCard{ui_->centralwidget, game, gameLogRuntime_.getArtworkService()};
         layout->addWidget(ui_->cardWidget, 0, 0); // Insert at position 0 (first).
 
+        // Requesting artwork is the window's decision, not the card's. The card
+        // redraws itself when artworkAvailable arrives for this game.
+        if(auto* artworkService = gameLogRuntime_.getArtworkService(); artworkService != nullptr)
+        {
+            static_cast<void>(artworkService->getGameArtwork(game));
+        }
+
         // Set up the timer from the persisted active-session start.
         if(const auto session = gameLogRuntime_.getSessionService()->findActiveSession())
         {
