@@ -42,15 +42,16 @@ namespace gamelog::core::database
         }
 
         // Make sure the ledger exists before we inspect or record anything.
-        if(!ensureMigrationTable() || !validateMigrationLedger()) { return false; }
+        if(!ensureMigrationTable()) { return false; }
+
+        // Read the ledger once; the apply loop below is a lookup, not a query.
+        const std::optional<QHash<int, QString>> appliedMigrations = readAndValidateMigrationLedger();
+        if(!appliedMigrations.has_value()) { return false; }
 
         // Apply each compiled-in migration in order.
         for(const Migration& migration : knownMigrations())
         {
-            const std::optional<bool> applied = isApplied(migration);
-            if(!applied.has_value()) { return false; }
-
-            if(*applied) { continue; }
+            if(appliedMigrations->contains(migration.version)) { continue; }
 
             if(!applyMigration(migration)) { return false; }
         }
@@ -78,16 +79,18 @@ namespace gamelog::core::database
         return true;
     }
 
-    bool DatabaseMigrator::validateMigrationLedger() const
+    std::optional<QHash<int, QString>> DatabaseMigrator::readAndValidateMigrationLedger() const
     {
         QSqlQuery query{database_};
         if(!query.exec(QStringLiteral("SELECT version, name FROM schema_migrations ORDER BY version")))
         {
             qCWarning(gamelogDatabaseLog) << "Failed to validate applied migrations:" << query.lastError().text();
-            return false;
+            return std::nullopt;
         }
 
         const auto& migrations = knownMigrations();
+        QHash<int, QString> applied;
+
         while(query.next())
         {
             const int version = query.value(QStringLiteral("version")).toInt();
@@ -104,47 +107,20 @@ namespace gamelog::core::database
             {
                 qCWarning(gamelogDatabaseLog) << "Database contains unknown migration version" << version <<
                     "and may use a newer incompatible schema.";
-                return false;
+                return std::nullopt;
             }
 
             if(known->name != name)
             {
                 qCWarning(gamelogDatabaseLog) << "Migration ledger name mismatch for version" << version << ": expected"
                     << known->name << "but found" << name;
-                return false;
+                return std::nullopt;
             }
+
+            applied.insert(version, name);
         }
 
-        return true;
-    }
-
-    std::optional<bool> DatabaseMigrator::isApplied(const Migration& migration) const
-    {
-        QSqlQuery query{database_};
-        query.prepare(R"(
-            SELECT name
-            FROM schema_migrations
-            WHERE version = :version
-            LIMIT 1
-        )");
-        query.bindValue(QStringLiteral(":version"), migration.version);
-
-        if(!query.exec())
-        {
-            qCWarning(gamelogDatabaseLog) << "Failed to inspect applied migrations:" << query.lastError().text();
-            return std::nullopt;
-        }
-
-        if(!query.next()) { return false; }
-
-        const QString recordedName = query.value(QStringLiteral("name")).toString();
-        if(recordedName != migration.name)
-        {
-            qCWarning(gamelogDatabaseLog) << "Migration ledger name mismatch for version" << migration.version;
-            return std::nullopt;
-        }
-
-        return true;
+        return applied;
     }
 
     bool DatabaseMigrator::applyMigration(const Migration& migration)
