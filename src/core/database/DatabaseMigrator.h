@@ -3,6 +3,7 @@
 #include <optional>
 #include <vector>
 
+#include <QHash>
 #include <QSqlDatabase>
 #include <QString>
 
@@ -62,13 +63,19 @@ namespace gamelog::core::database
         /**
          * @brief Validates every ledger row against the compiled migration list.
          */
-        [[nodiscard]] bool validateMigrationLedger() const;
+        /**
+         * Reads the whole ledger once and checks it against the compiled-in
+         * migration list: every recorded version must be known to this binary
+         * and must carry the recorded name.
+         * @return version-to-name map of applied migrations, or std::nullopt
+         * when the read failed or the ledger is incompatible (contract item 31).
+         */
+        [[nodiscard]] std::optional<QHash<int, QString>> readAndValidateMigrationLedger() const;
 
         /**
          * @brief Reports whether the exact version/name pair is already recorded.
          * @return False if absent, true if present and matching, or std::nullopt on error/mismatch.
          */
-        [[nodiscard]] std::optional<bool> isApplied(const Migration& migration) const;
 
         /**
          * @brief Executes one migration inside a transaction and records it.

@@ -19,20 +19,14 @@ namespace gamelog::application::services
     SteamApiService::SteamApiService(CredentialService& credentialService, QObject* parent)
         : QObject{parent},
           credentialService_{credentialService},
-          networkAccessManager_{new QNetworkAccessManager{this}}
-    {
-        connectCredentialService();
-    }
+          networkAccessManager_{new QNetworkAccessManager{this}} { connectCredentialService(); }
 
     SteamApiService::SteamApiService(CredentialService& credentialService,
                                      QNetworkAccessManager& networkAccessManager,
                                      QObject* parent)
         : QObject{parent},
           credentialService_{credentialService},
-          networkAccessManager_{&networkAccessManager}
-    {
-        connectCredentialService();
-    }
+          networkAccessManager_{&networkAccessManager} { connectCredentialService(); }
 
     void SteamApiService::setCredentialTimeout(const std::chrono::milliseconds timeout)
     {

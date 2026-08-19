@@ -9,8 +9,8 @@ namespace gamelog::core::domain
 
         debug.nospace() << "Game {" << "id: " << game.id << ", title: " << game.title << ", executablePath: " << game.
             executablePath << ", executableName: " << game.executableName << ", steamAppId: " << (
-                game.steamAppId.has_value() ? QString::number(*game.steamAppId) : "nullopt") << ", hasArtwork: " << (game
-               .hasArtwork) << ", trackingEnabled: " << game.trackingEnabled << "}";
+                game.steamAppId.has_value() ? QString::number(*game.steamAppId) : "nullopt") << ", hasArtwork: " << (
+                game.hasArtwork) << ", trackingEnabled: " << game.trackingEnabled << "}";
         return debug;
     }
 }

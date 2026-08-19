@@ -1,5 +1,7 @@
 #include <QtTest/QtTest>
 
+#include <algorithm>
+
 #include "application/services/local/GameService.h"
 #include "database/DatabaseManager.h"
 #include "domain/Game.h"
@@ -133,6 +135,8 @@ namespace
         void onSteamGamesReceived_leavesUntrackedAndLocallyTitledRowsUnchanged();
 
         void onSteamGamesReceived_skipsMalformedEntriesAndNonPositiveAppIds();
+
+        void onSteamGamesReceived_emitsGameAddedOncePerInsertedGameAndIndexesThemAll();
 
         void syncGamesWithDatabase_keepsLastEntryForDuplicateExecutablePaths();
 
@@ -568,6 +572,49 @@ void GameServiceTest::onSteamGamesReceived_leavesUntrackedAndLocallyTitledRowsUn
     QCOMPARE(reloaded->executablePath, untracked.executablePath);
     QCOMPARE(reloaded->executableName, untracked.executableName);
     QCOMPARE(*reloaded->steamAppId, 200);
+}
+
+void GameServiceTest::onSteamGamesReceived_emitsGameAddedOncePerInsertedGameAndIndexesThemAll()
+{
+    // Characterization of the observable contract of a bulk sync: one gameAdded
+    // per genuinely new game, none for games that already exist, and a fully
+    // populated tracked index once the batch completes.
+    Game existing = makeGame("Existing");
+    existing.steamAppId = 100;
+    QVERIFY(service_->addGame(existing));
+
+    QSignalSpy addedSpy{service_.get(), &GameService::gameAdded};
+    QVERIFY(addedSpy.isValid());
+
+    QJsonArray steamGames;
+    steamGames.append(makeSteamGame(100, "Already Known"));
+    steamGames.append(makeSteamGame(301, "New One"));
+    steamGames.append(makeSteamGame(302, "New Two"));
+    steamGames.append(makeSteamGame(303, "New Three"));
+    steamGames.append(makeSteamGame(0, "Rejected"));
+
+    emit
+    steamApiService_->ownedGamesReceived(steamGames);
+
+    QCOMPARE(addedSpy.count(), 3);
+
+    QList<int> emittedAppIds;
+    for(const QList<QVariant>& emission : addedSpy)
+    {
+        emittedAppIds.push_back(emission.at(0).value<Game>().steamAppId.value_or(0));
+    }
+    std::sort(emittedAppIds.begin(), emittedAppIds.end());
+    QCOMPARE(emittedAppIds, (QList<int>{301, 302, 303}));
+
+    QCOMPARE(service_->listGames().size(), 4);
+
+    // Every inserted game must be present in the in-memory index afterwards.
+    const auto& tracked = service_->trackedSteamGames();
+    QCOMPARE(tracked.size(), 4);
+    for(const int appId : {100, 301, 302, 303})
+    {
+        QVERIFY2(tracked.contains(static_cast<std::uint32_t>(appId)), qPrintable(QString::number(appId)));
+    }
 }
 
 void GameServiceTest::onSteamGamesReceived_skipsMalformedEntriesAndNonPositiveAppIds()

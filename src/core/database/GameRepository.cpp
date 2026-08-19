@@ -1,4 +1,5 @@
 #include "database/GameRepository.h"
+#include "database/SqlQueryBuilder.h"
 
 #include "logging/LoggingCategories.h"
 
@@ -95,44 +96,25 @@ namespace gamelog::core::database
 
             return QStringLiteral("title COLLATE NOCASE");
         }
-
-        void appendIdPredicate(const std::vector<int>& ids,
-                               QStringList& predicates,
-                               QList<QPair<QString, QVariant>>& bindings)
-        {
-            if(ids.empty()) { return; }
-
-            QStringList placeholders;
-            placeholders.reserve(static_cast<qsizetype>(ids.size()));
-
-            for(std::size_t index = 0; index < ids.size(); ++index)
-            {
-                const QString placeholder = QStringLiteral(":game_id_%1").arg(static_cast<qulonglong>(index));
-                placeholders.push_back(placeholder);
-                bindings.push_back({placeholder, QVariant::fromValue<qlonglong>(ids[index])});
-            }
-
-            predicates.push_back(QStringLiteral("id IN (%1)").arg(placeholders.join(QStringLiteral(", "))));
-        }
     } // namespace
 
     GameRepository::GameRepository(const QSqlDatabase& database) : database_{database} {}
 
     std::vector<domain::Game> GameRepository::query(const GameQuery& specification) const
     {
-        QString sql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, "
-                                     "has_artwork, tracking_enabled FROM games");
+        const QString baseSql = QStringLiteral("SELECT id, title, executable_path, executable_name, steam_app_id, "
+                                               "has_artwork, tracking_enabled FROM games");
 
-        QStringList predicates;
-        QList<QPair<QString, QVariant>> bindings;
-        appendIdPredicate(specification.ids, predicates, bindings);
+        SqlQueryBuilder builder;
 
-        const auto addEquality = [&predicates, &bindings](const QString& column,
-                                                          const QString& placeholder,
-                                                          const QVariant& value)
+        QList<QVariant> ids;
+        ids.reserve(static_cast<qsizetype>(specification.ids.size()));
+        for(const int id : specification.ids) { ids.push_back(QVariant::fromValue<qlonglong>(id)); }
+        builder.addInPredicate(QStringLiteral("id"), QStringLiteral("game_id"), ids);
+
+        const auto addEquality = [&builder](const QString& column, const QString& placeholder, const QVariant& value)
         {
-            predicates.push_back(column + QStringLiteral(" = ") + placeholder);
-            bindings.push_back({placeholder, value});
+            builder.addPredicate(column + QStringLiteral(" = ") + placeholder, placeholder, value);
         };
 
         if(specification.title)
@@ -166,26 +148,10 @@ namespace gamelog::core::database
                         *specification.trackingEnabled);
         }
 
-        if(!predicates.isEmpty()) { sql += QStringLiteral(" WHERE ") + predicates.join(QStringLiteral(" AND ")); }
+        builder.setOrderBy(orderColumn(specification.sortBy), specification.sortDirection);
+        builder.setLimitOffset(specification.limit, specification.offset);
 
-        sql += QStringLiteral(" ORDER BY ") + orderColumn(specification.sortBy);
-        sql += specification.sortDirection == SortDirection::Ascending
-                   ? QStringLiteral(" ASC")
-                   : QStringLiteral(" DESC");
-
-        if(specification.limit)
-        {
-            sql += QStringLiteral(" LIMIT :limit");
-            bindings.push_back({QStringLiteral(":limit"), QVariant::fromValue<qulonglong>(*specification.limit)});
-        }
-
-        if(specification.offset)
-        {
-            // SQLite requires LIMIT when OFFSET is present. -1 means no upper limit.
-            if(!specification.limit) { sql += QStringLiteral(" LIMIT -1"); }
-            sql += QStringLiteral(" OFFSET :offset");
-            bindings.push_back({QStringLiteral(":offset"), QVariant::fromValue<qulonglong>(*specification.offset)});
-        }
+        const QString sql = builder.buildSql(baseSql);
 
         QSqlQuery sqlQuery{database_};
         if(!sqlQuery.prepare(sql))
@@ -194,7 +160,7 @@ namespace gamelog::core::database
             return {};
         }
 
-        for(const auto& [placeholder, value] : bindings) { sqlQuery.bindValue(placeholder, value); }
+        builder.bindTo(sqlQuery);
 
         if(!sqlQuery.exec())
         {

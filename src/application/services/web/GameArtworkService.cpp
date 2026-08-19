@@ -68,15 +68,11 @@ namespace gamelog::application::services
 
     GameArtworkService::GameArtworkService(QObject* parent)
         : QObject{parent},
-          networkAccessManager_{new QNetworkAccessManager{this}}
-    {
-    }
+          networkAccessManager_{new QNetworkAccessManager{this}} {}
 
     GameArtworkService::GameArtworkService(QNetworkAccessManager& networkAccessManager, QObject* parent)
         : QObject{parent},
-          networkAccessManager_{&networkAccessManager}
-    {
-    }
+          networkAccessManager_{&networkAccessManager} {}
 
     void GameArtworkService::onNetworkReplyFinished(QNetworkReply* reply, ArtworkType artworkType, int gameId)
     {
@@ -102,7 +98,8 @@ namespace gamelog::application::services
         {
             if(!game.hasArtwork)
             {
-                qCWarning(gamelogArtworkServiceLog) << "Valid artwork found locally but not recorded in the database:" << coverPath;
+                qCWarning(gamelogArtworkServiceLog) << "Valid artwork found locally but not recorded in the database:"
+                    << coverPath;
             }
 
             emit artworkAvailable(game.id, ArtworkType::Cover);
@@ -111,7 +108,8 @@ namespace gamelog::application::services
 
         if(game.hasArtwork)
         {
-            qCWarning(gamelogArtworkServiceLog) << "Game is marked as having artwork, but cover.jpg is missing or invalid for game:" << game.id;
+            qCWarning(gamelogArtworkServiceLog) <<
+                "Game is marked as having artwork, but cover.jpg is missing or invalid for game:" << game.id;
         }
 
         // The persisted flag describes current local cover availability, not a
@@ -190,7 +188,8 @@ namespace gamelog::application::services
 
         if(data.isEmpty() || imageFormat.isEmpty())
         {
-            qCWarning(gamelogArtworkServiceLog) << "Received empty or unsupported artwork response for" << artworkTypeToString(artworkType);
+            qCWarning(gamelogArtworkServiceLog) << "Received empty or unsupported artwork response for" <<
+                artworkTypeToString(artworkType);
             emit artworkUnavailable(gameId, artworkType);
             return;
         }
@@ -198,8 +197,8 @@ namespace gamelog::application::services
         QImage decodedImage;
         if(!decodedImage.loadFromData(data, imageFormat.constData()))
         {
-            qCWarning(gamelogArtworkServiceLog) << "Artwork response did not decode as the expected" << imageFormat << "image for" <<
-                artworkTypeToString(artworkType);
+            qCWarning(gamelogArtworkServiceLog) << "Artwork response did not decode as the expected" << imageFormat <<
+                "image for" << artworkTypeToString(artworkType);
             emit artworkUnavailable(gameId, artworkType);
             return;
         }
@@ -254,5 +253,4 @@ namespace gamelog::application::services
             arg(steamArtworkFileName(artworkType))
         };
     }
-
 } // namespace gamelog::application::services

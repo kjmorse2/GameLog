@@ -52,7 +52,8 @@ namespace gamelog::gui
          */
         QCalendarWidget* calendar_{};
 
-    private Q_SLOTS:
+    private
+        Q_SLOTS :
         /**
          * Called when the calendar page is changed.
          * @param year The year the calendar is on

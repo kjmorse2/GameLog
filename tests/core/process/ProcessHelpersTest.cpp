@@ -11,7 +11,9 @@
 #include <QHash>
 
 using gamelog::core::domain::Game;
+using gamelog::core::process::MatchKind;
 using gamelog::core::process::ProcessHelpers;
+using gamelog::core::process::TrackedGameMatch;
 using gamelog::core::process::ProcessInfo;
 
 namespace
@@ -156,10 +158,11 @@ void ProcessHelpersTest::matchTrackedGame_returnsSteamEntryForSteamProcess()
     const QHash<QString, Game> trackedPathGames;
 
     const ProcessInfo process = makeProcess(100, QStringLiteral("/anywhere"), 600U);
-    const Game* matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
+    const TrackedGameMatch matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
 
-    QVERIFY(matched != nullptr);
-    QCOMPARE(matched->id, steamGame.id);
+    QVERIFY(matched.game != nullptr);
+    QCOMPARE(matched.game->id, steamGame.id);
+    QCOMPARE(matched.kind, MatchKind::SteamAppId);
 }
 
 void ProcessHelpersTest::matchTrackedGame_returnsPathEntryWhenSteamIdentityIsAbsent()
@@ -171,10 +174,11 @@ void ProcessHelpersTest::matchTrackedGame_returnsPathEntryWhenSteamIdentityIsAbs
     trackedPathGames.insert(pathGame.executablePath, pathGame);
 
     const ProcessInfo process = makeProcess(100, QStringLiteral("/games/path"));
-    const Game* matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
+    const TrackedGameMatch matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
 
-    QVERIFY(matched != nullptr);
-    QCOMPARE(matched->id, pathGame.id);
+    QVERIFY(matched.game != nullptr);
+    QCOMPARE(matched.game->id, pathGame.id);
+    QCOMPARE(matched.kind, MatchKind::ExecutablePath);
 }
 
 void ProcessHelpersTest::matchTrackedGame_prefersSteamIndexOverPathIndex()
@@ -189,10 +193,11 @@ void ProcessHelpersTest::matchTrackedGame_prefersSteamIndexOverPathIndex()
     trackedPathGames.insert(pathGame.executablePath, pathGame);
 
     const ProcessInfo process = makeProcess(100, QStringLiteral("/games/shared"), 600U);
-    const Game* matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
+    const TrackedGameMatch matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
 
-    QVERIFY(matched != nullptr);
-    QCOMPARE(matched->id, steamGame.id);
+    QVERIFY(matched.game != nullptr);
+    QCOMPARE(matched.game->id, steamGame.id);
+    QCOMPARE(matched.kind, MatchKind::SteamAppId);
 }
 
 void ProcessHelpersTest::matchTrackedGame_returnsNullptrForEmptyIndexes()
@@ -202,8 +207,10 @@ void ProcessHelpersTest::matchTrackedGame_returnsNullptrForEmptyIndexes()
 
     const ProcessInfo process = makeProcess(100, QStringLiteral("/games/one"), 600U);
 
-    QCOMPARE(ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames),
-             static_cast<const Game*>(nullptr));
+    const TrackedGameMatch matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
+
+    QCOMPARE(matched.game, static_cast<const Game*>(nullptr));
+    QCOMPARE(matched.kind, MatchKind::None);
 }
 
 void ProcessHelpersTest::matchTrackedGame_returnsNullptrForEmptyExecutablePath()
@@ -216,8 +223,10 @@ void ProcessHelpersTest::matchTrackedGame_returnsNullptrForEmptyExecutablePath()
 
     const ProcessInfo process = makeProcess(100, QString{});
 
-    QCOMPARE(ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames),
-             static_cast<const Game*>(nullptr));
+    const TrackedGameMatch matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
+
+    QCOMPARE(matched.game, static_cast<const Game*>(nullptr));
+    QCOMPARE(matched.kind, MatchKind::None);
 }
 
 void ProcessHelpersTest::matchTrackedGame_returnsNullptrWhenPathEntryFailsIdentityCheck()
@@ -232,8 +241,10 @@ void ProcessHelpersTest::matchTrackedGame_returnsNullptrWhenPathEntryFailsIdenti
 
     const ProcessInfo process = makeProcess(100, QStringLiteral("/games/shared"), 601U);
 
-    QCOMPARE(ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames),
-             static_cast<const Game*>(nullptr));
+    const TrackedGameMatch matched = ProcessHelpers::matchTrackedGame(process, trackedSteamGames, trackedPathGames);
+
+    QCOMPARE(matched.game, static_cast<const Game*>(nullptr));
+    QCOMPARE(matched.kind, MatchKind::None);
 }
 
 void ProcessHelpersTest::readProcessEnvironmentValue_returnsNulloptForNonPositivePid()

@@ -23,30 +23,12 @@ namespace
 
     QString toStringValue(const gamelog::core::domain::SessionSource source)
     {
-        switch(source)
-        {
-        case gamelog::core::domain::SessionSource::Automatic:
-            return QStringLiteral("Automatic");
-        case gamelog::core::domain::SessionSource::Manual:
-            return QStringLiteral("Manual");
-        }
-
-        return QStringLiteral("Unknown");
+        return gamelog::core::domain::toDisplayString(source);
     }
 
     QString toStringValue(const gamelog::core::domain::SessionStatus status)
     {
-        switch(status)
-        {
-        case gamelog::core::domain::SessionStatus::Active:
-            return QStringLiteral("Active");
-        case gamelog::core::domain::SessionStatus::Completed:
-            return QStringLiteral("Completed");
-        case gamelog::core::domain::SessionStatus::Interrupted:
-            return QStringLiteral("Interrupted");
-        }
-
-        return QStringLiteral("Unknown");
+        return gamelog::core::domain::toDisplayString(status);
     }
 
     QString toStringValue(const int value) { return QString::number(value); }

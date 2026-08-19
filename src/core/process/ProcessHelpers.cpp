@@ -43,14 +43,14 @@ namespace gamelog::core::process
         return static_cast<std::uint32_t>(numericValue);
     }
 
-    const domain::Game* ProcessHelpers::matchTrackedGame(const ProcessInfo& process,
-                                                         const QHash<std::uint32_t, domain::Game>& trackedSteamGames,
-                                                         const QHash<QString, domain::Game>& trackedPathGames) noexcept
+    TrackedGameMatch ProcessHelpers::matchTrackedGame(const ProcessInfo& process,
+                                                      const QHash<std::uint32_t, domain::Game>& trackedSteamGames,
+                                                      const QHash<QString, domain::Game>& trackedPathGames) noexcept
     {
         if(process.steamAppId)
         {
             const auto steamGame = trackedSteamGames.constFind(*process.steamAppId);
-            if(steamGame != trackedSteamGames.constEnd()) { return &steamGame.value(); }
+            if(steamGame != trackedSteamGames.constEnd()) { return {&steamGame.value(), MatchKind::SteamAppId}; }
         }
 
         if(!process.executablePath.isEmpty())
@@ -58,11 +58,11 @@ namespace gamelog::core::process
             const auto pathGame = trackedPathGames.constFind(process.executablePath);
             if(pathGame != trackedPathGames.constEnd() && processMatchesGame(process, pathGame.value()))
             {
-                return &pathGame.value();
+                return {&pathGame.value(), MatchKind::ExecutablePath};
             }
         }
 
-        return nullptr;
+        return {};
     }
 
     bool ProcessHelpers::processMatchesGame(const ProcessInfo& process, const domain::Game& game) noexcept

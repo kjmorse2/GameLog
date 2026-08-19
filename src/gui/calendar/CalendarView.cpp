@@ -30,8 +30,8 @@ namespace gamelog::gui
         const QDate startDay{year, month, 1};
         const auto startDate = QDateTime{startDay, QTime{0, 0}};
         const auto endDate = QDateTime{startDay.addMonths(1), QTime{0, 0}};
-        for(const std::vector<gamelog::core::domain::Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate, endDate); const auto&
-            session : foundSessions)
+        for(const std::vector<gamelog::core::domain::Session> foundSessions = sessionService_->
+                getSessionsInTimeRange(startDate, endDate); const auto& session : foundSessions)
         {
             const QDate date = session.startTimestamp.date();
 

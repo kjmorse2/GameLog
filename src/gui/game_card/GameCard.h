@@ -28,7 +28,9 @@ namespace gamelog::gui
          * allowing library cards to queue missing artwork and refresh asynchronously.
          * @param parent The QWidget parent.
          * @param game The Game object to construct from.
-         * @param artworkService Service used to locate/download artwork, or nullptr.
+         * @param artworkService Service whose artworkAvailable signal triggers a
+         * redraw, or nullptr. The card never requests a download itself: deciding
+         * when to fetch artwork is application policy and belongs to the owner.
          */
         explicit GameCard(QWidget* parent = nullptr,
                           const gamelog::core::domain::Game& game = emptyGameCard,
@@ -72,7 +74,8 @@ namespace gamelog::gui
 
         inline static const gamelog::core::domain::Game emptyGameCard{
             .id = -1, .title = QStringLiteral(""), .executablePath = QStringLiteral(""),
-            .executableName = QStringLiteral(""), .steamAppId = std::nullopt, .hasArtwork = false, .trackingEnabled = false
+            .executableName = QStringLiteral(""), .steamAppId = std::nullopt, .hasArtwork = false,
+            .trackingEnabled = false
         };
     };
 } // namespace gamelog::gui

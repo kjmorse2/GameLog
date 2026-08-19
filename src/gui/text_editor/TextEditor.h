@@ -33,10 +33,12 @@ namespace gamelog::gui
 
         ~TextEditor() override;
 
-    public Q_SLOTS:
+    public
+        Q_SLOTS :
         void setAbleToEdit(bool enabled);
 
-    private Q_SLOTS:
+    private
+        Q_SLOTS :
         void applyHeading(int index);
 
         void toggleBold();

@@ -47,6 +47,13 @@ namespace gamelog::gui
         ui_->cardWidget = new GameCard{ui_->centralwidget, game, gameLogRuntime_.getArtworkService()};
         layout->addWidget(ui_->cardWidget, 0, 0); // Insert at position 0 (first).
 
+        // Requesting artwork is the window's decision, not the card's. The card
+        // redraws itself when artworkAvailable arrives for this game.
+        if(auto* artworkService = gameLogRuntime_.getArtworkService(); artworkService != nullptr)
+        {
+            static_cast<void>(artworkService->getGameArtwork(game));
+        }
+
         // Set up the timer from the persisted active-session start.
         if(const auto session = gameLogRuntime_.getSessionService()->findActiveSession())
         {
@@ -54,8 +61,7 @@ namespace gamelog::gui
             // the elapsed time to just under a full day rather than narrowing.
             constexpr qint64 millisecondsPerDay = 24LL * 60LL * 60LL * 1000LL;
             const qint64 elapsed = std::max<qint64>(0,
-                                                    session->startTimestamp.
-                                                             msecsTo(QDateTime::currentDateTimeUtc()));
+                                                    session->startTimestamp.msecsTo(QDateTime::currentDateTimeUtc()));
             currentTime_ = QTime{0, 0}.addMSecs(static_cast<int>(std::min(elapsed, millisecondsPerDay - 1)));
         }
         else { currentTime_ = QTime{0, 0}; }

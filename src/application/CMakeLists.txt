@@ -3,12 +3,16 @@ add_library(gamelog-application STATIC
         GameLogRuntime.h
         RunMode.cpp
         RunMode.h
+        services/local/AutomaticSessionTracker.h
+        services/local/AutomaticSessionTracker.cpp
         services/local/GameService.h
         services/local/GameService.cpp
         services/local/SessionService.h
         services/local/SessionService.cpp
         services/web/GameArtworkService.h
         services/web/GameArtworkService.cpp
+        services/web/SteamGameMapper.h
+        services/web/SteamGameMapper.cpp
         services/web/SteamApiService.cpp
         services/web/SteamApiService.h
         services/local/CredentialService.cpp

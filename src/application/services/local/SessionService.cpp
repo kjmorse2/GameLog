@@ -97,8 +97,7 @@ namespace gamelog::application::services
         const QString gameTitle = activeGame_ ? activeGame_->title : QString{};
         activeSession_.reset();
         activeGame_.reset();
-        resetPendingStart();
-        gameClosedDuration_ = seconds::zero();
+        tracker_.reset();
 
         qCInfo(gamelogSessionServiceLog) << "Stopped session" << completed.id << "for game:" << gameTitle;
 
@@ -127,8 +126,7 @@ namespace gamelog::application::services
         {
             activeSession_ = session;
             activeGame_ = std::move(sessionGame);
-            resetPendingStart();
-            gameClosedDuration_ = seconds::zero();
+            tracker_.reset();
             emit sessionStarted(*activeGame_);
         }
 
@@ -167,8 +165,7 @@ namespace gamelog::application::services
         {
             activeSession_ = session;
             activeGame_ = std::move(sessionGame);
-            resetPendingStart();
-            gameClosedDuration_ = seconds::zero();
+            tracker_.reset();
             emit sessionStarted(*activeGame_);
         }
         else if(wasActive && !willBeActive)
@@ -177,8 +174,7 @@ namespace gamelog::application::services
             {
                 activeSession_.reset();
                 activeGame_.reset();
-                resetPendingStart();
-                gameClosedDuration_ = seconds::zero();
+                tracker_.reset();
             }
 
             emit sessionStopped(session);
@@ -208,8 +204,7 @@ namespace gamelog::application::services
     {
         activeSession_.reset();
         activeGame_.reset();
-        resetPendingStart();
-        gameClosedDuration_ = seconds::zero();
+        tracker_.reset();
 
         SessionQuery query;
         query.statuses = {SessionStatus::Active};
@@ -247,8 +242,8 @@ namespace gamelog::application::services
 
             if(!game)
             {
-                qCWarning(gamelogSessionServiceLog) << "Active session" << session.id << "references missing game" << session.
-                    gameId << "and will be interrupted.";
+                qCWarning(gamelogSessionServiceLog) << "Active session" << session.id << "references missing game" <<
+                    session.gameId << "and will be interrupted.";
             }
             else
             {
@@ -266,8 +261,8 @@ namespace gamelog::application::services
 
         if(activeSession_)
         {
-            qCInfo(gamelogSessionServiceLog) << "Restored active session" << activeSession_->id << "for game:" << activeGame_->
-                title;
+            qCInfo(gamelogSessionServiceLog) << "Restored active session" << activeSession_->id << "for game:" <<
+                activeGame_->title;
         }
 
         return true;
@@ -275,66 +270,45 @@ namespace gamelog::application::services
 
     void SessionService::updateAutomaticTracking(const std::vector<ProcessInfo>& processes, seconds elapsed)
     {
-        if(elapsed <= seconds::zero()) { return; }
-
-        if(!activeSession_)
-        {
-            const std::optional<Game> detectedGame = selectDetectedGame(processes);
-            if(!detectedGame)
-            {
-                resetPendingStart();
-                return;
-            }
-
-            if(!pendingGameId_ || *pendingGameId_ != detectedGame->id)
-            {
-                pendingGameId_ = detectedGame->id;
-                gameOpenDuration_ = seconds::zero();
-            }
-
-            gameOpenDuration_ += elapsed;
-            if(gameOpenDuration_ < kStartGracePeriod) { return; }
-
-            static_cast<void>(startAutomaticSession(*detectedGame));
-            resetPendingStart();
-            return;
-        }
-
+        // Rehydrate the active game before consulting the tracker.
         // restoreActiveSession() and startAutomaticSession() normally maintain
         // this invariant. Rehydrate defensively if an active Session was supplied
         // through another service operation or automatic tracking was reset.
-        if(!activeGame_)
+        if(activeSession_ && !activeGame_)
         {
             activeGame_ = gameService_.findById(activeSession_->gameId);
             if(!activeGame_)
             {
-                qCWarning(gamelogSessionServiceLog) << "Cannot track active session" << activeSession_->id << "because game" <<
-                    activeSession_->gameId << "is unavailable.";
+                qCWarning(gamelogSessionServiceLog) << "Cannot track active session" << activeSession_->id <<
+                    "because game" << activeSession_->gameId << "is unavailable.";
                 return;
             }
         }
 
-        const bool activeGameFound = std::ranges::any_of(processes,
-                                                         [this](const ProcessInfo& process)
-                                                         {
-                                                             return ProcessHelpers::processMatchesGame(process,
-                                                                 *activeGame_);
-                                                         });
+        const Game* activeGame = activeSession_ && activeGame_ ? &*activeGame_ : nullptr;
 
-        if(activeGameFound)
+        const TrackingDecision decision = tracker_.advance(processes,
+                                                           elapsed,
+                                                           activeGame,
+                                                           gameService_.trackedSteamGames(),
+                                                           gameService_.trackedPathGames());
+
+        switch(decision.action)
         {
-            gameClosedDuration_ = seconds::zero();
-            return;
+        case TrackingAction::Start:
+            static_cast<void>(startAutomaticSession(*decision.game));
+            break;
+        case TrackingAction::Stop:
+            static_cast<void>(endActiveSession());
+            break;
+        case TrackingAction::None:
+            break;
         }
-
-        gameClosedDuration_ += elapsed;
-        if(gameClosedDuration_ >= kEndGracePeriod) { static_cast<void>(endActiveSession()); }
     }
 
     void SessionService::resetAutomaticTracking() noexcept
     {
-        resetPendingStart();
-        gameClosedDuration_ = seconds::zero();
+        tracker_.reset();
         activeGame_.reset();
     }
 
@@ -348,7 +322,8 @@ namespace gamelog::application::services
 
         if(game.id <= 0 || !game.trackingEnabled)
         {
-            qCWarning(gamelogSessionServiceLog) << "Cannot start an automatic session for an invalid or untracked game.";
+            qCWarning(gamelogSessionServiceLog) <<
+                "Cannot start an automatic session for an invalid or untracked game.";
             return std::nullopt;
         }
 
@@ -366,9 +341,9 @@ namespace gamelog::application::services
 
         activeSession_ = session;
         activeGame_ = game;
-        gameClosedDuration_ = seconds::zero();
 
-        qCInfo(gamelogSessionServiceLog) << "Started session" << activeSession_->id << "for game:" << activeGame_->title;
+        qCInfo(gamelogSessionServiceLog) << "Started session" << activeSession_->id << "for game:" << activeGame_->
+            title;
 
         emit sessionStarted(*activeGame_);
         return activeSession_;
@@ -411,82 +386,5 @@ namespace gamelog::application::services
 
         emit sessionStopped(session);
         return true;
-    }
-
-    std::optional<Game> SessionService::selectDetectedGame(const std::vector<ProcessInfo>& processes) const
-    {
-        struct Candidate
-        {
-            Game game;
-            int priority;
-        };
-
-        std::vector<Candidate> candidates;
-
-        const auto addCandidate = [&candidates](const Game& game, int priority)
-        {
-            const auto existing = std::find_if(candidates.begin(),
-                                               candidates.end(),
-                                               [&game](const Candidate& candidate)
-                                               {
-                                                   return candidate.game.id == game.id;
-                                               });
-
-            if(existing == candidates.end()) { candidates.push_back({game, priority}); }
-            else { existing->priority = std::min(existing->priority, priority); }
-        };
-
-        for(const ProcessInfo& process : processes)
-        {
-            if(process.steamAppId)
-            {
-                const auto steamGame = gameService_.trackedSteamGames().constFind(*process.steamAppId);
-                if(steamGame != gameService_.trackedSteamGames().constEnd())
-                {
-                    addCandidate(steamGame.value(), 0);
-                    continue;
-                }
-            }
-
-            if(!process.executablePath.isEmpty())
-            {
-                const auto pathGame = gameService_.trackedPathGames().constFind(process.executablePath);
-                if(pathGame != gameService_.trackedPathGames().constEnd() &&
-                   ProcessHelpers::processMatchesGame(process, pathGame.value())) { addCandidate(pathGame.value(), 1); }
-            }
-        }
-
-        if(candidates.empty()) { return std::nullopt; }
-
-        if(pendingGameId_)
-        {
-            const auto pending = std::find_if(candidates.begin(),
-                                              candidates.end(),
-                                              [this](const Candidate& candidate)
-                                              {
-                                                  return candidate.game.id == *pendingGameId_;
-                                              });
-            if(pending != candidates.end()) { return pending->game; }
-        }
-
-        const auto selected = std::min_element(candidates.begin(),
-                                               candidates.end(),
-                                               [](const Candidate& left, const Candidate& right)
-                                               {
-                                                   if(left.priority != right.priority)
-                                                   {
-                                                       return left.priority < right.priority;
-                                                   }
-
-                                                   return left.game.id < right.game.id;
-                                               });
-
-        return selected->game;
-    }
-
-    void SessionService::resetPendingStart() noexcept
-    {
-        pendingGameId_.reset();
-        gameOpenDuration_ = seconds::zero();
     }
 } // namespace gamelog::application::services

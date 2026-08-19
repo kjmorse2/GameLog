@@ -78,7 +78,7 @@ namespace gamelog::application::services
 
         // TODO bool installCustomArtwork();
 
-    Q_SIGNALS:
+        Q_SIGNALS :
         /**
          * Emitted when one validated artwork file for a specific game is available,
          * either from local files or after a successful Steam download.
