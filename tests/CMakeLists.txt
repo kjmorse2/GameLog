@@ -182,6 +182,12 @@ add_gamelog_application_test(
 # General domain tests
 # ---------------------------------------------------------------------------
 
+add_gamelog_application_test(
+        gamelog-automatic-session-tracker-test
+        application/services/local/AutomaticSessionTrackerTest.cpp
+        "unit;application"
+)
+
 add_gamelog_test(
         gamelog-core-smoke-test
         CoreSmokeTest.cpp

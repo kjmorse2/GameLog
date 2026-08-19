@@ -9,6 +9,7 @@
 #include <QObject>
 
 #include "database/SessionRepository.h"
+#include "application/services/local/AutomaticSessionTracker.h"
 #include "domain/Game.h"
 #include "domain/Session.h"
 #include "domain/query/SessionQuery.h"
@@ -177,20 +178,6 @@ namespace gamelog::application::services
         [[nodiscard]] bool interruptSession(core::domain::Session session, const QDateTime& interruptedAt);
 
         /**
-         * Chooses one game from a process snapshot deterministically. A still
-         * detected pending game is retained; otherwise Steam matches precede
-         * path-only matches, with game ID used as a tie-breaker.
-         */
-        [[nodiscard]] std::optional<core::domain::Game> selectDetectedGame(
-            const std::vector<core::process::ProcessInfo>& processes) const;
-
-        /**
-         * Reset the pending start state, clearing any pending game ID and
-         * resetting the grace-period timer.
-         */
-        void resetPendingStart() noexcept;
-
-        /**
          * @brief The repository where sessions are stored.
          */
         core::database::SessionRepository& repository_;
@@ -216,28 +203,8 @@ namespace gamelog::application::services
         std::optional<core::domain::Game> activeGame_;
 
         /**
-         * @brief The game ID currently accumulating the automatic-start grace period.
+         * @brief Decides when automatic sessions should start and stop.
          */
-        std::optional<int> pendingGameId_;
-
-        /**
-         * @brief The amount of time the pending game has remained detected.
-         */
-        std::chrono::seconds gameOpenDuration_{0};
-
-        /**
-         * @brief The amount of time the active game has remained undetected.
-         */
-        std::chrono::seconds gameClosedDuration_{0};
-
-        /**
-         * @brief The grace period for starting a new automatic session.
-         */
-        static constexpr std::chrono::seconds kStartGracePeriod{30};
-
-        /**
-         * @brief The grace period for ending an automatic session.
-         */
-        static constexpr std::chrono::seconds kEndGracePeriod{30};
+        AutomaticSessionTracker tracker_;
     };
 } // namespace gamelog::application::services
