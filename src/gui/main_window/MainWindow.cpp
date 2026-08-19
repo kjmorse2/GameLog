@@ -40,9 +40,7 @@ namespace gamelog::gui
         auto* libraryViewWidget = new LibraryView{ui->libraryTab, &runtime};
         ui->libraryTabLayout->addWidget(libraryViewWidget);
 
-        ui->calanderTabLayout->addWidget(new CalendarView{
-                                             ui->calanderTab, runtime.getGameService(), runtime.getSessionService()
-                                         });
+        ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getSessionService()});
 
         statusActiveLabel_ = new QLabel{ui->statusBar};
         statusTitleLabel_ = new QLabel{ui->statusBar};
@@ -57,24 +55,7 @@ namespace gamelog::gui
         connect(sessionService, &SessionService::sessionStarted, this, &MainWindow::onSessionStarted);
         connect(runtime_.getSessionService(), &SessionService::sessionStopped, this, &MainWindow::onSessionEnded);
         connect(ui->actionAdd_SteamAPI_Key, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
-        connect(this,
-                &MainWindow::steamApiKeyEntered,
-                runtime_.getCredentialService(),
-                [credentialService = runtime_.getCredentialService()](const QString& key)
-                {
-                    credentialService->
-                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), key);
-                });
         connect(ui->actionAdd_Steam_Player_ID, &QAction::triggered, this, &MainWindow::onAddSteamPlayerId);
-        connect(this,
-                &MainWindow::steamPlayerIdEntered,
-                runtime_.getCredentialService(),
-                [credentialService = runtime_.getCredentialService()](const QString& key)
-                {
-                    credentialService->
-                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey),
-                                  key);
-                });
     }
 
     MainWindow::~MainWindow() { delete ui; }
@@ -129,7 +110,8 @@ namespace gamelog::gui
 
                     if(key.isEmpty()) { return; }
 
-                    emit steamApiKeyEntered(key);
+                    runtime_.getCredentialService()->
+                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), key);
                     dialog.accept();
                 });
 
@@ -174,7 +156,9 @@ namespace gamelog::gui
 
                     if(key.isEmpty()) { return; }
 
-                    emit steamPlayerIdEntered(key);
+                    runtime_.getCredentialService()->
+                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey),
+                                  key);
                     dialog.accept();
                 });
 

@@ -382,6 +382,12 @@ namespace gamelog::application::services
         return value.isValid() ? value.toUTC() : QDateTime{};
     }
 
+    // Defense in depth, not the primary guard. The `one_active_session` partial
+    // unique index in migration 001 is what actually enforces "at most one active
+    // session"; this check and restoreActiveSession()'s multi-row repair exist so
+    // the service fails cleanly instead of surfacing a constraint violation, and
+    // so a database predating the index is still repaired. Do not remove either
+    // as redundant. See CONTRACT_CHANGES.md item 19.
     bool SessionService::hasOtherActiveSession(int excludedSessionId) const
     {
         SessionQuery query;

@@ -34,8 +34,27 @@ namespace gamelog::application::services
         connectCredentialService();
     }
 
+    void SteamApiService::setCredentialTimeout(const std::chrono::milliseconds timeout)
+    {
+        credentialTimeout_.setInterval(timeout);
+    }
+
     void SteamApiService::connectCredentialService()
     {
+        credentialTimeout_.setSingleShot(true);
+        credentialTimeout_.setInterval(kDefaultCredentialTimeout);
+        credentialTimeout_.setParent(this);
+
+        connect(&credentialTimeout_,
+                &QTimer::timeout,
+                this,
+                [this]
+                {
+                    qCWarning(gamelogSteamApiServiceLog) <<
+                        "Timed out waiting for Steam credentials; abandoning the request.";
+                    failRequest(QStringLiteral("Timed out waiting for Steam credentials."));
+                });
+
         connect(&credentialService_, &CredentialService::secretRetrieved, this, &SteamApiService::onSecretRetrieved);
         connect(&credentialService_, &CredentialService::secretNotFound, this, &SteamApiService::onSecretNotFound);
         connect(&credentialService_, &CredentialService::credentialError, this, &SteamApiService::onCredentialError);
@@ -60,6 +79,8 @@ namespace gamelog::application::services
         steamPlayerId_.clear();
 
         qCDebug(gamelogSteamApiServiceLog) << "Requesting Steam API key and player ID from CredentialService.";
+
+        credentialTimeout_.start();
 
         credentialService_.getSecret(QString::fromLatin1(CredentialService::kSteamApiKey));
         credentialService_.getSecret(QString::fromLatin1(CredentialService::kSteamPlayerIdKey));
@@ -169,6 +190,7 @@ namespace gamelog::application::services
 
         QNetworkRequest request{url};
         networkRequestStarted_ = true;
+        credentialTimeout_.stop();
 
         qCInfo(gamelogSteamApiServiceLog) << "Sending Steam GetOwnedGames request." << "Steam ID:" << steamId <<
             "API key length:" << steamApiKey_.size() << "Endpoint:" << url.adjusted(QUrl::RemoveQuery).toString();
@@ -252,6 +274,7 @@ namespace gamelog::application::services
 
     void SteamApiService::resetRequestState()
     {
+        credentialTimeout_.stop();
         steamApiKey_.clear();
         steamPlayerId_.clear();
         requestInProgress_ = false;

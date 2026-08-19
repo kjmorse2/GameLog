@@ -83,6 +83,12 @@ namespace gamelog::core::domain
 
         /**
          * @brief Notes persisted in the corresponding session_documents row.
+         *
+         * The content is **Markdown**, which is what TextEditor reads and writes.
+         * Migration 002 renamed the column from html_content to content and 003
+         * removed the format column, so the format is a convention rather than a
+         * stored property. Never null: a null QString would bind as SQL NULL
+         * against a NOT NULL column, so the repository normalizes it to empty.
          */
         QString notes{QStringLiteral("")};
     };

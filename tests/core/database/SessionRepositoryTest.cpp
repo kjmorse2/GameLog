@@ -5,6 +5,7 @@
 #include "domain/Session.h"
 #include "domain/query/SessionQuery.h"
 #include "fixtures/TestDatabaseFixture.h"
+#include "fixtures/LoggingTestSupport.h"
 
 #include <chrono>
 #include <cstddef>
@@ -154,6 +155,10 @@ namespace
 
 void SessionRepositoryTest::init()
 {
+    // These tests assert on logged messages, so the categories must be on
+    // regardless of any ambient QT_LOGGING_RULES.
+    gamelog::tests::fixtures::enableGameLogLoggingCategories();
+
     QTest::failOnWarning();
 
     databasePath_ = gamelog::tests::fixtures::createFreshTestDatabasePath(QStringLiteral("session-repository-%1").

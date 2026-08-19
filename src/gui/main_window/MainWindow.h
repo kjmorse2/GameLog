@@ -28,18 +28,18 @@ namespace gamelog::gui
 
     public:
         /**
-     * @brief Constructs a new MainWindow.
-     * @param runtime
-     * @param parent
-     */
+         * @brief Constructs a new MainWindow.
+         *
+         * @pre The runtime must have been started successfully. The windows
+         * dereference GameLogRuntime's service accessors without null checks,
+         * and those return nullptr when database initialization failed.
+         * main.cpp enforces this by exiting when start() returns false.
+         * @param runtime The started runtime supplying game and session state.
+         * @param parent The parent widget.
+         */
         explicit MainWindow(application::GameLogRuntime& runtime, QWidget* parent = nullptr);
 
         ~MainWindow() override;
-
-    Q_SIGNALS:
-        void steamApiKeyEntered(QString key);
-
-        void steamPlayerIdEntered(QString playerId);
 
     private Q_SLOTS:
         void onSessionStarted(const core::domain::Game& game);

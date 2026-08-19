@@ -13,6 +13,15 @@ QT_END_NAMESPACE
 
 namespace gamelog::gui
 {
+    /**
+     * Rich-text editor used for session notes, backed by Markdown.
+     *
+     * The widget edits formatted text through QTextEdit but reads and writes
+     * Markdown via getMarkdown()/setMarkdown(), which is the format persisted in
+     * Session::notes. Editing is gated by setAbleToEdit(): notes are writable
+     * only while a session is live, so LiveWindow disables the editor once a
+     * session ends.
+     */
     class TextEditor : public QWidget
     {
         Q_OBJECT

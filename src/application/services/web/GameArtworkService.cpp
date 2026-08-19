@@ -70,41 +70,16 @@ namespace gamelog::application::services
         : QObject{parent},
           networkAccessManager_{new QNetworkAccessManager{this}}
     {
-        connectNetworkAccessManager();
     }
 
     GameArtworkService::GameArtworkService(QNetworkAccessManager& networkAccessManager, QObject* parent)
         : QObject{parent},
           networkAccessManager_{&networkAccessManager}
     {
-        connectNetworkAccessManager();
     }
 
-    void GameArtworkService::connectNetworkAccessManager()
+    void GameArtworkService::onNetworkReplyFinished(QNetworkReply* reply, ArtworkType artworkType, int gameId)
     {
-        connect(networkAccessManager_,
-                &QNetworkAccessManager::finished,
-                this,
-                &GameArtworkService::onNetworkReplyFinished);
-    }
-
-    void GameArtworkService::onNetworkReplyFinished(QNetworkReply* reply)
-    {
-        bool typeOk = false;
-        const int artworkTypeInt = reply->property("artworkType").toInt(&typeOk);
-
-        bool gameIdOk = false;
-        const int gameId = reply->property("gameId").toInt(&gameIdOk);
-
-        if(!typeOk || !gameIdOk)
-        {
-            qCWarning(gamelogArtworkServiceLog) << "Missing artwork metadata for reply:" << reply->url();
-            reply->deleteLater();
-            return;
-        }
-
-        const auto artworkType = static_cast<ArtworkType>(artworkTypeInt);
-
         if(reply->error() == QNetworkReply::NoError) { parseSteamArtworkReply(reply, artworkType, gameId); }
         else
         {
@@ -182,19 +157,27 @@ namespace gamelog::application::services
         return QStringLiteral("Unknown");
     }
 
-    bool GameArtworkService::getSteamArtwork(const core::domain::Game& game) const
+    bool GameArtworkService::getSteamArtwork(const core::domain::Game& game)
     {
         if(networkAccessManager_ == nullptr || game.id <= 0 || !game.steamAppId || *game.steamAppId <= 0)
         {
             return false;
         }
 
+        const int gameId = game.id;
+
         for(const ArtworkType type : kAllArtworkTypes)
         {
             const QUrl next = makeSteamArtworkUrl(*game.steamAppId, type);
             QNetworkReply* reply = networkAccessManager_->get(QNetworkRequest{next});
-            reply->setProperty("artworkType", static_cast<int>(type));
-            reply->setProperty("gameId", game.id);
+
+            // Connect to this reply rather than to the manager's finished()
+            // signal: an injected manager may be shared with other components,
+            // whose replies must not be handled or deleted here.
+            connect(reply,
+                    &QNetworkReply::finished,
+                    this,
+                    [this, reply, type, gameId] { onNetworkReplyFinished(reply, type, gameId); });
         }
 
         return true;

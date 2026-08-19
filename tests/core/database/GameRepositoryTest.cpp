@@ -5,6 +5,7 @@
 #include "domain/Game.h"
 #include "domain/query/GameQuery.h"
 #include "fixtures/TestDatabaseFixture.h"
+#include "fixtures/LoggingTestSupport.h"
 
 #include <cstddef>
 #include <memory>
@@ -129,6 +130,10 @@ namespace
 
 void GameRepositoryTest::init()
 {
+    // These tests assert on logged messages, so the categories must be on
+    // regardless of any ambient QT_LOGGING_RULES.
+    gamelog::tests::fixtures::enableGameLogLoggingCategories();
+
     QTest::failOnWarning();
 
     databasePath_ =

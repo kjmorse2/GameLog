@@ -3,6 +3,7 @@
 #include "application/services/web/GameArtworkService.h"
 #include "domain/Game.h"
 #include "fixtures/FakeNetworkAccessManager.h"
+#include "fixtures/LoggingTestSupport.h"
 #include "resources/AppPaths.h"
 
 #include <memory>
@@ -144,6 +145,10 @@ void GameArtworkServiceTest::registerValidResponses() const
 
 void GameArtworkServiceTest::init()
 {
+    // These tests assert on logged messages, so the categories must be on
+    // regardless of any ambient QT_LOGGING_RULES.
+    gamelog::tests::fixtures::enableGameLogLoggingCategories();
+
     // Redirects AppPaths away from the developer's real data directory.
     QStandardPaths::setTestModeEnabled(true);
     qRegisterMetaType<ArtworkType>();

@@ -73,7 +73,6 @@ namespace gamelog::core::process
             if(command != nullptr) { process.executableName = QString::fromLocal8Bit(command); }
 
             if(executable != nullptr) { process.executablePath = QString::fromLocal8Bit(executable); }
-            // qCDebug(gamelogProcessLog) << "Detected process:" << process.executableName << "PID:" << process.pid << "Path:" << process.executablePath;
             processes.push_back(std::move(process));
         }
         procps_pids_unref(&info);

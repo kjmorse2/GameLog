@@ -4,10 +4,8 @@ add_library(gamelog-core STATIC
         database/GameRepository.cpp
         database/SessionRepository.cpp
 
-        #        sessions/SessionManager.cpp
         logging/LoggingCategories.cpp
         domain/Session.cpp
-        domain/SessionDocument.cpp
         domain/query/GameQuery.h
         domain/query/GameQuery.cpp
         domain/query/SessionQuery.h

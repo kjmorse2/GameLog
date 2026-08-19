@@ -6,6 +6,7 @@ add_library(gamelog-test-support STATIC
         fixtures/TestDatabaseFixture.cpp
         fixtures/FakeNetworkAccessManager.cpp
         fixtures/FakeProcessSource.h
+        fixtures/LoggingTestSupport.cpp
 )
 
 target_include_directories(gamelog-test-support

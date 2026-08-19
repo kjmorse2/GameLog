@@ -1,9 +1,12 @@
 #pragma once
 
+#include <chrono>
+
 #include <QJsonArray>
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 
 class QNetworkReply;
 
@@ -11,6 +14,19 @@ namespace gamelog::application::services
 {
     class CredentialService;
 
+    /**
+     * Fetches the user's owned Steam library from the Steam Web API.
+     *
+     * A request is a two-stage operation: the API key and player ID are pulled
+     * asynchronously from CredentialService, and only once both arrive is the
+     * HTTP request sent. One request may be in flight at a time; a second call
+     * fails rather than queueing. Every outcome is reported through
+     * ownedGamesReceived() or requestFailed(), including the guard that fails a
+     * request whose credential callbacks never arrive.
+     *
+     * The API key is passed only as the `key` query parameter, never as a
+     * header, and neither it nor the full query string is ever logged.
+     */
     class SteamApiService : public QObject
     {
         Q_OBJECT
@@ -37,6 +53,14 @@ namespace gamelog::application::services
          * ownedGamesReceived().
          */
         void getOwnedGames();
+
+        /**
+         * Overrides how long the service waits for CredentialService to answer
+         * before failing the request. A narrow seam so tests need not wait the
+         * production timeout; production callers use the default.
+         * @param timeout The credential wait before the request is abandoned.
+         */
+        void setCredentialTimeout(std::chrono::milliseconds timeout);
 
     Q_SIGNALS:
         /**
@@ -135,5 +159,19 @@ namespace gamelog::application::services
          * one HTTP request for a single sync operation.
          */
         bool networkRequestStarted_{false};
+
+        /**
+         * Fails a request whose credential callbacks never arrive. Without it a
+         * silent keychain would leave requestInProgress_ set for the lifetime of
+         * the process and reject every later request. Covers only the credential
+         * phase; once the HTTP request starts, the reply drives completion.
+         */
+        QTimer credentialTimeout_;
+
+        /**
+         * Default credential wait. Generous enough for a keychain that prompts
+         * the user to unlock, short enough that a wedged request recovers.
+         */
+        static constexpr std::chrono::seconds kDefaultCredentialTimeout{30};
     };
 } // namespace gamelog::application::services

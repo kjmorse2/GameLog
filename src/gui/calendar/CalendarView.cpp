@@ -4,16 +4,14 @@
 
 #include "ui_calendarview.h"
 
-using gamelog::application::services::GameService;
 using gamelog::application::services::SessionService;
 
 
 namespace gamelog::gui
 {
-    CalendarView::CalendarView(QWidget* parent, GameService* gameService, SessionService* sessionService)
+    CalendarView::CalendarView(QWidget* parent, SessionService* sessionService)
         : QWidget(parent),
           ui(new Ui::CalendarView),
-          gameService_(gameService),
           sessionService_(sessionService)
     {
         ui->setupUi(this);

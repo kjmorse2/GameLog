@@ -13,11 +13,27 @@ class QNetworkReply;
 
 namespace gamelog::application::services
 {
+    /**
+     * The artwork images GameLog stores per game. Each maps to one fixed file
+     * name on disk and one Steam CDN file name.
+     */
     enum class ArtworkType
     {
         Cover, Header, Logo
     };
 
+    /**
+     * Supplies local cover/header/logo artwork for a game, downloading it from
+     * the Steam CDN when it is missing.
+     *
+     * Artwork lives on disk under AppPaths::gameArtworkDirectory(gameId), not in
+     * the database; Game::hasArtwork only records whether a valid cover.jpg was
+     * present. Downloads are asynchronous, so getGameArtwork() returns true only
+     * when a usable cover already exists at the moment of the call - queueing
+     * downloads returns false, and callers learn the outcome from
+     * artworkAvailable()/artworkUnavailable(). Every downloaded file is decoded
+     * before being written, so a Steam error page is never stored as an image.
+     */
     class GameArtworkService : public QObject
     {
         Q_OBJECT
@@ -89,7 +105,7 @@ namespace gamelog::application::services
          * @param game The game to get artwork for.
          * @return True if the download requests were queued.
          */
-        [[nodiscard]] bool getSteamArtwork(const core::domain::Game& game) const;
+        [[nodiscard]] bool getSteamArtwork(const core::domain::Game& game);
 
         /**
          * Parses the reply from the Steam CDN for artwork requests, validates
@@ -117,17 +133,11 @@ namespace gamelog::application::services
         [[nodiscard]] static QUrl makeSteamArtworkUrl(int steamAppId, ArtworkType artworkType);
 
         /**
-         * Wires the reply handler. Shared by both constructors, which differ
-         * only in whether the network access manager is owned or injected.
+         * Routes one finished artwork reply to parsing or to artworkUnavailable,
+         * then schedules the reply for deletion. Connected per reply, so replies
+         * issued by other users of an injected manager are never touched here.
          */
-        void connectNetworkAccessManager();
-
-        /**
-         * Routes one finished reply to parsing or to artworkUnavailable, then
-         * schedules the reply for deletion. Replies missing their artworkType/
-         * gameId properties are discarded.
-         */
-        void onNetworkReplyFinished(QNetworkReply* reply);
+        void onNetworkReplyFinished(QNetworkReply* reply, ArtworkType artworkType, int gameId);
 
         /**
          * A static map that associates each ArtworkType with its corresponding Steam CDN file. This is used to construct the correct URL for fetching artwork.

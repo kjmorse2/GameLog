@@ -28,8 +28,13 @@ namespace gamelog::gui
     public:
         /**
          * Constructs a LibraryView.
+         *
+         * @pre The runtime must have been started successfully. The windows
+         * dereference GameLogRuntime's service accessors without null checks,
+         * and those return nullptr when database initialization failed.
+         * main.cpp enforces this by exiting when start() returns false.
          * @param parent The parent widget.
-         * @param service The Gamelog service to query Games for.
+         * @param service The started runtime to query Games through.
          */
         explicit LibraryView(QWidget* parent = nullptr, gamelog::application::GameLogRuntime* service = nullptr);
 

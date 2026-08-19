@@ -12,6 +12,17 @@
 
 namespace gamelog::core::process
 {
+    /**
+     * Annotates process snapshots with the Steam App ID of each Steam process.
+     *
+     * Reading a process's environment means opening /proc/<pid>/environ, which
+     * is far too costly to repeat for every process on every poll. This class
+     * therefore caches results per PID, re-reading only when a PID is new or
+     * its executable path changed (a PID reused by a different program), and
+     * dropping entries for PIDs that are no longer present.
+     *
+     * Not thread-safe; it is owned and driven by GameLogRuntime's polling.
+     */
     class SteamProcessInspector
     {
     public:

@@ -5,6 +5,7 @@
 #include "fixtures/FakeNetworkAccessManager.h"
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 
 #include <QJsonArray>
@@ -73,6 +74,28 @@ namespace
         if(previousMessageHandler != nullptr) { previousMessageHandler(type, context, message); }
     }
 
+    QLoggingCategory::CategoryFilter previousCategoryFilter = nullptr;
+
+    /**
+     * Force-enables the Steam API category no matter how logging is configured.
+     *
+     * Rules from QT_LOGGING_RULES and qtlogging.ini are applied after, and so
+     * override, QLoggingCategory::setFilterRules(). An installed filter is the
+     * only mechanism that outranks both, which keeps this test's assertions
+     * meaningful instead of silently capturing nothing.
+     */
+    void enableSteamApiCategory(QLoggingCategory* category)
+    {
+        if(previousCategoryFilter != nullptr) { previousCategoryFilter(category); }
+
+        if(qstrcmp(category->categoryName(), "gamelog.application.services.steam_api") == 0)
+        {
+            category->setEnabled(QtDebugMsg, true);
+            category->setEnabled(QtInfoMsg, true);
+            category->setEnabled(QtWarningMsg, true);
+        }
+    }
+
     constexpr auto kValidPlayerId = "76561197960287930";
     constexpr auto kValidApiKey = "0123456789ABCDEF0123456789ABCDEF";
 } // namespace
@@ -126,6 +149,8 @@ namespace
         void getOwnedGames_acceptsEmptyGamesArrayAsSuccess();
 
         void getOwnedGames_failsForResponseShapesWithoutAGamesArray();
+
+        void getOwnedGames_recoversWhenCredentialCallbacksNeverArrive();
 
     private:
         void startRequestSilently() const;
@@ -435,7 +460,7 @@ void SteamApiServiceTest::getOwnedGames_sendsApiKeyOnlyAsQueryParameter()
 
 void SteamApiServiceTest::getOwnedGames_neverLogsTheApiKeyOrTheQueryString()
 {
-    QLoggingCategory::setFilterRules(QStringLiteral("gamelog.application.services.steam_api=true"));
+    previousCategoryFilter = QLoggingCategory::installFilter(enableSteamApiCategory);
 
     QStringList messages;
     capturedMessages = &messages;
@@ -447,9 +472,16 @@ void SteamApiServiceTest::getOwnedGames_neverLogsTheApiKeyOrTheQueryString()
 
     qInstallMessageHandler(previousMessageHandler);
     capturedMessages = nullptr;
-    QLoggingCategory::setFilterRules(QString{});
+
+    // Restoring the previous filter re-evaluates every category, returning
+    // them to whatever the ambient configuration specified.
+    QLoggingCategory::installFilter(previousCategoryFilter);
+    previousCategoryFilter = nullptr;
 
     QVERIFY(received);
+
+    // With the category force-enabled above this is an invariant of the
+    // service, not of the environment: the request path always logs.
     QVERIFY(!messages.isEmpty());
 
     const QString apiKey = QString::fromLatin1(kValidApiKey);
@@ -470,6 +502,29 @@ void SteamApiServiceTest::getOwnedGames_neverLogsTheApiKeyOrTheQueryString()
     }
 
     QVERIFY(sawEndpointLine);
+}
+
+void SteamApiServiceTest::getOwnedGames_recoversWhenCredentialCallbacksNeverArrive()
+{
+    // A keychain that neither succeeds nor errors used to leave requestInProgress_
+    // set forever, rejecting every later request for the process lifetime.
+    service_->setCredentialTimeout(std::chrono::milliseconds{50});
+
+    startRequestSilently();
+
+    // No credentials are ever delivered; only the guard can end this request.
+    QVERIFY(failedSpy_->wait(2000));
+    QCOMPARE(failedSpy_->count(), 1);
+    QVERIFY(failedSpy_->at(0).at(0).toString().contains(QStringLiteral("Timed out")));
+    QCOMPARE(networkAccessManager_->requestCount(), 0);
+
+    // The service must accept work again rather than stay wedged.
+    failedSpy_->clear();
+    startRequestSilently();
+    deliverCredentials();
+
+    QVERIFY(receivedSpy_->wait(2000));
+    QCOMPARE(failedSpy_->count(), 0);
 }
 
 void SteamApiServiceTest::getOwnedGames_acceptsEmptyGamesArrayAsSuccess()

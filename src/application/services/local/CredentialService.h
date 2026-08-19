@@ -12,6 +12,18 @@ namespace QKeychain
 
 namespace gamelog::application::services
 {
+    /**
+     * Stores and retrieves Steam credentials in the operating system's keychain.
+     *
+     * All three operations are asynchronous and report their outcome through
+     * secretRetrieved(), secretNotFound(), or credentialError() rather than by
+     * return value; a call that returns true has only been *started*. Keys and
+     * secrets that are empty or blank after trimming are rejected before any
+     * keychain job is created. Secrets are never written to the log.
+     *
+     * Keychain job creation is virtual so tests can substitute jobs without a
+     * real keychain; production behavior is unaffected.
+     */
     class CredentialService : public QObject
     {
         Q_OBJECT
@@ -24,6 +36,11 @@ namespace gamelog::application::services
 
         /**
          * @brief The key used to store the Steam Player ID in the keychain.
+         *
+         * The value is deliberately inconsistent with kSteamApiKey's naming
+         * ("player_id_key" rather than "steam_player_id"). It is a persisted
+         * keychain entry name, so renaming it would strand credentials that
+         * existing installations have already stored. Left as-is on purpose.
          */
         static constexpr auto kSteamPlayerIdKey = "player_id_key";
 

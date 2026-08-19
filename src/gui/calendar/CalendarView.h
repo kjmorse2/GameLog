@@ -24,12 +24,14 @@ namespace gamelog::gui
     public:
         /**
          * Creates a new CalendarView.
+         *
+         * @pre sessionService must be non-null for the calendar to populate.
+         * GameLogRuntime's accessors return nullptr when database
+         * initialization failed, so callers must have started the runtime.
          * @param parent The parent widget.
-         * @param gameService The game service to query/edit for games.
          * @param sessionService The session service to query/edit for sessions.
          */
         explicit CalendarView(QWidget* parent = nullptr,
-                              gamelog::application::services::GameService* gameService = nullptr,
                               gamelog::application::services::SessionService* sessionService = nullptr);
 
         ~CalendarView() override;
@@ -39,11 +41,6 @@ namespace gamelog::gui
          * @brief ui pointer from QT
          */
         Ui::CalendarView* ui{};
-
-        /**
-         * @brief The game service to query/edit for games.
-         */
-        gamelog::application::services::GameService* gameService_{};
 
         /**
          * @brief the session service to query/edit for sessions
