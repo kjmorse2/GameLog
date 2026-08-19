@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 
+#include <optional>
+
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QLabel>
@@ -74,96 +76,74 @@ namespace gamelog::gui
         statusTimeLabel_->setText("00:00");
     }
 
-    void MainWindow::onAddSteamApiKey()
+    std::optional<QString> MainWindow::promptForSecret(const QString& title,
+                                                       const QString& explanation,
+                                                       const QString& placeholder)
     {
         QDialog dialog{this};
-        dialog.setWindowTitle(tr("Add Steam Web API Key"));
+        dialog.setWindowTitle(title);
         dialog.setModal(true);
 
         auto* layout = new QVBoxLayout{&dialog};
 
-        auto* explanation = new QLabel{
-            tr("GameLog uses the Steam Web API to import your Steam library. " "Enter your Steam Web API key below. "
-               "You can obtain a key from Steam's developer page."),
-            &dialog
-        };
-        explanation->setWordWrap(true);
+        auto* explanationLabel = new QLabel{explanation, &dialog};
+        explanationLabel->setWordWrap(true);
 
-        auto* keyEdit = new QLineEdit{&dialog};
-        keyEdit->setEchoMode(QLineEdit::Password);
-        keyEdit->setPlaceholderText(tr("Steam Web API key"));
+        auto* secretEdit = new QLineEdit{&dialog};
+        secretEdit->setEchoMode(QLineEdit::Password);
+        secretEdit->setPlaceholderText(placeholder);
 
         auto* buttons = new QDialogButtonBox{QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog};
-
         buttons->button(QDialogButtonBox::Ok)->setText(tr("Submit"));
 
-        layout->addWidget(explanation);
-        layout->addWidget(keyEdit);
+        layout->addWidget(explanationLabel);
+        layout->addWidget(secretEdit);
         layout->addWidget(buttons);
 
         connect(buttons,
                 &QDialogButtonBox::accepted,
                 &dialog,
-                [&dialog, keyEdit, this]
+                [&dialog, secretEdit]
                 {
-                    const QString key = keyEdit->text().trimmed();
-
-                    if(key.isEmpty()) { return; }
-
-                    runtime_.getCredentialService()->
-                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), key);
+                    // A blank entry keeps the dialog open rather than storing nothing.
+                    if(secretEdit->text().trimmed().isEmpty()) { return; }
                     dialog.accept();
                 });
 
         connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
 
-        dialog.exec();
+        if(dialog.exec() != QDialog::Accepted) { return std::nullopt; }
+
+        return secretEdit->text().trimmed();
+    }
+
+    void MainWindow::onAddSteamApiKey()
+    {
+        const std::optional<QString> key = promptForSecret(
+            tr("Add Steam Web API Key"),
+            tr("GameLog uses the Steam Web API to import your Steam library. "
+               "Enter your Steam Web API key below. "
+               "You can obtain a key from Steam's developer page."),
+            tr("Steam Web API key"));
+
+        if(!key) { return; }
+
+        runtime_.getCredentialService()->
+            setSecret(QString::fromLatin1(application::services::CredentialService::kSteamApiKey), *key);
     }
 
     void MainWindow::onAddSteamPlayerId()
     {
-        QDialog dialog{this};
-        dialog.setWindowTitle(tr("Add Steam Player Id"));
-        dialog.setModal(true);
+        const std::optional<QString> playerId = promptForSecret(
+            tr("Add Steam Player ID"),
+            tr("GameLog uses the Steam Web API to import your Steam library. "
+               "Enter your 64-bit Steam player ID below. "
+               "You can find it on your Steam profile page."),
+            tr("Steam player ID"));
 
-        auto* layout = new QVBoxLayout{&dialog};
+        if(!playerId) { return; }
 
-        auto* explanation = new QLabel{
-            tr("GameLog uses the Steam Web API to import your Steam library. " "Enter your Steam player API key below. "
-               "You can obtain a key from Steam's developer page."),
-            &dialog
-        };
-        explanation->setWordWrap(true);
-
-        auto* keyEdit = new QLineEdit{&dialog};
-        keyEdit->setEchoMode(QLineEdit::Password);
-        keyEdit->setPlaceholderText(tr("Steam player ID"));
-
-        auto* buttons = new QDialogButtonBox{QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog};
-
-        buttons->button(QDialogButtonBox::Ok)->setText(tr("Submit"));
-
-        layout->addWidget(explanation);
-        layout->addWidget(keyEdit);
-        layout->addWidget(buttons);
-
-        connect(buttons,
-                &QDialogButtonBox::accepted,
-                &dialog,
-                [&dialog, keyEdit, this]
-                {
-                    const QString key = keyEdit->text().trimmed();
-
-                    if(key.isEmpty()) { return; }
-
-                    runtime_.getCredentialService()->
-                        setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey),
-                                  key);
-                    dialog.accept();
-                });
-
-        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-        dialog.exec();
+        runtime_.getCredentialService()->
+            setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey), *playerId);
     }
 } // namespace gamelog::gui

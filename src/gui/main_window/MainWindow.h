@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <QMainWindow>
 #include "domain/Game.h"
 
@@ -40,6 +42,18 @@ namespace gamelog::gui
         explicit MainWindow(application::GameLogRuntime& runtime, QWidget* parent = nullptr);
 
         ~MainWindow() override;
+
+    private:
+        /**
+         * Shows a modal password-style prompt for one credential.
+         *
+         * Submitting is refused while the field is blank after trimming, so a
+         * returned value is always non-empty.
+         * @return The entered secret, or std::nullopt if the dialog was cancelled.
+         */
+        [[nodiscard]] std::optional<QString> promptForSecret(const QString& title,
+                                                             const QString& explanation,
+                                                             const QString& placeholder);
 
     private Q_SLOTS:
         void onSessionStarted(const core::domain::Game& game);
