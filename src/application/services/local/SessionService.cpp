@@ -438,21 +438,22 @@ namespace gamelog::application::services
 
         for(const ProcessInfo& process : processes)
         {
-            if(process.steamAppId)
-            {
-                const auto steamGame = gameService_.trackedSteamGames().constFind(*process.steamAppId);
-                if(steamGame != gameService_.trackedSteamGames().constEnd())
-                {
-                    addCandidate(steamGame.value(), 0);
-                    continue;
-                }
-            }
+            // Precedence lives in ProcessHelpers (contract item 33). Selection
+            // policy below only ranks what the matcher already classified.
+            const auto [game, kind] = ProcessHelpers::matchTrackedGame(process,
+                                                                       gameService_.trackedSteamGames(),
+                                                                       gameService_.trackedPathGames());
 
-            if(!process.executablePath.isEmpty())
+            switch(kind)
             {
-                const auto pathGame = gameService_.trackedPathGames().constFind(process.executablePath);
-                if(pathGame != gameService_.trackedPathGames().constEnd() &&
-                   ProcessHelpers::processMatchesGame(process, pathGame.value())) { addCandidate(pathGame.value(), 1); }
+            case core::process::MatchKind::SteamAppId:
+                addCandidate(*game, 0);
+                break;
+            case core::process::MatchKind::ExecutablePath:
+                addCandidate(*game, 1);
+                break;
+            case core::process::MatchKind::None:
+                break;
             }
         }
 
