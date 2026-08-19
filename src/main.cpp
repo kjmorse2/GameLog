@@ -12,6 +12,7 @@
 #include <QTimer>
 
 #include "application/GameLogRuntime.h"
+#include "application/RunMode.h"
 #include "database/DatabaseManager.h"
 #include "gui/live_window/LiveWindow.h"
 #include "gui/main_window/MainWindow.h"
@@ -19,31 +20,6 @@
 
 namespace
 {
-    enum class RunMode
-    {
-        Headless, Gui, Live
-    };
-
-    /**
-     * @brief Determine the run mode based on the command-line arguments.
-     *
-     * Exactly one recognized run-mode argument is required. Duplicate run-mode
-     * arguments and unrecognized arguments are rejected.
-     * @param argc of main.
-     * @param argv of main.
-     * @return enum RunMode of the options above, or std::nullopt for invalid arguments.
-     */
-    std::optional<RunMode> determineRunMode(int argc, char* argv[])
-    {
-        if(argc != 2 || argv == nullptr || argv[1] == nullptr) { return std::nullopt; }
-
-        if(std::strcmp(argv[1], "--headless") == 0) { return RunMode::Headless; }
-        if(std::strcmp(argv[1], "--gui") == 0) { return RunMode::Gui; }
-        if(std::strcmp(argv[1], "--live") == 0) { return RunMode::Live; }
-
-        return std::nullopt;
-    }
-
     /**
      * @brief Get the path to the GameLog runtime lock file.
      * @return The path to the lock file, or an empty string if it cannot be determined.
@@ -67,7 +43,9 @@ namespace
 
 int main(int argc, char* argv[])
 {
-    const std::optional<RunMode> mode = determineRunMode(argc, argv);
+    using gamelog::application::RunMode;
+
+    const std::optional<RunMode> mode = gamelog::application::determineRunMode(argc, argv);
 
     if(!mode)
     {

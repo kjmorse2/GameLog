@@ -74,6 +74,23 @@ namespace gamelog::core::database
 
         QString dateTimeToDatabase(const QDateTime& value) { return value.toUTC().toString(Qt::ISODateWithMs); }
 
+        // session_documents.content is NOT NULL, but a default-constructed or
+        // cleared QString is null rather than empty and would bind as SQL NULL.
+        // Empty notes must still produce a document row, so normalize first.
+        QString notesToDatabase(const QString& notes) { return notes.isNull() ? QStringLiteral("") : notes; }
+
+        // Persisted timestamps may lack milliseconds (legacy rows) or use a
+        // trailing 'Z' inconsistently with the bound parameter's literal text,
+        // so raw TEXT comparison cannot be trusted for range predicates.
+        // strftime() normalizes both the column and the bound value to the
+        // same millisecond-precision, offset-free form before comparing, and
+        // returns NULL for unparseable text so corrupted rows are excluded by
+        // SQL's three-valued logic rather than reaching sessionFromQuery().
+        QString normalizedTimestampExpression(const QString& sqlExpression)
+        {
+            return QStringLiteral("strftime('%Y-%m-%dT%H:%M:%f', %1)").arg(sqlExpression);
+        }
+
         bool validateSession(const Session& session, QString* reason = nullptr)
         {
             const auto fail = [reason](const QString& message)
@@ -182,7 +199,7 @@ namespace gamelog::core::database
                 prepare(QStringLiteral("INSERT INTO session_documents (session_id, content, last_saved_timestamp_utc) "
                                        "VALUES (:session_id, :content, :last_saved_timestamp_utc)"));
             notesQuery.bindValue(QStringLiteral(":session_id"), sessionId);
-            notesQuery.bindValue(QStringLiteral(":content"), notes);
+            notesQuery.bindValue(QStringLiteral(":content"), notesToDatabase(notes));
             notesQuery.bindValue(QStringLiteral(":last_saved_timestamp_utc"),
                                  dateTimeToDatabase(QDateTime::currentDateTimeUtc()));
 
@@ -232,7 +249,7 @@ namespace gamelog::core::database
             updateQuery.prepare(QStringLiteral("UPDATE session_documents SET content = :content, "
                                                "last_saved_timestamp_utc = :last_saved_timestamp_utc "
                                                "WHERE session_id = :session_id"));
-            updateQuery.bindValue(QStringLiteral(":content"), notes);
+            updateQuery.bindValue(QStringLiteral(":content"), notesToDatabase(notes));
             updateQuery.bindValue(QStringLiteral(":last_saved_timestamp_utc"), dateTimeToDatabase(savedAt));
             updateQuery.bindValue(QStringLiteral(":session_id"), sessionId);
 
@@ -322,18 +339,21 @@ namespace gamelog::core::database
 
         if(specification.startedAtOrAfter)
         {
-            addComparison(QStringLiteral("s.start_timestamp_utc"),
-                          QStringLiteral(">="),
-                          QStringLiteral(":started_at_or_after"),
-                          dateTimeToDatabase(*specification.startedAtOrAfter));
+            predicates.push_back(normalizedTimestampExpression(QStringLiteral("s.start_timestamp_utc")) +
+                                 QStringLiteral(" >= ") +
+                                 normalizedTimestampExpression(QStringLiteral(":started_at_or_after")));
+            bindings.push_back({
+                                   QStringLiteral(":started_at_or_after"),
+                                   dateTimeToDatabase(*specification.startedAtOrAfter)
+                               });
         }
 
         if(specification.startedBefore)
         {
-            addComparison(QStringLiteral("s.start_timestamp_utc"),
-                          QStringLiteral("<"),
-                          QStringLiteral(":started_before"),
-                          dateTimeToDatabase(*specification.startedBefore));
+            predicates.push_back(normalizedTimestampExpression(QStringLiteral("s.start_timestamp_utc")) +
+                                 QStringLiteral(" < ") +
+                                 normalizedTimestampExpression(QStringLiteral(":started_before")));
+            bindings.push_back({QStringLiteral(":started_before"), dateTimeToDatabase(*specification.startedBefore)});
         }
 
         if(specification.minimumTrackedDuration)

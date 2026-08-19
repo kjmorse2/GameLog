@@ -1,6 +1,8 @@
 add_library(gamelog-application STATIC
         GameLogRuntime.cpp
         GameLogRuntime.h
+        RunMode.cpp
+        RunMode.h
         services/local/GameService.h
         services/local/GameService.cpp
         services/local/SessionService.h

@@ -25,8 +25,9 @@ CalendarView::~CalendarView() { delete ui; }
 
 void CalendarView::onPageChanged(int year, int month) const
 {
-    const auto startDate = QDateTime{QDate(year, month, 1), QTime{0, 0}};
-    const auto endDate = QDateTime{QDate(year, (month + 1) % 12, 1), QTime{0, 0}};
+    const QDate startDay{year, month, 1};
+    const auto startDate = QDateTime{startDay, QTime{0, 0}};
+    const auto endDate = QDateTime{startDay.addMonths(1), QTime{0, 0}};
     for(const vector<Session> foundSessions = sessionService_->getSessionsInTimeRange(startDate, endDate); const auto&
         session : foundSessions)
     {

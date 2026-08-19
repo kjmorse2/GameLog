@@ -12,7 +12,9 @@
 
 ## 1. Purpose
 
-GameLog is a local-first Linux desktop application for tracking PC game sessions. It maintains a library of games, detects configured games from running processes, creates and completes play sessions, stores session notes, synchronizes owned-game metadata from Steam, retrieves game artwork, and presents the data through Qt Widgets interfaces.
+GameLog is a local-first Linux desktop application for tracking PC game sessions. It maintains a library of games,
+detects configured games from running processes, creates and completes play sessions, stores session notes, synchronizes
+owned-game metadata from Steam, retrieves game artwork, and presents the data through Qt Widgets interfaces.
 
 This document is intended to serve two purposes:
 
@@ -21,9 +23,12 @@ This document is intended to serve two purposes:
 
 Unlike the original design document, this revision distinguishes clearly between:
 
-- **Implemented/current architecture** — behavior represented by the current source tree and the 2026-08-18 contract-adherence revision.
-- **Contracted behavior** — behavior that tests and future edits should preserve even when an implementation is still being stabilized.
-- **Future/aspirational architecture** — features that remain useful goals but are not part of the current implementation.
+- **Implemented/current architecture** — behavior represented by the current source tree and the 2026-08-18
+  contract-adherence revision.
+- **Contracted behavior** — behavior that tests and future edits should preserve even when an implementation is still
+  being stabilized.
+- **Future/aspirational architecture** — features that remain useful goals but are not part of the current
+  implementation.
 
 Future AI sessions should not treat aspirational sections as already implemented.
 
@@ -39,7 +44,9 @@ When this document, source code, tests, migrations, or older design notes disagr
 4. **Implementation notes and diagrams in this document.**
 5. **Older design documents, TODO comments, or exploratory discussions.**
 
-The source tree is still under active development. If a source file contradicts a contract that has already been deliberately established and tested, treat the disagreement as a likely regression rather than silently redefining the contract.
+The source tree is still under active development. If a source file contradicts a contract that has already been
+deliberately established and tested, treat the disagreement as a likely regression rather than silently redefining the
+contract.
 
 ---
 
@@ -100,28 +107,28 @@ Some of these remain future extension candidates.
 
 ## 4. Implementation Status Summary
 
-| Area | Status | Current design |
-|---|---|---|
-| Single executable | Implemented | `gamelog` runs as `--headless`, `--gui`, or `--live`. |
-| Runtime ownership | Implemented | `GameLogRuntime` owns long-lived repositories/services and process tracking infrastructure. |
-| SQLite persistence | Implemented | Qt SQL repositories plus ordered migrations. |
-| Game CRUD/query | Implemented | `GameService` delegates persistence to `GameRepository`. |
-| Session CRUD/query | Implemented | `SessionService` delegates persistence to `SessionRepository`. |
-| One active session | Contracted/implemented | Enforced in service lifecycle and repaired during restore. |
-| Linux process detection | Implemented | `ProcfsProcessSource` uses libproc2; higher layers accept `ProcessInfo` snapshots. |
-| Steam process annotation | Implemented | `/proc/<pid>/environ` is inspected for `SteamAppId` and cached. |
-| Steam library sync | Implemented | Steam Web API `GetOwnedGames`; existing App IDs are preserved rather than overwritten. |
-| Credential storage | Implemented | `CredentialService` uses the system keychain abstraction. |
-| Artwork download | Implemented | Steam CDN cover/header/logo download with image decoding validation. |
-| Artwork completeness | Contracted/implemented | A valid `cover.jpg` currently defines `Game.hasArtwork`. |
-| Main/library/calendar/live GUI | Partial | Existing Qt Widgets pages provide the currently implemented GUI surface. |
-| Note editing | Partial | Current `TextEditor` produces Markdown and `LiveWindow` persists it on session completion. |
-| Separate background agent | Planned only | The earlier `gamelog-agent`/IPC split is not current architecture. |
-| Local IPC | Planned only | No `QLocalServer`/`QLocalSocket` ownership split exists in the current design. |
-| systemd user service | Planned only | May be introduced later around headless mode or a future agent. |
-| System tray / multiple compact modes | Planned only | Not part of the current implemented surface. |
-| QSettings configuration system | Planned only | Current grace/poll values are largely compile-time or entry-point constants. |
-| HTML note model/export | Planned/reconsidered | Current persisted note payload is Markdown text, not canonical HTML. |
+| Area                                 | Status                 | Current design                                                                                                                   |
+|--------------------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Single executable                    | Implemented            | `gamelog` runs as `--headless`, `--gui`, or `--live`.                                                                            |
+| Runtime ownership                    | Implemented            | `GameLogRuntime` owns long-lived repositories/services and process tracking infrastructure.                                      |
+| SQLite persistence                   | Implemented            | Qt SQL repositories plus ordered migrations.                                                                                     |
+| Game CRUD/query                      | Implemented            | `GameService` delegates persistence to `GameRepository`.                                                                         |
+| Session CRUD/query                   | Implemented            | `SessionService` delegates persistence to `SessionRepository`.                                                                   |
+| One active session                   | Implemented            | Enforced primarily by the `one_active_session` partial unique index; the service rejects invalid transitions before persistence. |
+| Linux process detection              | Implemented            | `ProcfsProcessSource` uses libproc2; higher layers accept `ProcessInfo` snapshots.                                               |
+| Steam process annotation             | Implemented            | `/proc/<pid>/environ` is inspected for `SteamAppId` and cached.                                                                  |
+| Steam library sync                   | Implemented            | Steam Web API `GetOwnedGames`; existing App IDs are preserved rather than overwritten.                                           |
+| Credential storage                   | Implemented            | `CredentialService` uses the system keychain abstraction.                                                                        |
+| Artwork download                     | Implemented            | Steam CDN cover/header/logo download with image decoding validation.                                                             |
+| Artwork completeness                 | Contracted/implemented | A valid `cover.jpg` currently defines `Game.hasArtwork`.                                                                         |
+| Main/library/calendar/live GUI       | Partial                | Existing Qt Widgets pages provide the currently implemented GUI surface.                                                         |
+| Note editing                         | Partial                | Current `TextEditor` produces Markdown and `LiveWindow` persists it on session completion.                                       |
+| Separate background agent            | Planned only           | The earlier `gamelog-agent`/IPC split is not current architecture.                                                               |
+| Local IPC                            | Planned only           | No `QLocalServer`/`QLocalSocket` ownership split exists in the current design.                                                   |
+| systemd user service                 | Planned only           | May be introduced later around headless mode or a future agent.                                                                  |
+| System tray / multiple compact modes | Planned only           | Not part of the current implemented surface.                                                                                     |
+| QSettings configuration system       | Planned only           | Current grace/poll values are largely compile-time or entry-point constants.                                                     |
+| HTML note model/export               | Planned/reconsidered   | Current persisted note payload is Markdown text, not canonical HTML.                                                             |
 
 ---
 
@@ -172,9 +179,11 @@ flowchart TB
 
 The central design principle is:
 
-> **Widgets request application behavior through services; services own application state and rules; repositories own SQL; infrastructure-specific dependencies remain below those boundaries.**
+> **Widgets request application behavior through services; services own application state and rules; repositories own
+SQL; infrastructure-specific dependencies remain below those boundaries.**
 
-The project is not using a strict textbook MVC implementation. Views may call application services to request data and operations, while domain persistence and lifecycle decisions remain outside the widgets.
+The project is not using a strict textbook MVC implementation. Views may call application services to request data and
+operations, while domain persistence and lifecycle decisions remain outside the widgets.
 
 ---
 
@@ -192,7 +201,8 @@ No mode, duplicated modes, mixed modes, unknown arguments, or extra arguments ar
 
 ### 6.1 `--headless`
 
-Creates a `QCoreApplication`, starts `GameLogRuntime`, polls processes, and performs automatic tracking without constructing a main window.
+Creates a `QCoreApplication`, starts `GameLogRuntime`, polls processes, and performs automatic tracking without
+constructing a main window.
 
 ### 6.2 `--gui`
 
@@ -204,7 +214,8 @@ Creates a `QApplication`, starts the same runtime, and shows `LiveWindow`, focus
 
 ### 6.4 Runtime lock
 
-The process creates a `QLockFile` under the user's runtime directory, falling back to the temporary directory when necessary. The lock prevents two GameLog processes from simultaneously owning tracking and the database.
+The process creates a `QLockFile` under the user's runtime directory, falling back to the temporary directory when
+necessary. The lock prevents two GameLog processes from simultaneously owning tracking and the database.
 
 ### 6.5 Polling interval
 
@@ -265,7 +276,8 @@ A new process source is created on each successful start.
 
 ### 7.4 Single-runtime policy
 
-The fixed database connection name `GameLogRuntimeConnection`, together with the application lock, intentionally expresses a one-live-runtime-per-process/application policy.
+The fixed database connection name `GameLogRuntimeConnection`, together with the application lock, intentionally
+expresses a one-live-runtime-per-process/application policy.
 
 ---
 
@@ -419,11 +431,11 @@ id                int
 
 ### 10.3 Valid session states
 
-| Status | End timestamp | Duration | Start/end ordering |
-|---|---|---|---|
-| Active | Must be absent | Must be nonnegative | Start must be valid |
-| Completed | Must be present and valid | Must be nonnegative | End >= start |
-| Interrupted | Must be present and valid | Must be nonnegative | End >= start |
+| Status      | End timestamp             | Duration            | Start/end ordering  |
+|-------------|---------------------------|---------------------|---------------------|
+| Active      | Must be absent            | Must be nonnegative | Start must be valid |
+| Completed   | Must be present and valid | Must be nonnegative | End >= start        |
+| Interrupted | Must be present and valid | Must be nonnegative | End >= start        |
 
 Zero-length completed/interrupted sessions are valid.
 
@@ -445,11 +457,13 @@ They do not trim input and are not generally case-insensitive. Invalid strings t
 
 The current application treats `Session.notes` as the application-facing note payload.
 
-The current editor retrieves content as Markdown using Qt's `QTextEdit::toMarkdown()`, and the repository persists the resulting text in `session_documents.content`.
+The current editor retrieves content as Markdown using Qt's `QTextEdit::toMarkdown()`, and the repository persists the
+resulting text in `session_documents.content`.
 
 Therefore:
 
-> **Markdown/text is the current canonical note payload. HTML-only storage described in the original design is not current behavior.**
+> **Markdown/text is the current canonical note payload. HTML-only storage described in the original design is not
+current behavior.**
 
 A richer document model, timestamped semantic blocks, autosave, and export may be introduced later.
 
@@ -459,7 +473,8 @@ A richer document model, timestamped semantic blocks, autosave, and export may b
 
 `GameQuery` and `SessionQuery` provide persistence-neutral search specifications.
 
-This keeps UI/service code from constructing SQL and allows repository filtering to grow without adding a separate repository method for every filter combination.
+This keeps UI/service code from constructing SQL and allows repository filtering to grow without adding a separate
+repository method for every filter combination.
 
 ### 11.1 `GameQuery`
 
@@ -496,6 +511,14 @@ The time-range convention is:
 ```
 
 `startedAtOrAfter` is inclusive and `startedBefore` is exclusive.
+
+Timestamps participating in these comparisons must use one canonical sortable representation. `SessionRepository` writes
+UTC timestamps with `Qt::ISODateWithMs`, but the read path also accepts `Qt::ISODate` without milliseconds, so both
+forms can be present.
+
+Raw lexicographic TEXT comparison does not satisfy the interval contract: `'Z'` (0x5A) sorts above `'.'` (0x2E), so
+`'2026-01-01T12:00:00Z'` compares as greater than `'2026-01-01T12:00:00.500Z'` even though it precedes it.
+No-millisecond rows must therefore be normalized before comparison, or compared as datetime values rather than text.
 
 ---
 
@@ -568,15 +591,23 @@ Executable path/name are not currently unique.
 
 ```text
 id                         INTEGER PRIMARY KEY
- game_id                    INTEGER FK
- start_timestamp_utc        TEXT datetime
+ game_id                    INTEGER FK / ON DELETE CASCADE
+ start_timestamp_utc        TEXT datetime / NOT NULL
  end_timestamp_utc          TEXT datetime / nullable
- tracked_duration_seconds   INTEGER
- source                     TEXT
- status                     TEXT
+ tracked_duration_seconds   INTEGER NOT NULL / CHECK >= 0
+ source                     TEXT NOT NULL / CHECK IN ('automatic','manual')
+ status                     TEXT NOT NULL / CHECK IN ('active','completed','interrupted')
 ```
 
-The repository is the final validation boundary for valid timestamp/status/duration combinations.
+Two schema-level constraints carry contract weight and must not be assumed absent:
+
+- `one_active_session`, a partial unique index on `sessions (status) WHERE status = 'active'`, present since
+  `001_initial_schema.sql`. It permits at most one active row across the whole database, not one per game.
+- `ON DELETE CASCADE` on `game_id`, combined with `PRAGMA foreign_keys = ON` set by
+  `DatabaseManager::configureDatabase()`, so deleting a game deletes its sessions.
+
+The repository is the final validation boundary for timestamp/status/duration combinations that the schema does not
+constrain — in particular invalid timestamp text and invalid status/end combinations.
 
 #### `session_documents`
 
@@ -595,7 +626,8 @@ A session row and its document state form one persistence operation.
 - Insert is transactional.
 - Update is transactional.
 - A document failure rolls back the session change.
-- If an inserted session receives a generated ID and the transaction subsequently fails, the caller's `Session.id` is restored to zero.
+- If an inserted session receives a generated ID and the transaction subsequently fails, the caller's `Session.id` is
+  restored to zero.
 - Unchanged note content does not advance `last_saved_timestamp_utc`.
 - A changed note receives a later timestamp.
 
@@ -609,7 +641,13 @@ If an older or damaged session lacks its document row, the session may still be 
 
 A malformed session row does not invalidate the entire query.
 
-Rows with invalid enums, timestamps, durations, or status/end combinations are logged and skipped; valid rows continue to be returned.
+Rows with invalid enums, timestamps, durations, or status/end combinations are logged and skipped; valid rows continue
+to be returned.
+
+`SessionRepository::query` must handle these rows defensively even when the current schema prevents them from being
+produced. Invalid enums and negative durations are blocked by `CHECK` constraints; invalid timestamp text and invalid
+status/end combinations have no corresponding constraint and can be inserted directly. See §22.5 for how tests construct
+the constrained cases.
 
 ---
 
@@ -681,7 +719,8 @@ Only games with `trackingEnabled == true` are included.
 
 After add/update/remove operations, the service rebuilds detection indexes from persistence.
 
-Duplicate executable paths are not currently prohibited. `QHash::insert` replacement behavior therefore remains an implementation detail and should not be strengthened into a permanent domain rule without a later design decision.
+Duplicate executable paths are not currently prohibited. `QHash::insert` replacement behavior therefore remains an
+implementation detail and should not be strengthened into a permanent domain rule without a later design decision.
 
 ### 14.4 Steam synchronization behavior
 
@@ -924,7 +963,10 @@ The rule applies to:
 - updates that would transition another row to active
 - restored persisted state
 
-The repository remains the final persistence validator, while the service rejects invalid transitions before persistence where appropriate.
+Enforcement is layered. The `one_active_session` partial unique index is the authoritative guarantee and cannot be
+bypassed by any `PRAGMA`. The service additionally rejects invalid transitions before they reach persistence, so callers
+receive a clean rejection rather than a surfaced constraint error. That service-layer rejection is the contracted,
+testable behavior.
 
 ### 18.2 Automatic state machine
 
@@ -1015,7 +1057,16 @@ Rules:
 - If an active row references a missing game, interrupt it with a valid end/duration and continue searching.
 - Restoration fails only when required repair cannot be persisted.
 
-This gives the system deterministic recovery from a corrupted multi-active state.
+Reachability differs between the two repair paths, and the testing expectations differ with it.
+
+The multi-active repair — the sort, the tie-break, and interrupting extras — is **defense in depth against a database
+that predates or loses `one_active_session`**. Because no `PRAGMA` bypasses a unique index, that state cannot be
+constructed through any supported fixture, and tests must not drop the index to manufacture it. This path is
+deliberately not required to be covered; its absence from coverage is not a gap.
+
+The orphaned-row repair **is** required behavior and must be covered. Under normal operation it is unreachable, because
+`ON DELETE CASCADE` plus `PRAGMA foreign_keys = ON` removes a game's sessions along with the game. Tests construct the
+fixture by temporarily disabling foreign-key enforcement; see §22.5.
 
 ---
 
@@ -1082,7 +1133,8 @@ Current editor features include:
 - Zoom
 - Markdown extraction
 
-The toolbar/UI remains an evolving component. Timestamped note blocks, autosave, export, and a final canonical formatting policy are future work.
+The toolbar/UI remains an evolving component. Timestamped note blocks, autosave, export, and a final canonical
+formatting policy are future work.
 
 ---
 
@@ -1090,7 +1142,8 @@ The toolbar/UI remains an evolving component. Timestamped note blocks, autosave,
 
 ### 20.1 General policy
 
-Expected failures should return failure values and/or emit service-specific error signals rather than terminate the application.
+Expected failures should return failure values and/or emit service-specific error signals rather than terminate the
+application.
 
 Qt logging categories are used for diagnostics.
 
@@ -1121,7 +1174,8 @@ Missing or bad files can be retried on later artwork requests.
 
 ### 20.5 Runtime restore failures
 
-Runtime startup may fail if an active-session repair cannot safely be persisted. Recoverable orphan rows should be repaired rather than immediately preventing startup.
+Runtime startup may fail if an active-session repair cannot safely be persisted. Recoverable orphan rows should be
+repaired rather than immediately preventing startup.
 
 ---
 
@@ -1166,7 +1220,7 @@ High-value deterministic tests should cover:
 - Note load/save/transaction behavior.
 - Session lifecycle transitions and signals.
 - Single-active-session enforcement.
-- Restoration and repair.
+- Restoration of a single active row, and orphaned-row repair.
 - Automatic grace-period behavior.
 - Deterministic multi-game detection priority.
 - Process/game Steam-versus-path matching.
@@ -1179,7 +1233,8 @@ High-value deterministic tests should cover:
 
 A real `ProcfsProcessSource` smoke/integration test may assume Linux `/proc` and libproc2.
 
-It should assert only stable properties such as successful enumeration and plausible records. It must not depend on a particular arbitrary process being present.
+It should assert only stable properties such as successful enumeration and plausible records. It must not depend on a
+particular arbitrary process being present.
 
 Higher-level session/process tests use fake snapshots.
 
@@ -1189,9 +1244,28 @@ Higher-level session/process tests use fake snapshots.
 
 Use it in deterministic tests where an unexpected warning reliably indicates a defect.
 
-Do not enable it indiscriminately in GUI, network, keychain, or live-process integration tests where platform/plugin warnings may be legitimate.
+Do not enable it indiscriminately in GUI, network, keychain, or live-process integration tests where platform/plugin
+warnings may be legitimate.
 
 Expected warnings should be explicitly consumed where practical.
+
+Note that `SessionService::findActiveSession()` currently logs a warning for the ordinary "no active session" case, so
+tests enabling `failOnWarning()` around that call must consume it.
+
+### 22.5 Corrupted persistence test setup
+
+Some contracted behaviors defend against persisted states that the current schema prevents from being created. Tests
+covering those states may deliberately bypass database constraints when constructing fixtures.
+
+- `PRAGMA ignore_check_constraints = ON` may be used to create invalid enum and invalid duration rows for corrupted-row
+  query tests (§12.6).
+- `PRAGMA foreign_keys = OFF` may be used to construct orphaned-session fixtures for restoration repair (§18.7).
+
+These pragmas are test-fixture mechanisms only. They do not represent supported production database behavior, and
+production code must never enable them.
+
+One constraint is deliberately not bypassable: tests must not drop `one_active_session`. A multi-active state is out of
+scope for fixtures, and the corresponding repair path is not required to be covered.
 
 ---
 
@@ -1221,11 +1295,17 @@ The implementation uses or expects:
 - libproc2 on Linux
 - a keychain library/backend used by `CredentialService`
 
-Because artwork validation decodes images through `QImage`, targets containing `GameArtworkService` must link the appropriate Qt GUI module.
+Because artwork validation decodes images through `QImage`, targets containing `GameArtworkService` must link the
+appropriate Qt GUI module.
 
 ### 23.3 Validation status of the 2026-08-18 contract revision
 
-The contract-adherence overlay passed static source assertions and direct SQLite migration validation, but a complete Qt/CMake build was not executed in the generation environment because the required Qt development toolchain and full resource/UI build context were unavailable there.
+The contract-adherence overlay originally passed static source assertions and direct SQLite migration validation only; a
+complete Qt/CMake build was not executed in the generation environment.
+
+A full configure/build/test cycle has since been run against this revision: the tree builds warning-free and the
+registered suite passes. The schema claims in §12.3, §18.7, and §25.8 were additionally verified directly against SQLite
+rather than inferred from the migration text.
 
 The local development workflow should always finish with the project's normal configure/build/test commands.
 
@@ -1248,7 +1328,8 @@ Steam API credentials are stored through the system keychain abstraction, not in
 
 Secrets should not be printed in logs.
 
-Because the Steam API key is currently transmitted as a query parameter by contract, application logging must avoid logging the credential-bearing URL.
+Because the Steam API key is currently transmitted as a query parameter by contract, application logging must avoid
+logging the credential-bearing URL.
 
 ### 24.3 Network use
 
@@ -1265,7 +1346,8 @@ Session/game data is not uploaded as part of these operations.
 
 ### 25.1 Single executable instead of separate agent
 
-The current runtime architecture is simpler than the original two-process design. This reduces IPC complexity but means headless tracking and GUI ownership are still part of one executable design.
+The current runtime architecture is simpler than the original two-process design. This reduces IPC complexity but means
+headless tracking and GUI ownership are still part of one executable design.
 
 A later agent split should preserve service/repository contracts instead of rewriting domain logic around IPC.
 
@@ -1275,31 +1357,47 @@ Polling and grace-period values are currently constants. The original plan for `
 
 ### 25.3 Wall-clock tracked duration
 
-Current session completion replaces `trackedDuration` with a wall-clock difference. The earlier idea of monotonic accumulated playtime/checkpointing is not current behavior.
+Current session completion replaces `trackedDuration` with a wall-clock difference. The earlier idea of monotonic
+accumulated playtime/checkpointing is not current behavior.
 
-If suspend-aware or pause-aware duration is added later, this is a deliberate domain-model change requiring new tests and probably persisted checkpoint state.
+If suspend-aware or pause-aware duration is added later, this is a deliberate domain-model change requiring new tests
+and probably persisted checkpoint state.
 
 ### 25.4 Executable-path collisions
 
-Executable paths are not unique in current persistence. The service's hash therefore cannot represent multiple tracked rows with the same path simultaneously without replacement.
+Executable paths are not unique in current persistence. The service's hash therefore cannot represent multiple tracked
+rows with the same path simultaneously without replacement.
 
 Future schema changes may make executable path unique or introduce launch profiles.
 
 ### 25.5 Artwork completeness is cover-centric
 
-`hasArtwork` currently represents valid cover availability only. A richer artwork-state model may eventually replace the boolean.
+`hasArtwork` currently represents valid cover availability only. A richer artwork-state model may eventually replace the
+boolean.
 
 ### 25.6 Steam synchronization is intentionally conservative
 
-Steam is not authoritative over existing local rows. This avoids overwriting local choices but means Steam title changes do not automatically propagate.
+Steam is not authoritative over existing local rows. This avoids overwriting local choices but means Steam title changes
+do not automatically propagate.
 
 ### 25.7 Notes are still evolving
 
-The previous design proposed canonical HTML and timestamped WYSIWYG note entries. Current persistence uses the editor's Markdown output. Do not build new code assuming the older HTML contract unless that migration is explicitly designed.
+The previous design proposed canonical HTML and timestamped WYSIWYG note entries. Current persistence uses the editor's
+Markdown output. Do not build new code assuming the older HTML contract unless that migration is explicitly designed.
 
-### 25.8 Active-session uniqueness is primarily application-enforced
+### 25.8 Active-session repair logic is unreachable defensive code
 
-The current contract requires services and restoration logic to maintain one active session and repair corruption. A future database-level partial unique index could strengthen this invariant, but should be introduced through a migration rather than assumed to already exist.
+Active-session uniqueness is enforced at the database level and has been since the initial schema.
+`001_initial_schema.sql` creates `one_active_session`, a partial unique index on
+`sessions (status) WHERE status = 'active'`.
+
+An earlier revision of this document stated that such an index did not yet exist and should be introduced through a
+future migration. That was incorrect, and several contract items were written from that false premise.
+
+The consequence is that `restoreActiveSession()`'s multi-active repair logic — sorting active rows, breaking ties by ID,
+and interrupting extras — can never execute against a database created by this codebase. It is retained as defense in
+depth, but it is unreachable, untestable without dropping the index, and should be understood as such rather than as an
+active contract. See §18.7.
 
 ---
 
@@ -1319,7 +1417,8 @@ gamelog-agent  -> owns automatic tracking + active-session authority
     gamelog     -> GUI and user editing
 ```
 
-If introduced, shared application logic should remain in reusable core/services rather than being duplicated across processes.
+If introduced, shared application logic should remain in reusable core/services rather than being duplicated across
+processes.
 
 ### 26.2 IPC
 
@@ -1369,7 +1468,8 @@ Potential future improvements:
 
 ### 26.6 Platform expansion
 
-The current `ProcessSource` abstraction is a natural seam for future Windows/macOS backends, but Linux remains the only guaranteed platform.
+The current `ProcessSource` abstraction is a natural seam for future Windows/macOS backends, but Linux remains the only
+guaranteed platform.
 
 ---
 
@@ -1407,7 +1507,8 @@ The current `ProcessSource` abstraction is a natural seam for future Windows/mac
 
 ### Milestone E — Deployment architecture
 
-After the in-process architecture is stable and tested, evaluate whether a separate long-lived agent and IPC layer still provide enough practical value to justify the added complexity.
+After the in-process architecture is stable and tested, evaluate whether a separate long-lived agent and IPC layer still
+provide enough practical value to justify the added complexity.
 
 ---
 
@@ -1429,7 +1530,7 @@ Future AI sessions should begin by applying these rules.
 - Linux-only production process source is acceptable.
 - `/proc` and libproc2 may be assumed in the Linux integration environment.
 - There is one active GameLog runtime.
-- There is at most one active session.
+- There is at most one active session, enforced by a partial unique index in the schema.
 - Game/session persistence goes through repositories.
 - UI requests application behavior through services.
 - Steam App ID is authoritative when both process and game have one.
@@ -1473,7 +1574,8 @@ These are deliberate testing boundaries, not incidental implementation details.
 
 ## 29. Revised Version 1 Acceptance Direction
 
-The original Version 1 criteria were broader than the current implementation. The practical current direction is to consider the core architecture stable when:
+The original Version 1 criteria were broader than the current implementation. The practical current direction is to
+consider the core architecture stable when:
 
 1. The project configures, builds, and passes tests on the supported Linux development environment.
 2. Exactly one run mode is required and each mode starts the expected application type.
@@ -1491,7 +1593,8 @@ The original Version 1 criteria were broader than the current implementation. Th
 14. Main/library/calendar/live UI paths can consume the service layer without direct SQL access.
 15. The project has broad automated test coverage across functional translation units.
 
-Tray integration, systemd startup, richer notes, full history UX, packaging, and a potential agent/IPC split can then be layered on top of a stable core.
+Tray integration, systemd startup, richer notes, full history UX, packaging, and a potential agent/IPC split can then be
+layered on top of a stable core.
 
 ---
 
@@ -1501,13 +1604,15 @@ Tray integration, systemd startup, richer notes, full history UX, packaging, and
 The single session currently in `SessionStatus::Active` state.
 
 **Application service**  
-A stateful/application-facing layer such as `GameService` or `SessionService` that coordinates repositories and business rules.
+A stateful/application-facing layer such as `GameService` or `SessionService` that coordinates repositories and business
+rules.
 
 **Artwork completeness**  
 For the current model, the presence of a valid decodable local `cover.jpg`.
 
 **Contract**  
-A deliberately chosen behavior that tests should enforce and future refactors should preserve unless explicitly redesigned.
+A deliberately chosen behavior that tests should enforce and future refactors should preserve unless explicitly
+redesigned.
 
 **GameLogRuntime**  
 The composition root that owns the database, repositories, services, process source, and process inspector.
@@ -1536,83 +1641,124 @@ A persisted game with `trackingEnabled == true` and therefore eligible for autom
 
 The following boundaries should be treated as deliberate requirements for new tests and refactors.
 
-1. **Test-file scope** — Test every translation unit with meaningful application behavior. Files containing only `QDebug operator<<` or logging-category definitions do not require dedicated behavioral tests. `main.cpp` is in scope.
+1. **Test-file scope** — Test every translation unit with meaningful application behavior. Files containing only
+   `QDebug operator<<` or logging-category definitions do not require dedicated behavioral tests. `main.cpp` is in
+   scope.
 
-2. **Dependency seams** — Tests may inject/override keychain job creation, both web-service network managers, the session clock, runtime process source, and Steam process App ID reader without changing production semantics.
+2. **Dependency seams** — Tests may inject/override keychain job creation, both web-service network managers, the
+   session clock, runtime process source, and Steam process App ID reader without changing production semantics.
 
-3. **Linux process environment** — Production/live integration may assume Linux `/proc` and libproc2. Higher-level tests use deterministic fake process snapshots.
+3. **Linux process environment** — Production/live integration may assume Linux `/proc` and libproc2. Higher-level tests
+   use deterministic fake process snapshots.
 
-4. **Run-mode parsing** — Exactly one argument and only `--headless`, `--gui`, or `--live` succeeds. Missing, duplicate, mixed, unknown, or extra arguments fail.
+4. **Run-mode parsing** — Exactly one argument and only `--headless`, `--gui`, or `--live` succeeds. Missing, duplicate,
+   mixed, unknown, or extra arguments fail.
 
-5. **Credential validation** — Empty/whitespace-only keys fail set/get/remove. Empty/whitespace-only secrets fail set. Removal is explicit.
+5. **Credential validation** — Empty/whitespace-only keys fail set/get/remove. Empty/whitespace-only secrets fail set.
+   Removal is explicit.
 
-6. **Steam credential completion** — Blank retrieved credentials immediately fail and reset the request; they do not leave it waiting.
+6. **Steam credential completion** — Blank retrieved credentials immediately fail and reset the request; they do not
+   leave it waiting.
 
-7. **Steam API key transport** — API key appears only in the `key` query parameter. No `x-webapi-key` header. Logs do not expose the query/secret.
+7. **Steam API key transport** — API key appears only in the `key` query parameter. No `x-webapi-key` header. Logs do
+   not expose the query/secret.
 
-8. **Steam JSON shape** — `{"response":{"games":[]}}` is successful. Root/response must be objects and games must be an array; malformed/missing games fails.
+8. **Steam JSON shape** — `{"response":{"games":[]}}` is successful. Root/response must be objects and games must be an
+   array; malformed/missing games fails.
 
-9. **Session enum parsing** — Only lowercase and leading-capital spellings are accepted. No trimming/general case folding. Invalid input throws.
+9. **Session enum parsing** — Only lowercase and leading-capital spellings are accepted. No trimming/general case
+   folding. Invalid input throws.
 
-10. **Game persistence validation** — Insert requires ID zero, nonblank title, and absent-or-positive Steam App ID. Update requires positive ID plus the same field rules. `hasArtwork` defaults false.
+10. **Game persistence validation** — Insert requires ID zero, nonblank title, and absent-or-positive Steam App ID.
+    Update requires positive ID plus the same field rules. `hasArtwork` defaults false.
 
-11. **Game uniqueness** — ID and non-null Steam App ID are unique. Duplicate Steam App ID insert fails, not merge/update. Executable path/name remain non-unique.
+11. **Game uniqueness** — ID and non-null Steam App ID are unique. Duplicate Steam App ID insert fails, not
+    merge/update. Executable path/name remain non-unique.
 
-12. **Steam synchronization** — Existing Steam App IDs anywhere in persistence are left unchanged, including untracked rows and local titles.
+12. **Steam synchronization** — Existing Steam App IDs anywhere in persistence are left unchanged, including untracked
+    rows and local titles.
 
-13. **Tracked index collisions** — Duplicate executable-path behavior remains out of scope; do not turn current hash replacement into a permanent domain contract.
+13. **Tracked index collisions** — Duplicate executable-path behavior remains out of scope; do not turn current hash
+    replacement into a permanent domain contract.
 
-14. **Artwork return value** — `getGameArtwork()` returns true only when usable local cover exists when it returns. Queued downloads alone return false.
+14. **Artwork return value** — `getGameArtwork()` returns true only when usable local cover exists when it returns.
+    Queued downloads alone return false.
 
-15. **Artwork completeness** — Valid cover only. Directory existence, invalid/empty cover, or header/logo alone is insufficient. Missing/invalid cover may retry.
+15. **Artwork completeness** — Valid cover only. Directory existence, invalid/empty cover, or header/logo alone is
+    insufficient. Missing/invalid cover may retry.
 
-16. **Artwork signals/state** — Signals contain `(gameId, ArtworkType)`. Only cover availability changes persisted `hasArtwork`.
+16. **Artwork signals/state** — Signals contain `(gameId, ArtworkType)`. Only cover availability changes persisted
+    `hasArtwork`.
 
 17. **Artwork response validation** — Bytes must decode as expected JPEG/PNG before write/success.
 
-18. **Session time range** — `[start, end)`.
+18. **Session time range** — `[start, end)`. Range comparisons require one canonical sortable timestamp representation;
+    no-millisecond rows must be normalized or compared as datetime values, not raw text. Interval tests should include
+    mixed millisecond/no-millisecond rows.
 
-19. **Single active session** — Add/update/start reject a second active row. Restore evaluates all active rows, keeps newest restorable, interrupts extras.
+19. **Single active session** — At most one active row database-wide, enforced primarily by the `one_active_session`
+    partial unique index. Add/update/start additionally reject a second active row in the service layer; that rejection
+    is the contracted, testable behavior. Restore's multi-active repair is unreachable defensive code and is not
+    required to be covered. Tests must not drop the index.
 
-20. **Session persistence validation** — Valid start, nonnegative duration; active has no end; completed/interrupted require valid end >= start. Repository is final boundary.
+20. **Session persistence validation** — Valid start, nonnegative duration; active has no end; completed/interrupted
+    require valid end >= start. Repository is final boundary.
 
-21. **Lifecycle signals** — Emit start on nonexistent/inactive -> active. Emit stop on active -> completed/interrupted, including repairs. No same-side lifecycle emissions. Active deletion rejected.
+21. **Lifecycle signals** — Emit start on nonexistent/inactive -> active. Emit stop on active -> completed/interrupted,
+    including repairs. No same-side lifecycle emissions. Active deletion rejected.
 
-22. **Stopped payload** — `sessionStopped` carries `Session` by value and `Session` is a Qt metatype. Slots explicitly persist their own modified copy.
+22. **Stopped payload** — `sessionStopped` carries `Session` by value and `Session` is a Qt metatype. Slots explicitly
+    persist their own modified copy.
 
-23. **End duration** — Completion replaces duration with wall-clock start-to-end difference. Invalid/future-start timing fails rather than clamping.
+23. **End duration** — Completion replaces duration with wall-clock start-to-end difference. Invalid/future-start timing
+    fails rather than clamping.
 
-24. **Automatic detection** — Direct automatic start rejects disabled games. Keep a still-detected pending game; otherwise Steam match before path-only, then lower game ID.
+24. **Automatic detection** — Direct automatic start rejects disabled games. Keep a still-detected pending game;
+    otherwise Steam match before path-only, then lower game ID.
 
-25. **Orphan restoration** — Missing-game active rows are interrupted with valid end/duration, stop signal emitted, and restore continues. Fail only if repair persistence fails.
+25. **Orphan restoration** — Missing-game active rows are interrupted with valid end/duration, stop signal emitted, and
+    restore continues. Fail only if repair persistence fails. Unreachable in normal operation due to `ON DELETE CASCADE`
+    with foreign keys on; tests may use `PRAGMA foreign_keys = OFF` to build the fixture.
 
 26. **Note loading** — Session queries left-join document content. Missing document yields empty notes.
 
-27. **Document lifecycle** — Every insert creates a document. Save timestamp changes only for changed content/missing-document creation and advances when changed.
+27. **Document lifecycle** — Every insert creates a document. Save timestamp changes only for changed
+    content/missing-document creation and advances when changed.
 
-28. **Session/document atomicity** — Insert/update session and document operations are transactional. Rollback restores assigned insert ID to zero.
+28. **Session/document atomicity** — Insert/update session and document operations are transactional. Rollback restores
+    assigned insert ID to zero.
 
-29. **Corrupt rows** — Skip only the corrupt session row and continue returning valid rows.
+29. **Corrupt rows** — Skip only the corrupt session row and continue returning valid rows, even for rows the current
+    schema could not have produced. Invalid enums and negative durations need `PRAGMA ignore_check_constraints = ON` to
+    construct; invalid timestamps and status/end combinations insert directly.
 
-30. **Database manager lifecycle** — Repeated successful initialize is idempotent. Blank paths fail; `:memory:` succeeds. Partial initialization cleans up only the owned connection.
+30. **Database manager lifecycle** — Repeated successful initialize is idempotent. Blank paths fail; `:memory:`
+    succeeds. Partial initialization cleans up only the owned connection.
 
-31. **Migration compatibility** — Applied version and name must both match. Unknown/future versions make schema incompatible. Pending migrations remain transactional and ordered.
+31. **Migration compatibility** — Applied version and name must both match. Unknown/future versions make schema
+    incompatible. Pending migrations remain transactional and ordered.
 
-32. **Legacy artwork migration** — Null/empty/ASCII-whitespace legacy paths -> false; nonblank -> true; no filesystem inspection.
+32. **Legacy artwork migration** — Null/empty/ASCII-whitespace legacy paths -> false; nonblank -> true; no filesystem
+    inspection.
 
-33. **Process/game identity** — When both have Steam App IDs, mismatching IDs cannot fall back to matching path. Path may match when one side lacks Steam identity.
+33. **Process/game identity** — When both have Steam App IDs, mismatching IDs cannot fall back to matching path. Path
+    may match when one side lacks Steam identity.
 
-34. **Steam process cache** — Steam App ID is immutable for a live PID/path cache entry; reread on new PID/path change and purge absent PIDs.
+34. **Steam process cache** — Steam App ID is immutable for a live PID/path cache entry; reread on new PID/path change
+    and purge absent PIDs.
 
-35. **Runtime lifecycle** — One live runtime connection. Starting while already running fails. The same instance supports start -> stop -> start.
+35. **Runtime lifecycle** — One live runtime connection. Starting while already running fails. The same instance
+    supports start -> stop -> start.
 
-36. **Qt warning policy** — Use `QTest::failOnWarning()` selectively in deterministic tests; consume expected warnings; avoid a blanket policy for platform-sensitive integration tests.
+36. **Qt warning policy** — Use `QTest::failOnWarning()` selectively in deterministic tests; consume expected warnings;
+    avoid a blanket policy for platform-sensitive integration tests.
 
 ---
 
 ## Change History
 
-| Version | Date | Changes |
-|---|---|---|
-| 0.1 | 2026-07-27 | Initial requirements-oriented design. Proposed separate agent/GUI architecture, IPC, canonical HTML notes, systemd integration, and broader Version 1 scope. |
-| 0.2 | 2026-08-18 | Rebased design on the current single-executable runtime/service/repository implementation. Added Steam Web API + keychain behavior, current artwork model, process matching rules, session persistence invariants, migration contracts, test seams, 36 explicit behavioral contracts, implementation/planned distinction, and AI handoff guidance. |
+| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|---------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0.1     | 2026-07-27 | Initial requirements-oriented design. Proposed separate agent/GUI architecture, IPC, canonical HTML notes, systemd integration, and broader Version 1 scope.                                                                                                                                                                                                                                                                                                           |
+| 0.2     | 2026-08-18 | Rebased design on the current single-executable runtime/service/repository implementation. Added Steam Web API + keychain behavior, current artwork model, process matching rules, session persistence invariants, migration contracts, test seams, 36 explicit behavioral contracts, implementation/planned distinction, and AI handoff guidance.                                                                                                                     |
+| 0.3     | 2026-08-18 | Corrected the claim in §25.8 that `one_active_session` did not yet exist; it has been present since `001_initial_schema.sql`. Documented the schema constraints on `sessions` in §12.3 and reframed contracts 19, 25, and 29 around what the schema actually permits. Added §22.5 covering the pragma-based fixture policy for constrained corrupted states. Tightened contract 18 to require a canonical sortable timestamp representation for SQL range comparisons. |

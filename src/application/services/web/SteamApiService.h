@@ -38,7 +38,7 @@ namespace gamelog::application::services
          */
         void getOwnedGames();
 
-        signals :
+        signals  :
         /**
          * Emitted when Steam successfully returns the user's game library.
          *
@@ -55,7 +55,7 @@ namespace gamelog::application::services
         void requestFailed(QString error);
 
     private
-        slots :
+        slots  :
         /**
          * Connected to CredentialService::secretRetrieved. Starts the HTTP request
          * when both required, nonblank credentials are available.

@@ -138,7 +138,7 @@ namespace gamelog::application::services
          */
         void resetAutomaticTracking() noexcept;
 
-        signals :
+        signals  :
         /**
          * Emitted after a database row changes from inactive/nonexistent to active.
          * @param requestedGame The game for which the session was started.

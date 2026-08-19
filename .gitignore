@@ -15,6 +15,7 @@ compile_commands.json
 
 # IDE/editor metadata
 .vscode/
+.qtcreator/
 .idea/
 *.swp
 *.swo

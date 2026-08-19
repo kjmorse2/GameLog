@@ -59,7 +59,7 @@ namespace gamelog::core::database
             if(game.steamAppId && *game.steamAppId <= 0)
             {
                 qCWarning(gamelogDatabaseLog) << "Refusing to persist a game with a non-positive Steam App ID:" << *game
-                                            .steamAppId;
+                   .steamAppId;
                 return false;
             }
 

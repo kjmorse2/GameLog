@@ -59,7 +59,7 @@ namespace gamelog::application::services
          */
         void removeSecret(const QString& key);
 
-        signals :
+        signals  :
         /**
          * Emitted when a secret has been successfully stored.
          * @param key the key under which the secret was stored

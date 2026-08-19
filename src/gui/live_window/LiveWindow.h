@@ -35,7 +35,7 @@ namespace gamelog::gui
         ~LiveWindow() override;
 
     private
-        slots :
+        slots  :
         /**
          * Connected to SessionService::sessionStarted. Updates the UI to reflect the new session.
          * @param game The Game struct that was started.

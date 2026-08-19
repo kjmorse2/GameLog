@@ -11,6 +11,30 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+
+option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+
+if (ENABLE_COVERAGE)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(STATUS "Code coverage enabled")
+
+        add_compile_options(
+                -O0
+                -g
+                --coverage
+        )
+
+        add_link_options(
+                --coverage
+        )
+    else ()
+        message(WARNING "Coverage requested, but compiler is not GCC/Clang")
+    endif ()
+endif ()
+
 include(CTest)
 include(GNUInstallDirs)
 
@@ -20,6 +44,14 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)
 
 add_library(gamelog-warnings INTERFACE)
+
+include(CTest)
+include(GNUInstallDirs)
+
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network Sql Test Keychain)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PROC2 REQUIRED IMPORTED_TARGET libproc2)
 
 target_compile_options(gamelog-warnings
         INTERFACE
@@ -33,6 +65,7 @@ add_subdirectory(src)
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif ()
+
 
 option(
         GAMELOG_ENABLE_INSTALL
