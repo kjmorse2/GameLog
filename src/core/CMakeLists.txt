@@ -3,6 +3,8 @@ add_library(gamelog-core STATIC
         database/DatabaseMigrator.cpp
         database/GameRepository.cpp
         database/SessionRepository.cpp
+        database/SqlQueryBuilder.h
+        database/SqlQueryBuilder.cpp
 
         logging/LoggingCategories.cpp
         domain/Session.cpp

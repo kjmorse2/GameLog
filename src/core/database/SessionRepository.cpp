@@ -1,4 +1,5 @@
 #include "database/SessionRepository.h"
+#include "database/SqlQueryBuilder.h"
 
 #include "logging/LoggingCategories.h"
 
@@ -236,127 +237,88 @@ namespace gamelog::core::database
             return QStringLiteral("s.start_timestamp_utc");
         }
 
-        void appendInPredicate(const QString& column,
-                               const QString& placeholderPrefix,
-                               const QList<QVariant>& values,
-                               QStringList& predicates,
-                               QList<QPair<QString, QVariant>>& bindings)
-        {
-            if(values.isEmpty()) { return; }
-
-            QStringList placeholders;
-            placeholders.reserve(values.size());
-            for(qsizetype index = 0; index < values.size(); ++index)
-            {
-                const QString placeholder = QStringLiteral(":%1_%2").arg(placeholderPrefix).arg(index);
-                placeholders.push_back(placeholder);
-                bindings.push_back({placeholder, values.at(index)});
-            }
-
-            predicates.push_back(QStringLiteral("%1 IN (%2)").arg(column, placeholders.join(QStringLiteral(", "))));
-        }
     } // namespace
 
     SessionRepository::SessionRepository(const QSqlDatabase& database) : database_{database} {}
 
     std::vector<domain::Session> SessionRepository::query(const domain::query::SessionQuery& specification) const
     {
-        QString sql = QStringLiteral("SELECT s.id AS id, s.game_id AS game_id, "
-                                     "s.start_timestamp_utc AS start_timestamp_utc, "
-                                     "s.end_timestamp_utc AS end_timestamp_utc, "
-                                     "s.tracked_duration_seconds AS tracked_duration_seconds, "
-                                     "s.source AS source, s.status AS status, " "COALESCE(d.content, '') AS notes "
-                                     "FROM sessions AS s " "LEFT JOIN session_documents AS d ON d.session_id = s.id");
+        const QString baseSql = QStringLiteral("SELECT s.id AS id, s.game_id AS game_id, "
+                                              "s.start_timestamp_utc AS start_timestamp_utc, "
+                                              "s.end_timestamp_utc AS end_timestamp_utc, "
+                                              "s.tracked_duration_seconds AS tracked_duration_seconds, "
+                                              "s.source AS source, s.status AS status, "
+                                              "COALESCE(d.content, '') AS notes "
+                                              "FROM sessions AS s "
+                                              "LEFT JOIN session_documents AS d ON d.session_id = s.id");
 
-        QStringList predicates;
-        QList<QPair<QString, QVariant>> bindings;
+        SqlQueryBuilder builder;
 
         QList<QVariant> ids;
         for(const int id : specification.ids) { ids.push_back(id); }
-        appendInPredicate(QStringLiteral("s.id"), QStringLiteral("session_id"), ids, predicates, bindings);
+        builder.addInPredicate(QStringLiteral("s.id"), QStringLiteral("session_id"), ids);
 
         QList<QVariant> gameIds;
         for(const int gameId : specification.gameIds) { gameIds.push_back(gameId); }
-        appendInPredicate(QStringLiteral("s.game_id"), QStringLiteral("game_id"), gameIds, predicates, bindings);
+        builder.addInPredicate(QStringLiteral("s.game_id"), QStringLiteral("game_id"), gameIds);
 
         QList<QVariant> sources;
-        for(const SessionSource source : specification.sources) { sources.push_back(domain::toDatabaseString(source)); }
-        appendInPredicate(QStringLiteral("s.source"), QStringLiteral("source"), sources, predicates, bindings);
+        for(const SessionSource source : specification.sources)
+        {
+            sources.push_back(domain::toDatabaseString(source));
+        }
+        builder.addInPredicate(QStringLiteral("s.source"), QStringLiteral("source"), sources);
 
         QList<QVariant> statuses;
-        for(const SessionStatus status : specification.statuses) { statuses.push_back(domain::toDatabaseString(status)); }
-        appendInPredicate(QStringLiteral("s.status"), QStringLiteral("status"), statuses, predicates, bindings);
-
-        const auto addComparison = [&predicates, &bindings](const QString& column,
-                                                            const QString& comparison,
-                                                            const QString& placeholder,
-                                                            const QVariant& value)
+        for(const SessionStatus status : specification.statuses)
         {
-            predicates.push_back(column + QLatin1Char(' ') + comparison + QLatin1Char(' ') + placeholder);
-            bindings.push_back({placeholder, value});
-        };
+            statuses.push_back(domain::toDatabaseString(status));
+        }
+        builder.addInPredicate(QStringLiteral("s.status"), QStringLiteral("status"), statuses);
 
         if(specification.startedAtOrAfter)
         {
-            predicates.push_back(normalizedTimestampExpression(QStringLiteral("s.start_timestamp_utc")) +
+            builder.addPredicate(normalizedTimestampExpression(QStringLiteral("s.start_timestamp_utc")) +
                                  QStringLiteral(" >= ") +
-                                 normalizedTimestampExpression(QStringLiteral(":started_at_or_after")));
-            bindings.push_back({
-                                   QStringLiteral(":started_at_or_after"),
-                                   dateTimeToDatabase(*specification.startedAtOrAfter)
-                               });
+                                 normalizedTimestampExpression(QStringLiteral(":started_at_or_after")),
+                                 QStringLiteral(":started_at_or_after"),
+                                 dateTimeToDatabase(*specification.startedAtOrAfter));
         }
 
         if(specification.startedBefore)
         {
-            predicates.push_back(normalizedTimestampExpression(QStringLiteral("s.start_timestamp_utc")) +
+            builder.addPredicate(normalizedTimestampExpression(QStringLiteral("s.start_timestamp_utc")) +
                                  QStringLiteral(" < ") +
-                                 normalizedTimestampExpression(QStringLiteral(":started_before")));
-            bindings.push_back({QStringLiteral(":started_before"), dateTimeToDatabase(*specification.startedBefore)});
+                                 normalizedTimestampExpression(QStringLiteral(":started_before")),
+                                 QStringLiteral(":started_before"),
+                                 dateTimeToDatabase(*specification.startedBefore));
         }
 
         if(specification.minimumTrackedDuration)
         {
-            addComparison(QStringLiteral("s.tracked_duration_seconds"),
-                          QStringLiteral(">="),
-                          QStringLiteral(":minimum_duration"),
-                          QVariant::fromValue<qlonglong>(specification.minimumTrackedDuration->count()));
+            builder.addPredicate(QStringLiteral("s.tracked_duration_seconds >= :minimum_duration"),
+                                 QStringLiteral(":minimum_duration"),
+                                 QVariant::fromValue<qlonglong>(specification.minimumTrackedDuration->count()));
         }
 
         if(specification.maximumTrackedDuration)
         {
-            addComparison(QStringLiteral("s.tracked_duration_seconds"),
-                          QStringLiteral("<="),
-                          QStringLiteral(":maximum_duration"),
-                          QVariant::fromValue<qlonglong>(specification.maximumTrackedDuration->count()));
+            builder.addPredicate(QStringLiteral("s.tracked_duration_seconds <= :maximum_duration"),
+                                 QStringLiteral(":maximum_duration"),
+                                 QVariant::fromValue<qlonglong>(specification.maximumTrackedDuration->count()));
         }
 
         if(specification.hasEndTimestamp)
         {
-            predicates.push_back(*specification.hasEndTimestamp
+            builder.addPredicate(*specification.hasEndTimestamp
                                      ? QStringLiteral("s.end_timestamp_utc IS NOT NULL")
                                      : QStringLiteral("s.end_timestamp_utc IS NULL"));
         }
 
-        if(!predicates.isEmpty()) { sql += QStringLiteral(" WHERE ") + predicates.join(QStringLiteral(" AND ")); }
+        builder.setOrderBy(orderColumn(specification.sortBy), specification.sortDirection);
+        builder.setLimitOffset(specification.limit, specification.offset);
 
-        sql += QStringLiteral(" ORDER BY ") + orderColumn(specification.sortBy);
-        sql += specification.sortDirection == SortDirection::Ascending
-                   ? QStringLiteral(" ASC")
-                   : QStringLiteral(" DESC");
-
-        if(specification.limit)
-        {
-            sql += QStringLiteral(" LIMIT :limit");
-            bindings.push_back({QStringLiteral(":limit"), QVariant::fromValue<qulonglong>(*specification.limit)});
-        }
-
-        if(specification.offset)
-        {
-            if(!specification.limit) { sql += QStringLiteral(" LIMIT -1"); }
-            sql += QStringLiteral(" OFFSET :offset");
-            bindings.push_back({QStringLiteral(":offset"), QVariant::fromValue<qulonglong>(*specification.offset)});
-        }
+        const QString sql = builder.buildSql(baseSql);
 
         QSqlQuery sqlQuery{database_};
         if(!sqlQuery.prepare(sql))
@@ -365,7 +327,7 @@ namespace gamelog::core::database
             return {};
         }
 
-        for(const auto& [placeholder, value] : bindings) { sqlQuery.bindValue(placeholder, value); }
+        builder.bindTo(sqlQuery);
 
         if(!sqlQuery.exec())
         {
