@@ -11,6 +11,8 @@ add_library(gamelog-application STATIC
         services/local/SessionService.cpp
         services/web/GameArtworkService.h
         services/web/GameArtworkService.cpp
+        services/web/SteamGameMapper.h
+        services/web/SteamGameMapper.cpp
         services/web/SteamApiService.cpp
         services/web/SteamApiService.h
         services/local/CredentialService.cpp

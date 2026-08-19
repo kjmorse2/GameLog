@@ -1,11 +1,11 @@
 #include "GameService.h"
 
 #include "application/services/web/SteamApiService.h"
+#include "application/services/web/SteamGameMapper.h"
 #include "logging/LoggingCategories.h"
 
 #include <utility>
 
-#include <QJsonObject>
 
 namespace gamelog::application::services
 {
@@ -153,30 +153,21 @@ namespace gamelog::application::services
     {
         qCInfo(gamelogGameServiceLog) << "Received" << steamGames.size() << "Steam games from API";
 
-        for(const QJsonValue& value : steamGames)
+        for(Game game : gamesFromSteamOwnedGames(steamGames))
         {
-            if(!value.isObject()) { continue; }
-
-            const QJsonObject object = value.toObject();
-            const int appId = object.value(QStringLiteral("appid")).toInt();
-            const QString title = object.value(QStringLiteral("name")).toString();
-
-            if(appId <= 0 || title.trimmed().isEmpty()) { continue; }
-
             GameQuery existingQuery;
-            existingQuery.steamAppId = appId;
+            existingQuery.steamAppId = game.steamAppId;
             existingQuery.limit = 1;
 
             // Synchronization never updates, re-enables, retitles, or duplicates
             // an App ID that already exists anywhere in the database.
             if(!search(existingQuery).empty()) { continue; }
 
-            Game game;
-            game.title = title;
-            game.steamAppId = appId;
-
-            qCDebug(gamelogGameServiceLog) << "Adding game with Steam ID:" << appId;
-            if(!addGame(game)) { qCWarning(gamelogGameServiceLog) << "Failed to add game with Steam ID:" << appId; }
+            qCDebug(gamelogGameServiceLog) << "Adding game with Steam ID:" << *game.steamAppId;
+            if(!addGame(game))
+            {
+                qCWarning(gamelogGameServiceLog) << "Failed to add game with Steam ID:" << *game.steamAppId;
+            }
         }
     }
 } // namespace gamelog::application::services

@@ -183,6 +183,12 @@ add_gamelog_application_test(
 # ---------------------------------------------------------------------------
 
 add_gamelog_application_test(
+        gamelog-steam-game-mapper-test
+        application/services/web/SteamGameMapperTest.cpp
+        "unit;application"
+)
+
+add_gamelog_application_test(
         gamelog-automatic-session-tracker-test
         application/services/local/AutomaticSessionTrackerTest.cpp
         "unit;application"
