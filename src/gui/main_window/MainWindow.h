@@ -12,6 +12,12 @@ namespace gamelog::application
     class GameLogRuntime;
 }
 
+namespace gamelog::gui
+{
+    class CalendarView;
+    class LibraryView;
+} // namespace gamelog::gui
+
 QT_BEGIN_NAMESPACE
 
 namespace Ui
@@ -65,11 +71,31 @@ namespace gamelog::gui
 
         void onAddSteamPlayerId();
 
+        /**
+         * Shows the modal game form and refreshes the library when it persisted a game.
+         */
+        void onAddGame();
+
+        /**
+         * Shows the modal session form and refreshes the calendar when it persisted a session.
+         */
+        void onAddSession();
+
     private:
         Ui::MainWindow* ui;
         application::GameLogRuntime& runtime_;
         QLabel* statusActiveLabel_;
         QLabel* statusTitleLabel_;
         QLabel* statusTimeLabel_;
+
+        /**
+         * @brief The library tab's view, refreshed after a game is added.
+         */
+        LibraryView* libraryView_;
+
+        /**
+         * @brief The calendar tab's view, refreshed after a session is added.
+         */
+        CalendarView* calendarView_;
     };
 } // namespace gamelog::gui

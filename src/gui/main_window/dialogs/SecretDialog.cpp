@@ -4,7 +4,7 @@
 
 // You may need to build the project (run Qt uic code generator) to get "ui_SecretDialog.h" resolved
 
-#include "../SecretDialog.h"
+#include "gui/main_window/dialogs/SecretDialog.h"
 
 #include <QDialogButtonBox>
 #include <QPushButton>

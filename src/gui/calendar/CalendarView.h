@@ -36,6 +36,15 @@ namespace gamelog::gui
 
         ~CalendarView() override;
 
+    public
+        Q_SLOTS :
+        /**
+         * Re-reads the sessions of the month currently on screen. Callers use
+         * this after writing a session, since the calendar otherwise only
+         * refreshes when its page changes.
+         */
+        void refresh() const;
+
     private:
         /**
          * @brief ui pointer from QT

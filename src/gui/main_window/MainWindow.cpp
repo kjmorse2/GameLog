@@ -12,6 +12,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "dialogs/AddGameDialog.h"
+#include "dialogs/AddSessionDialog.h"
 #include "dialogs/SecretDialog.h"
 #include "gui/calendar/CalendarView.h"
 #include "gui/library/LibraryView.h"
@@ -44,10 +46,14 @@ namespace gamelog::gui
 
         // Setup the "Add" button with a menu for adding games or sessions
         auto *addMenu = new QMenu(ui->addButton);
-        QAction *addGameAction = addMenu->addAction("Add Game");
-        QAction *addSessionAction = addMenu->addAction("Add Session");
+
+        const QAction *addGameAction = addMenu->addAction("Add Game");
+        connect(addGameAction, &QAction::triggered, this, &MainWindow::onAddGame);
+
+        const QAction *addSessionAction = addMenu->addAction("Add Session");
+        connect(addSessionAction, &QAction::triggered, this, &MainWindow::onAddSession);
+
         ui->addButton->setMenu(addMenu);
-        // TODO: Connect to functionality.
 
         // Setup the "Config" button with a menu for configuration options
         auto *configMenu = new QMenu(ui->configButton);
@@ -64,9 +70,11 @@ namespace gamelog::gui
         // TODO: Connect to functionality.
 
         // Setup the library and calendar views
-        auto* libraryViewWidget = new LibraryView{ui->libraryTab, &runtime};
-        ui->libraryTabLayout->addWidget(libraryViewWidget);
-        ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getSessionService()});
+        libraryView_ = new LibraryView{ui->libraryTab, &runtime};
+        ui->libraryTabLayout->addWidget(libraryView_);
+
+        calendarView_ = new CalendarView{ui->calanderTab, runtime.getSessionService()};
+        ui->calanderTabLayout->addWidget(calendarView_);
 
         // Setup the status bar labels
         statusActiveLabel_ = new QLabel{ui->statusBar};
@@ -140,5 +148,25 @@ namespace gamelog::gui
 
         runtime_.getCredentialService()->
                  setSecret(QString::fromLatin1(application::services::CredentialService::kSteamPlayerIdKey), *playerId);
+    }
+
+    void MainWindow::onAddGame()
+    {
+        AddGameDialog dialog{*runtime_.getGameService(), this};
+
+        // The dialog performs the insert itself, so acceptance means the library
+        // has a row the view has not drawn yet.
+        if(dialog.exec() != QDialog::Accepted) { return; }
+
+        libraryView_->displayAllGames();
+    }
+
+    void MainWindow::onAddSession()
+    {
+        AddSessionDialog dialog{*runtime_.getGameService(), *runtime_.getSessionService(), this};
+
+        if(dialog.exec() != QDialog::Accepted) { return; }
+
+        calendarView_->refresh();
     }
 } // namespace gamelog::gui
