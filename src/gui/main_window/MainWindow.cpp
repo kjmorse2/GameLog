@@ -12,7 +12,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-#include "SecretDialog.h"
+#include "dialogs/SecretDialog.h"
 #include "gui/calendar/CalendarView.h"
 #include "gui/library/LibraryView.h"
 #include "application/GameLogRuntime.h"
