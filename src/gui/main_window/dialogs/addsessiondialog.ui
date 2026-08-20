@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>AddSessionDialog</class>
+    <widget class="QDialog" name="AddSessionDialog">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>520</width>
+                <height>460</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>Add Session</string>
+        </property>
+        <property name="modal">
+            <bool>true</bool>
+        </property>
+
+        <layout class="QVBoxLayout" name="verticalLayout">
+
+            <item>
+                <widget class="QLabel" name="explanationLabel">
+                    <property name="text">
+                        <string>Record a play session by hand. Times are entered and displayed in local time
+                            and stored in UTC.
+                        </string>
+                    </property>
+                    <property name="wordWrap">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+            </item>
+
+            <item>
+                <layout class="QFormLayout" name="formLayout">
+
+                    <item row="0" column="0">
+                        <widget class="QLabel" name="gameLabel">
+                            <property name="text">
+                                <string>Game</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item row="0" column="1">
+                        <widget class="QComboBox" name="gameComboBox"/>
+                    </item>
+
+                    <item row="1" column="0">
+                        <widget class="QLabel" name="startLabel">
+                            <property name="text">
+                                <string>Start</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item row="1" column="1">
+                        <widget class="QDateTimeEdit" name="startDateTimeEdit">
+                            <property name="calendarPopup">
+                                <bool>true</bool>
+                            </property>
+                            <property name="displayFormat">
+                                <string>yyyy-MM-dd HH:mm</string>
+                            </property>
+                        </widget>
+                    </item>
+
+                    <item row="2" column="0">
+                        <widget class="QLabel" name="endLabel">
+                            <property name="text">
+                                <string>End</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item row="2" column="1">
+                        <widget class="QDateTimeEdit" name="endDateTimeEdit">
+                            <property name="calendarPopup">
+                                <bool>true</bool>
+                            </property>
+                            <property name="displayFormat">
+                                <string>yyyy-MM-dd HH:mm</string>
+                            </property>
+                        </widget>
+                    </item>
+
+                    <item row="3" column="0">
+                        <widget class="QLabel" name="durationLabel">
+                            <property name="text">
+                                <string>Tracked duration</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item row="3" column="1">
+                        <widget class="QSpinBox" name="durationSpinBox">
+                            <property name="suffix">
+                                <string> minutes</string>
+                            </property>
+                            <property name="minimum">
+                                <number>0</number>
+                            </property>
+                            <property name="maximum">
+                                <number>1000000</number>
+                            </property>
+                        </widget>
+                    </item>
+
+                    <item row="4" column="0">
+                        <widget class="QLabel" name="statusLabel">
+                            <property name="text">
+                                <string>Status</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item row="4" column="1">
+                        <widget class="QComboBox" name="statusComboBox"/>
+                    </item>
+
+                    <item row="5" column="0">
+                        <widget class="QLabel" name="sourceLabel">
+                            <property name="text">
+                                <string>Source</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item row="5" column="1">
+                        <widget class="QComboBox" name="sourceComboBox"/>
+                    </item>
+
+                </layout>
+            </item>
+
+            <item>
+                <widget class="QLabel" name="notesLabel">
+                    <property name="text">
+                        <string>Notes (Markdown)</string>
+                    </property>
+                </widget>
+            </item>
+
+            <item>
+                <widget class="QPlainTextEdit" name="notesEdit">
+                    <property name="placeholderText">
+                        <string>Optional notes for this session</string>
+                    </property>
+                </widget>
+            </item>
+
+            <item>
+                <widget class="QLabel" name="errorLabel">
+                    <property name="text">
+                        <string/>
+                    </property>
+                    <property name="styleSheet">
+                        <string notr="true">color: #c0392b;</string>
+                    </property>
+                    <property name="wordWrap">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+            </item>
+
+            <item>
+                <widget class="QDialogButtonBox" name="buttonBox">
+                    <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="standardButtons">
+                        <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+                    </property>
+                </widget>
+            </item>
+
+        </layout>
+    </widget>
+
+    <resources/>
+    <connections/>
+</ui>

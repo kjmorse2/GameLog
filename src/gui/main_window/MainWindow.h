@@ -12,6 +12,12 @@ namespace gamelog::application
     class GameLogRuntime;
 }
 
+namespace gamelog::gui
+{
+    class CalendarView;
+    class LibraryView;
+} // namespace gamelog::gui
+
 QT_BEGIN_NAMESPACE
 
 namespace Ui
@@ -41,6 +47,9 @@ namespace gamelog::gui
          */
         explicit MainWindow(application::GameLogRuntime& runtime, QWidget* parent = nullptr);
 
+        virtual void showEvent(QShowEvent* event) override;
+        virtual void resizeEvent(QResizeEvent* event) override;
+
         ~MainWindow() override;
 
     private:
@@ -55,6 +64,14 @@ namespace gamelog::gui
                                                              const QString& explanation,
                                                              const QString& placeholder);
 
+        /**
+         * Stretches the two west-edge tabs over the tab widget's height.
+         *
+         * A no-op when the height has not changed, so dragging the window edge
+         * does not repolish the style on every pixel.
+         */
+        void updateTabBarHeight();
+
     private
         Q_SLOTS :
         void onSessionStarted(const core::domain::Game& game);
@@ -65,11 +82,37 @@ namespace gamelog::gui
 
         void onAddSteamPlayerId();
 
+        /**
+         * Shows the modal game form and refreshes the library when it persisted a game.
+         */
+        void onAddGame();
+
+        /**
+         * Shows the modal session form and refreshes the calendar when it persisted a session.
+         */
+        void onAddSession();
+
     private:
         Ui::MainWindow* ui;
         application::GameLogRuntime& runtime_;
         QLabel* statusActiveLabel_;
         QLabel* statusTitleLabel_;
         QLabel* statusTimeLabel_;
+
+        /**
+         * @brief Height last written into the tab bar's style sheet, or -1
+         * before the first update.
+         */
+        int tabBarHeight_{-1};
+
+        /**
+         * @brief The library tab's view, refreshed after a game is added.
+         */
+        LibraryView* libraryView_;
+
+        /**
+         * @brief The calendar tab's view, refreshed after a session is added.
+         */
+        CalendarView* calendarView_;
     };
 } // namespace gamelog::gui

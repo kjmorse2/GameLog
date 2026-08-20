@@ -40,7 +40,9 @@ namespace gamelog::gui
 
     GameCard::~GameCard() { delete ui; }
 
-    QSize GameCard::sizeHint() const { return {135, 240}; }
+    QSize GameCard::cardSizeHint() noexcept { return {135, 240}; }
+
+    QSize GameCard::sizeHint() const { return cardSizeHint(); }
 
     QSize GameCard::minimumSizeHint() const { return {90, 160}; }
 

@@ -39,6 +39,14 @@ namespace gamelog::gui
         ~GameCard() override;
 
         /**
+         * The fixed size every card asks for.
+         *
+         * Static so that layout code can size a grid against a card without
+         * building one: constructing a card loads and scales its artwork.
+         */
+        [[nodiscard]] static QSize cardSizeHint() noexcept;
+
+        /**
          * Returns the recommended size for the widget.
          * @return The recommended widget size.
          */

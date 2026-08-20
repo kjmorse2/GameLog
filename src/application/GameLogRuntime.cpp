@@ -49,6 +49,8 @@ namespace gamelog::application
         gameRepository_.emplace(database);
         sessionRepository_.emplace(database);
         credentialService_.emplace();
+        // Un-comment this line to clear all stored secrets on startup (useful for testing).
+        // credentialService_->removeAllSecrets();
         steamApiService_.emplace(*credentialService_);
         gameService_.emplace(*gameRepository_, *steamApiService_);
         sessionService_.emplace(*sessionRepository_, *gameService_);

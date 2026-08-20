@@ -25,6 +25,8 @@ namespace gamelog::gui
 
     CalendarView::~CalendarView() { delete ui; }
 
+    void CalendarView::refresh() const { onPageChanged(calendar_->yearShown(), calendar_->monthShown()); }
+
     void CalendarView::onPageChanged(int year, int month) const
     {
         const QDate startDay{year, month, 1};

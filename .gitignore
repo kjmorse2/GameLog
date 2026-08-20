@@ -4,6 +4,9 @@ build-*/
 build-debug/
 out/
 
+#secrets folder
+secrets/
+
 # CMake-generated files
 CMakeCache.txt
 CMakeFiles/

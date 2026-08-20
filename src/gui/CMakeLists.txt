@@ -19,6 +19,15 @@ add_library(gamelog-gui STATIC
         text_editor/TextEditor.cpp
         text_editor/TextEditor.h
         text_editor/texteditor.ui
+        main_window/dialogs/secretdialog.ui
+        main_window/dialogs/SecretDialog.cpp
+        main_window/dialogs/SecretDialog.h
+        main_window/dialogs/AddGameDialog.cpp
+        main_window/dialogs/AddGameDialog.h
+        main_window/dialogs/addgamedialog.ui
+        main_window/dialogs/AddSessionDialog.cpp
+        main_window/dialogs/AddSessionDialog.h
+        main_window/dialogs/addsessiondialog.ui
         ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
 )
 
