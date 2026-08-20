@@ -20,6 +20,9 @@ add_library(gamelog-gui STATIC
         text_editor/TextEditor.h
         text_editor/texteditor.ui
         ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
+        main_window/SecretDialog.cpp
+        main_window/SecretDialog.h
+        main_window/secretdialog.ui
 )
 
 target_include_directories(gamelog-gui

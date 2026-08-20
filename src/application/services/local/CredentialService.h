@@ -76,6 +76,12 @@ namespace gamelog::application::services
          */
         void removeSecret(const QString& key);
 
+        /**
+         * Removes all secrets from the keychain.
+         * This is a convenience method for testing and debugging; it should not be used in production code.
+         */
+        void removeAllSecrets();
+
         Q_SIGNALS :
         /**
          * Emitted when a secret has been successfully stored.
@@ -101,6 +107,7 @@ namespace gamelog::application::services
          * @param key The key under which the secret was expected to be stored
          */
         void secretNotFound(const QString& key);
+
 
         /**
          * Emitted when an error occurs while storing, retrieving, or removing a secret.

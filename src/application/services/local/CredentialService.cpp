@@ -161,4 +161,11 @@ namespace gamelog::application::services
     {
         return new QKeychain::DeletePasswordJob{QString::fromLatin1(kServiceName), this};
     }
+
+    void CredentialService::removeAllSecrets()
+    {
+        qCDebug(gamelogCredentialServiceLog) << "Removing all secrets from the keychain.";
+        removeSecret(QString::fromLatin1(kSteamApiKey));
+        removeSecret(QString::fromLatin1(kSteamPlayerIdKey));
+    }
 } // namespace gamelog::application::services

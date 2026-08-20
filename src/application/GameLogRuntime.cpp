@@ -49,6 +49,7 @@ namespace gamelog::application
         gameRepository_.emplace(database);
         sessionRepository_.emplace(database);
         credentialService_.emplace();
+        credentialService_->removeAllSecrets();
         steamApiService_.emplace(*credentialService_);
         gameService_.emplace(*gameRepository_, *steamApiService_);
         sessionService_.emplace(*sessionRepository_, *gameService_);

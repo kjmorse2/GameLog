@@ -5,12 +5,14 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QLabel>
+#include <QMenu>
 #include <QLineEdit>
 #include <QObject>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "SecretDialog.h"
 #include "gui/calendar/CalendarView.h"
 #include "gui/library/LibraryView.h"
 #include "application/GameLogRuntime.h"
@@ -39,11 +41,34 @@ namespace gamelog::gui
     {
         initializeGUIResources();
         ui->setupUi(this);
+
+        // Setup the "Add" button with a menu for adding games or sessions
+        auto *addMenu = new QMenu(ui->addButton);
+        QAction *addGameAction = addMenu->addAction("Add Game");
+        QAction *addSessionAction = addMenu->addAction("Add Session");
+        ui->addButton->setMenu(addMenu);
+        // TODO: Connect to functionality.
+
+        // Setup the "Config" button with a menu for configuration options
+        auto *configMenu = new QMenu(ui->configButton);
+
+        const QAction *addSteamApiKeyAction = configMenu->addAction("Steam API Key");
+        connect(addSteamApiKeyAction, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
+
+        const QAction *addSteamPlayerIdAction = configMenu->addAction("Add Steam Player ID");
+        connect(addSteamPlayerIdAction, &QAction::triggered, this, &MainWindow::onAddSteamPlayerId);
+
+        QAction *openSettingsAction = configMenu->addAction("Settings");
+        QAction *fullShutdownAction = configMenu->addAction("Full Shutdown");
+        ui->configButton->setMenu(configMenu);
+        // TODO: Connect to functionality.
+
+        // Setup the library and calendar views
         auto* libraryViewWidget = new LibraryView{ui->libraryTab, &runtime};
         ui->libraryTabLayout->addWidget(libraryViewWidget);
-
         ui->calanderTabLayout->addWidget(new CalendarView{ui->calanderTab, runtime.getSessionService()});
 
+        // Setup the status bar labels
         statusActiveLabel_ = new QLabel{ui->statusBar};
         statusTitleLabel_ = new QLabel{ui->statusBar};
         statusTimeLabel_ = new QLabel{ui->statusBar};
@@ -54,10 +79,7 @@ namespace gamelog::gui
 
         const auto sessionService = runtime_.getSessionService();
 
-        connect(sessionService, &SessionService::sessionStarted, this, &MainWindow::onSessionStarted);
-        connect(runtime_.getSessionService(), &SessionService::sessionStopped, this, &MainWindow::onSessionEnded);
-        connect(ui->actionAdd_SteamAPI_Key, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
-        connect(ui->actionAdd_Steam_Player_ID, &QAction::triggered, this, &MainWindow::onAddSteamPlayerId);
+        connect(sessionService, &SessionService::sessionStarted, this, &MainWindow::onSessionStarted); connect(runtime_.getSessionService(), &SessionService::sessionStopped, this, &MainWindow::onSessionEnded); // connect(ui->actionAdd_Steam_Player_ID, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
     }
 
     MainWindow::~MainWindow() { delete ui; }
@@ -77,44 +99,19 @@ namespace gamelog::gui
     }
 
     std::optional<QString> MainWindow::promptForSecret(const QString& title,
-                                                       const QString& explanation,
-                                                       const QString& placeholder)
+                                                        const QString& explanation,
+                                                        const QString& placeholder)
     {
-        QDialog dialog{this};
-        dialog.setWindowTitle(title);
-        dialog.setModal(true);
+        SecretDialog dialog{title, explanation, placeholder, this};
 
-        auto* layout = new QVBoxLayout{&dialog};
+        if(dialog.exec() != QDialog::Accepted)
+        {
+            return std::nullopt;
+        }
+        QString secret = dialog.secret().trimmed();
+        dialog.close();
 
-        auto* explanationLabel = new QLabel{explanation, &dialog};
-        explanationLabel->setWordWrap(true);
-
-        auto* secretEdit = new QLineEdit{&dialog};
-        secretEdit->setEchoMode(QLineEdit::Password);
-        secretEdit->setPlaceholderText(placeholder);
-
-        auto* buttons = new QDialogButtonBox{QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog};
-        buttons->button(QDialogButtonBox::Ok)->setText(tr("Submit"));
-
-        layout->addWidget(explanationLabel);
-        layout->addWidget(secretEdit);
-        layout->addWidget(buttons);
-
-        connect(buttons,
-                &QDialogButtonBox::accepted,
-                &dialog,
-                [&dialog, secretEdit]
-                {
-                    // A blank entry keeps the dialog open rather than storing nothing.
-                    if(secretEdit->text().trimmed().isEmpty()) { return; }
-                    dialog.accept();
-                });
-
-        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-        if(dialog.exec() != QDialog::Accepted) { return std::nullopt; }
-
-        return secretEdit->text().trimmed();
+        return secret;
     }
 
     void MainWindow::onAddSteamApiKey()
