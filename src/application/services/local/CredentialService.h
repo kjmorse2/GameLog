@@ -75,7 +75,7 @@ namespace gamelog::application::services
          * Empty or whitespace-only keys are rejected.
          */
         void removeSecret(const QString& key);
-
+        
         /**
          * Removes all secrets from the keychain.
          * This is a convenience method for testing and debugging; it should not be used in production code.

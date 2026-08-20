@@ -38,7 +38,7 @@ namespace gamelog::gui
                 &QPushButton::clicked,
                 runtime_->getGameService(),
                 &GameService::syncSteamGames);
-
+          
         ui->gameScrollArea->viewport()->installEventFilter(this);
 
         displayAllGames();
