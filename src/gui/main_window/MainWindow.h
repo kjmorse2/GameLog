@@ -47,6 +47,9 @@ namespace gamelog::gui
          */
         explicit MainWindow(application::GameLogRuntime& runtime, QWidget* parent = nullptr);
 
+        virtual void showEvent(QShowEvent* event) override;
+        virtual void resizeEvent(QResizeEvent* event) override;
+
         ~MainWindow() override;
 
     private:

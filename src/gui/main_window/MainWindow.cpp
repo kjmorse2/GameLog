@@ -69,6 +69,8 @@ namespace gamelog::gui
         ui->configButton->setMenu(configMenu);
         // TODO: Connect to functionality.
 
+
+
         // Setup the library and calendar views
         libraryView_ = new LibraryView{ui->libraryTab, &runtime};
         ui->libraryTabLayout->addWidget(libraryView_);
@@ -84,6 +86,7 @@ namespace gamelog::gui
         ui->statusBar->addPermanentWidget(statusActiveLabel_);
         ui->statusBar->addPermanentWidget(statusTitleLabel_);
         ui->statusBar->addPermanentWidget(statusTimeLabel_);
+
 
         const auto sessionService = runtime_.getSessionService();
 
@@ -168,5 +171,37 @@ namespace gamelog::gui
         if(dialog.exec() != QDialog::Accepted) { return; }
 
         calendarView_->refresh();
+    }
+
+    void MainWindow::resizeEvent(QResizeEvent* event)
+    {
+        // Set up expanding tabs:
+        /*
+         * Divide by 2 because we have 2 tabs.
+         * I need to decrease 24 pixels to fill the width correctly, I don't know exactly
+         * why 24 pixels, but I found this number by making some tests
+         */
+        int tabHeight = ui->mainTabWidget->height()/2;
+        /*
+         * Then, I set this tabWidth to the styleSheet.
+         * Note: I need to set the previously styleSheet to not lose it
+         */
+        ui->mainTabWidget->setStyleSheet(ui->mainTabWidget->styleSheet() + "QTabBar::tab {height: " + QString::number(tabHeight) + "px; }" );
+    }
+
+    void MainWindow::showEvent(QShowEvent* event)
+    {
+        // Set up expanding tabs:
+        /*
+         * Divide by 2 because we have 2 tabs.
+         * I need to decrease 24 pixels to fill the width correctly, I don't know exactly
+         * why 24 pixels, but I found this number by making some tests
+         */
+        int tabHeight = ui->mainTabWidget->height()/2;
+        /*
+         * Then, I set this tabWidth to the styleSheet.
+         * Note: I need to set the previously styleSheet to not lose it
+         */
+        ui->mainTabWidget->setStyleSheet(ui->mainTabWidget->styleSheet() + "QTabBar::tab {height: " + QString::number(tabHeight) + "px; }" );
     }
 } // namespace gamelog::gui
