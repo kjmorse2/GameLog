@@ -64,6 +64,14 @@ namespace gamelog::gui
                                                              const QString& explanation,
                                                              const QString& placeholder);
 
+        /**
+         * Stretches the two west-edge tabs over the tab widget's height.
+         *
+         * A no-op when the height has not changed, so dragging the window edge
+         * does not repolish the style on every pixel.
+         */
+        void updateTabBarHeight();
+
     private
         Q_SLOTS :
         void onSessionStarted(const core::domain::Game& game);
@@ -90,6 +98,12 @@ namespace gamelog::gui
         QLabel* statusActiveLabel_;
         QLabel* statusTitleLabel_;
         QLabel* statusTimeLabel_;
+
+        /**
+         * @brief Height last written into the tab bar's style sheet, or -1
+         * before the first update.
+         */
+        int tabBarHeight_{-1};
 
         /**
          * @brief The library tab's view, refreshed after a game is added.

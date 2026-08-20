@@ -175,33 +175,27 @@ namespace gamelog::gui
 
     void MainWindow::resizeEvent(QResizeEvent* event)
     {
-        // Set up expanding tabs:
-        /*
-         * Divide by 2 because we have 2 tabs.
-         * I need to decrease 24 pixels to fill the width correctly, I don't know exactly
-         * why 24 pixels, but I found this number by making some tests
-         */
-        int tabHeight = ui->mainTabWidget->height()/2;
-        /*
-         * Then, I set this tabWidth to the styleSheet.
-         * Note: I need to set the previously styleSheet to not lose it
-         */
-        ui->mainTabWidget->setStyleSheet(ui->mainTabWidget->styleSheet() + "QTabBar::tab {height: " + QString::number(tabHeight) + "px; }" );
+        QMainWindow::resizeEvent(event);
+        updateTabBarHeight();
     }
 
     void MainWindow::showEvent(QShowEvent* event)
     {
-        // Set up expanding tabs:
-        /*
-         * Divide by 2 because we have 2 tabs.
-         * I need to decrease 24 pixels to fill the width correctly, I don't know exactly
-         * why 24 pixels, but I found this number by making some tests
-         */
-        int tabHeight = ui->mainTabWidget->height()/2;
-        /*
-         * Then, I set this tabWidth to the styleSheet.
-         * Note: I need to set the previously styleSheet to not lose it
-         */
-        ui->mainTabWidget->setStyleSheet(ui->mainTabWidget->styleSheet() + "QTabBar::tab {height: " + QString::number(tabHeight) + "px; }" );
+        QMainWindow::showEvent(event);
+        updateTabBarHeight();
+    }
+
+    void MainWindow::updateTabBarHeight()
+    {
+        // The tab bar runs down the west edge, so the two tabs split the widget's
+        // height between them.
+        const int tabHeight = ui->mainTabWidget->height() / 2;
+
+        if(tabHeight == tabBarHeight_) { return; }
+        tabBarHeight_ = tabHeight;
+
+        // Assign the rule outright rather than appending to the current sheet:
+        // appending stacks one more rule on every single resize event.
+        ui->mainTabWidget->setStyleSheet(QStringLiteral("QTabBar::tab { height: %1px; }").arg(tabHeight));
     }
 } // namespace gamelog::gui
