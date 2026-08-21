@@ -29,6 +29,9 @@ add_library(gamelog-gui STATIC
         main_window/dialogs/AddSessionDialog.h
         main_window/dialogs/addsessiondialog.ui
         ${PROJECT_SOURCE_DIR}/resources/images/images.qrc
+        main_window/components/GameSearchBar.cpp
+        main_window/components/GameSearchBar.h
+        main_window/components/gamesearchbar.ui
 )
 
 target_include_directories(gamelog-gui

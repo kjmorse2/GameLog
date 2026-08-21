@@ -64,6 +64,8 @@ namespace gamelog::gui
         const QAction *addSteamPlayerIdAction = configMenu->addAction("Add Steam Player ID");
         connect(addSteamPlayerIdAction, &QAction::triggered, this, &MainWindow::onAddSteamPlayerId);
 
+        ui->gameSearchBar->initialize(runtime.getGameService());
+
         QAction *openSettingsAction = configMenu->addAction("Settings");
         QAction *fullShutdownAction = configMenu->addAction("Full Shutdown");
         ui->configButton->setMenu(configMenu);
