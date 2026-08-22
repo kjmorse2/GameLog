@@ -5,6 +5,7 @@
 
 #include "application/services/local/GameService.h"
 #include "application/services/local/SessionService.h"
+#include "core/domain/query/SessionQuery.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -43,7 +44,18 @@ namespace gamelog::gui
          * this after writing a session, since the calendar otherwise only
          * refreshes when its page changes.
          */
-        void refresh() const;
+        void refresh();
+
+        /**
+         * Restricts the calendar to a single game's sessions.
+         *
+         * The filter persists across page changes: onPageChanged() only
+         * rewrites the date bounds, so paging keeps showing this game.
+         * @param game The game whose sessions the calendar should show.
+         */
+        void onGameSelected(const gamelog::core::domain::Game& game);
+
+        void onGameSelectionCleared();
 
     private:
         /**
@@ -54,12 +66,22 @@ namespace gamelog::gui
         /**
          * @brief the session service to query/edit for sessions
          */
-        gamelog::application::services::SessionService* sessionService_{};
+        application::services::SessionService* sessionService_{};
 
         /**
          * @brief The calendar widget.
          */
         QCalendarWidget* calendar_{};
+
+        /**
+         * @brief The search this view paints.
+         *
+         * Holding the criteria rather than the results keeps one query behind
+         * both entry points: onPageChanged() overwrites the date bounds for
+         * the month on screen, onGameSelected() narrows gameIds, and either
+         * change repaints through the same path.
+         */
+        core::domain::query::SessionQuery sessionQuery_{};
 
     private
         Q_SLOTS :
@@ -68,6 +90,6 @@ namespace gamelog::gui
          * @param year The year the calendar is on
          * @param month The month the calendar is on.
          */
-        void onPageChanged(int year, int month) const;
+        void onPageChanged(int year, int month);
     };
 } // namespace gamelog::gui

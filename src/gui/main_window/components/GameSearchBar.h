@@ -35,7 +35,8 @@ public:
     void initialize(gamelog::application::services::GameService* service);
 
 Q_SIGNALS:
-    void gameChosen(const gamelog::core::domain::Game& game);
+    void gameSelected(const gamelog::core::domain::Game& game);
+    void gameSelectionCleared();
 
 private:
     bool initialized{false};
@@ -46,6 +47,7 @@ private:
 
 private Q_SLOTS:
     void onGameChosen();
+    void onSelectionCleared();
 };
 
 

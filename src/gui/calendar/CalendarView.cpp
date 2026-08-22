@@ -20,28 +20,46 @@ namespace gamelog::gui
 
         // Populate the initially shown month directly rather than emitting the
         // calendar's own signal from outside the class.
-        onPageChanged(calendar_->yearShown(), calendar_->monthShown());
+        refresh();
     }
 
     CalendarView::~CalendarView() { delete ui; }
 
-    void CalendarView::refresh() const { onPageChanged(calendar_->yearShown(), calendar_->monthShown()); }
+    void CalendarView::refresh()
+    {
+        onPageChanged(calendar_->yearShown(), calendar_->monthShown());
+    }
 
-    void CalendarView::onPageChanged(int year, int month) const
+    void CalendarView::onPageChanged(int year, int month)
     {
         const QDate startDay{year, month, 1};
-        const auto startDate = QDateTime{startDay, QTime{0, 0}};
-        const auto endDate = QDateTime{startDay.addMonths(1), QTime{0, 0}};
-        for(const std::vector<gamelog::core::domain::Session> foundSessions = sessionService_->
-                getSessionsInTimeRange(startDate, endDate); const auto& session : foundSessions)
+        sessionQuery_.startedAtOrAfter = QDateTime{startDay, QTime{0, 0}};
+        sessionQuery_.startedBefore = QDateTime{startDay.addMonths(1), QTime{0, 0}};
+
+        // A null QDate clears every format in the table. Formats otherwise only
+        // accumulate, so without this a narrowed filter leaves the days it
+        // dropped still painted and a page change carries the old month's days.
+        calendar_->setDateTextFormat(QDate{}, QTextCharFormat{});
+
+        QTextCharFormat format;
+        format.setBackground(QBrush{Qt::red});
+        format.setForeground(QBrush{Qt::white});
+
+        for(const auto& session : sessionService_->search(sessionQuery_))
         {
-            const QDate date = session.startTimestamp.date();
-
-            QTextCharFormat format;
-            format.setBackground(QBrush{Qt::red});
-            format.setForeground(QBrush{Qt::white});
-
-            ui->calendarWidget->setDateTextFormat(date, format);
+            calendar_->setDateTextFormat(session.startTimestamp.date(), format);
         }
+    }
+
+    void CalendarView::onGameSelected(const gamelog::core::domain::Game& game)
+    {
+        sessionQuery_.gameIds = {game.id};
+        refresh();
+    }
+
+    void CalendarView::onGameSelectionCleared()
+    {
+        sessionQuery_.gameIds.clear();
+        refresh();
     }
 } // namespace gamelog::gui

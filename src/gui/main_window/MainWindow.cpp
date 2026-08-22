@@ -71,8 +71,6 @@ namespace gamelog::gui
         ui->configButton->setMenu(configMenu);
         // TODO: Connect to functionality.
 
-
-
         // Setup the library and calendar views
         libraryView_ = new LibraryView{ui->libraryTab, &runtime};
         ui->libraryTabLayout->addWidget(libraryView_);
@@ -92,7 +90,17 @@ namespace gamelog::gui
 
         const auto sessionService = runtime_.getSessionService();
 
-        connect(sessionService, &SessionService::sessionStarted, this, &MainWindow::onSessionStarted); connect(runtime_.getSessionService(), &SessionService::sessionStopped, this, &MainWindow::onSessionEnded); // connect(ui->actionAdd_Steam_Player_ID, &QAction::triggered, this, &MainWindow::onAddSteamApiKey);
+        connect(sessionService,
+            &SessionService::sessionStarted,
+            this,
+            &MainWindow::onSessionStarted);
+        connect(runtime_.getSessionService(),
+            &SessionService::sessionStopped,
+            this,
+            &MainWindow::onSessionEnded);
+
+        connect(ui->gameSearchBar, &GameSearchBar::gameSelected, calendarView_, &CalendarView::onGameSelected);
+        connect(ui->gameSearchBar, &GameSearchBar::gameSelectionCleared, calendarView_, &CalendarView::onGameSelectionCleared);
     }
 
     MainWindow::~MainWindow() { delete ui; }

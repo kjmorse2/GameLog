@@ -40,47 +40,47 @@ namespace gamelog::core::domain::query
         /**
          * The IDs of the sessions to select.
          */
-        std::vector<int> ids;
+        std::vector<int> ids{};
 
         /**
          * The IDs of the games to select.
          */
-        std::vector<int> gameIds;
+        std::vector<int> gameIds{};
 
         /**
          * The sources of the sessions to select.
          */
-        std::vector<SessionSource> sources;
+        std::vector<SessionSource> sources{};
 
         /**
          * The statuses of the sessions to select.
          */
-        std::vector<SessionStatus> statuses;
+        std::vector<SessionStatus> statuses{};
 
         /**
          * The inclusive lower bound for session start timestamps.
          */
-        std::optional<QDateTime> startedAtOrAfter;
+        std::optional<QDateTime> startedAtOrAfter{};
 
         /**
          * The exclusive upper bound for session start timestamps.
          */
-        std::optional<QDateTime> startedBefore;
+        std::optional<QDateTime> startedBefore{};
 
         /**
          * The minimum tracked duration of the sessions to select
          */
-        std::optional<std::chrono::seconds> minimumTrackedDuration;
+        std::optional<std::chrono::seconds> minimumTrackedDuration{};
 
         /**
          * The maximum tracked duration of the sessions to select
          */
-        std::optional<std::chrono::seconds> maximumTrackedDuration;
+        std::optional<std::chrono::seconds> maximumTrackedDuration{};
 
         /**
          * Whether the sessions to select have an end timestamp
          */
-        std::optional<bool> hasEndTimestamp;
+        std::optional<bool> hasEndTimestamp{};
 
         /**
          * The field to sort by.
@@ -95,12 +95,12 @@ namespace gamelog::core::domain::query
         /**
          * The maximum number of sessions to return.
          */
-        std::optional<std::size_t> limit;
+        std::optional<std::size_t> limit{};
 
         /**
          * The number of sessions to skip before returning the first one.
          */
-        std::optional<std::size_t> offset;
+        std::optional<std::size_t> offset{};
     };
 
     /**

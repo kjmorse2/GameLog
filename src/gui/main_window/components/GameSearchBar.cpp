@@ -38,6 +38,7 @@ void GameSearchBar::initialize(gamelog::application::services::GameService* serv
     completer->setMaxVisibleItems(10);             // replaces the found < 10 cap
     ui->searchBar->setCompleter(completer);
     connect(completer, qOverload<const QString&>(&QCompleter::activated), this, &GameSearchBar::onGameChosen);
+    connect(ui->clearButton, &QPushButton::clicked, this, &GameSearchBar::onSelectionCleared);
 
     initialized = true;
 }
@@ -50,7 +51,14 @@ void GameSearchBar::onGameChosen()
 
     const QString chosenTitle = ui->searchBar->text();
     if(!gameTitles.contains(chosenTitle)) { return; }
-    gamelog::core::domain::Game game = gameTitles.value(chosenTitle);
+    const gamelog::core::domain::Game game = gameTitles.value(chosenTitle);
 
-    emit gameChosen(game);
+    emit gameSelected(game);
+}
+
+void GameSearchBar::onSelectionCleared()
+{
+    if(!initialized) { return; }
+    ui->searchBar->clear();
+    emit gameSelectionCleared();
 }

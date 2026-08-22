@@ -24,6 +24,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="clearButton">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::EditDelete"/>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="enterButton">
        <property name="text">
         <string/>
